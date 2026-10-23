@@ -4,12 +4,13 @@
   python -m oncall baseline --window 5m          save healthy numbers (before injecting faults)
   python -m oncall investigate --service checkout --signal error_rate --value 0.3
   python -m oncall investigate --alert-file alert.json
-  python -m oncall --source fake investigate --alert-file tests/fixtures/payment_down/alert.json
+  python -m oncall --test investigate --alert-file tests/fixtures/payment_down/alert.json
   python -m oncall watch                         threshold watcher -> investigation
   python -m oncall stop | resume                 kill switch on / off
 
-Shared flags (before the command): --source live|fake|bundle, --fixtures DIR, --bundle DIR,
---record DIR (save a replayable bundle).
+Source flags (before the command). Default is live. --source bundle --bundle DIR replays a recording;
+--record DIR saves one while live; --test [--fixtures DIR] uses fixtures under tests/fixtures/ and
+is the ONLY way to run on fixture data. Every report records the source used.
 """
 import argparse
 import json
@@ -17,14 +18,14 @@ import sys
 from pathlib import Path
 
 from oncall import config
-from oncall.sources import SourceError, get_source, set_source
+from oncall.sources import SourceError, add_source_args, apply_source_args, get_source, source_info
 
 
 def cmd_check(_args):
     """Read-only connectivity check for Prometheus, Jaeger and docker."""
     from oncall.tools._common import metric_names
     src = get_source()
-    report = {}
+    report = source_info()
     try:
         names = src.prom_names()
         found = metric_names()
@@ -58,7 +59,10 @@ def cmd_check(_args):
 
 def cmd_baseline(args):
     from oncall.tools.metrics import save_baseline
-    print(json.dumps(save_baseline(args.window), indent=2))
+    try:
+        print(json.dumps(save_baseline(args.window), indent=2))
+    except RuntimeError as e:
+        sys.exit(str(e))
 
 
 def _alert_from_args(args):
@@ -96,10 +100,7 @@ def cmd_resume(_args):
 def main():
     p = argparse.ArgumentParser(prog="oncall", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--source", choices=["live", "fake", "bundle"], default=config.SOURCE)
-    p.add_argument("--fixtures")
-    p.add_argument("--bundle")
-    p.add_argument("--record")
+    add_source_args(p)
     sub = p.add_subparsers(dest="cmd", required=True)
     sub.add_parser("check")
     b = sub.add_parser("baseline")
@@ -119,7 +120,8 @@ def main():
     sub.add_parser("stop")
     sub.add_parser("resume")
     args = p.parse_args()
-    set_source(args.source, bundle_dir=args.bundle, record_to=args.record, fixture_dir=args.fixtures)
+    if args.cmd not in ("stop", "resume"):
+        apply_source_args(p, args)
     {"check": cmd_check, "baseline": cmd_baseline, "investigate": cmd_investigate,
      "watch": cmd_watch, "stop": cmd_stop, "resume": cmd_resume}[args.cmd](args)
 

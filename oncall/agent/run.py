@@ -4,7 +4,8 @@ Input is an alert JSON. Prints every tool call with a one-line result live, enfo
 (config.MAX_STEPS, default 10) and the kill switch, drops claims whose evidence IDs are not in the
 registry, and saves the whole run to runs/<timestamp>.json.
 
-CLI: python -m oncall.agent.run tests/fixtures/payment_down/alert.json --source fake
+CLI: python -m oncall.agent.run alert.json                       (live, the default)
+     python -m oncall.agent.run tests/fixtures/payment_down/alert.json --test
 """
 import argparse
 import json
@@ -18,7 +19,7 @@ from oncall import config
 from oncall.agent.prompt import alert_message, build_system_prompt
 from oncall.agent.summary import SUBMIT_TOOL, empty_summary, render, validate
 from oncall.evidence import registry
-from oncall.sources import get_source, set_source
+from oncall.sources import add_source_args, apply_source_args, source_info
 from oncall.tools.catalog import TOOL_SPECS, dispatch
 
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
@@ -114,11 +115,14 @@ class Agent:
         registry.reset()
         started = time.time()
         run_id = datetime.now().strftime("%Y%m%d-%H%M%S")
-        record = {"run_id": run_id, "alert": alert, "model": self.model,
-                  "source": get_source().name, "steps": [], "usage": {"input": 0, "output": 0}}
+        info = source_info()
+        record = {"run_id": run_id, **info, "alert": alert, "model": self.model,
+                  "steps": [], "usage": {"input": 0, "output": 0}}
         messages = [{"role": "user", "content": alert_message(alert)}]
         summary, outcome = None, "incomplete"
-        self.log(f"=== run {run_id} | source={record['source']} | alert: "
+        if info["source"] == "test":
+            self.log("!!! TEST MODE: answers come from fixtures, not the live demo")
+        self.log(f"=== run {run_id} | source={info['source']} ({info['source_detail']}) | alert: "
                  f"{json.dumps(alert, default=str)[:200]}")
 
         try:
@@ -182,11 +186,13 @@ class Agent:
 
         if summary is None:
             summary = empty_summary(f"agent outcome: {outcome}")
+        summary = {**info, **summary}
 
         record.update(outcome=outcome, seconds=round(time.time() - started, 1),
                       evidence=registry.dump(), summary=summary)
         config.RUNS_DIR.mkdir(parents=True, exist_ok=True)
-        path = config.RUNS_DIR / f"{run_id}.json"
+        suffix = "" if info["source"] == "live" else f"-{info['source']}"
+        path = config.RUNS_DIR / f"{run_id}{suffix}.json"
         path.write_text(json.dumps(record, indent=2, default=str), encoding="utf-8")
         record["path"] = str(path)
         self.log(render(summary))
@@ -202,14 +208,11 @@ def main():
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("alert", help="alert JSON file")
-    p.add_argument("--source", choices=["live", "fake", "bundle"], default=config.SOURCE)
-    p.add_argument("--fixtures", help="fixture directory for --source fake")
-    p.add_argument("--bundle")
-    p.add_argument("--record")
+    add_source_args(p)
     p.add_argument("--max-steps", type=int)
     p.add_argument("--model")
     args = p.parse_args()
-    set_source(args.source, bundle_dir=args.bundle, record_to=args.record, fixture_dir=args.fixtures)
+    apply_source_args(p, args)
     alert = json.loads(Path(args.alert).read_text())
     record = run_agent(alert, model=args.model, max_steps=args.max_steps)
     raise SystemExit(0 if record["outcome"] == "submitted" else 1)

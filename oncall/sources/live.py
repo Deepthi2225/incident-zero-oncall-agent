@@ -41,6 +41,7 @@ class LiveSource:
 
     def __init__(self):
         self._jaeger_base = None
+        self.detail = f"prometheus {config.PROMETHEUS_URL}, jaeger, docker CLI"
 
     def now(self):
         return time.time()

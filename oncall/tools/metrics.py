@@ -8,7 +8,7 @@ list_metrics: find metric names (runtime CPU, memory and GC metrics differ per l
 CLI: python -m oncall.tools.metrics health --window 5m [--save-baseline]
      python -m oncall.tools.metrics query 'sum by (container_name) (container_memory_percent)'
      python -m oncall.tools.metrics list memory
-     (put --source live|fake|bundle before the subcommand)
+     (put --test / --source bundle before the subcommand; default is live)
 """
 import argparse
 import json
@@ -16,7 +16,7 @@ import math
 
 from oncall import config
 from oncall.evidence import registry
-from oncall.sources import get_source
+from oncall.sources import get_source, source_info
 from oncall.sources.guard import check
 from oncall.tools._common import cap, fmt_num, metric_names, parse_window, prom_window, run_cli
 
@@ -97,19 +97,27 @@ def compute_health(window="5m"):
 
 
 def load_baseline():
-    src_dir = getattr(get_source(), "dir", None)  # fake and bundle sources carry their own
-    if src_dir is not None and (src_dir / "baseline.json").exists():
-        return json.loads((src_dir / "baseline.json").read_text())
+    """Test and bundle sources carry their own baseline; live uses runs/baseline.json, but only
+    if that file was captured live (a baseline from fixtures must never leak into a live run)."""
+    src = get_source()
+    if src.name in ("test", "bundle"):
+        own = src.dir / "baseline.json"
+        return json.loads(own.read_text()) if own.exists() else None
     if config.BASELINE_FILE.exists():
-        return json.loads(config.BASELINE_FILE.read_text())
+        base = json.loads(config.BASELINE_FILE.read_text())
+        if base.get("source", "live") == src.name:
+            return base
     return None
 
 
 def save_baseline(window="5m"):
-    health = compute_health(window)
+    info = source_info()
+    if info["source"] != "live":
+        raise RuntimeError(f"baselines are captured live only (current source: {info['source']})")
+    health = {**info, **compute_health(window)}
     config.BASELINE_FILE.parent.mkdir(parents=True, exist_ok=True)
     config.BASELINE_FILE.write_text(json.dumps(health, indent=2))
-    return {"saved": str(config.BASELINE_FILE), "services": len(health["services"])}
+    return {"saved": str(config.BASELINE_FILE), "services": len(health["services"]), **info}
 
 
 def _ratio(now, before):

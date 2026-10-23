@@ -106,7 +106,11 @@ def empty_summary(reason):
 
 def render(s):
     o = s["suspected_origin"]
-    lines = [f"\n--- SYMPTOM SUMMARY [{s['status']}]", s.get("headline", ""), "Affected:"]
+    source = s.get("source", "?")
+    lines = [f"\n--- SYMPTOM SUMMARY [{s['status']}] source={source} ({s.get('source_detail', '')})"]
+    if source == "test":
+        lines.append("!!! TEST MODE: fixture data, not the live demo")
+    lines += [s.get("headline", ""), "Affected:"]
     lines += [f"  - {a['service']}: {a['impact']} [{', '.join(a['evidence'])}]"
               for a in s["affected_services"]]
     lines.append("Anomalies:")

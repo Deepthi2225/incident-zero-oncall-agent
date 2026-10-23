@@ -1,9 +1,11 @@
 """End-to-end demo: inject a fault -> wait -> run the agent -> print the summary -> reset.
 
     python scripts/demo.py stop-payment [--wait 90] [--save-baseline]
+    python scripts/demo.py stop-payment --test     rehearsal on fixtures: no docker, no injection
 
-The agent only receives an alert built from live telemetry by the threshold watcher; it is never
-told which fault was injected. The fault is always reset at the end, even on Ctrl-C or errors.
+Live by default. The agent only receives an alert built from telemetry by the threshold watcher;
+it is never told which fault was injected. The fault is always reset at the end, even on Ctrl-C
+or errors. The summary records which source was used.
 """
 import argparse
 import json
@@ -17,9 +19,8 @@ sys.path.insert(0, str(HERE.parent))
 sys.path.insert(0, str(HERE))
 
 import incident  # noqa: E402
-from oncall import config  # noqa: E402
 from oncall.agent.run import run_agent  # noqa: E402
-from oncall.sources import set_source  # noqa: E402
+from oncall.sources import set_source, source_info  # noqa: E402
 from oncall.tools.metrics import compute_health, load_baseline, save_baseline  # noqa: E402
 from oncall.watcher import breaches, make_alert  # noqa: E402
 
@@ -54,29 +55,42 @@ def main():
     p.add_argument("--save-baseline", action="store_true",
                    help="capture the healthy baseline before injecting")
     p.add_argument("--max-steps", type=int)
+    p.add_argument("--test", action="store_true",
+                   help="rehearse on fixtures under tests/fixtures/ (no docker, nothing injected)")
+    p.add_argument("--fixtures", help="fixture directory under tests/fixtures/ (needs --test)")
     args = p.parse_args()
+    if args.fixtures and not args.test:
+        p.error("--fixtures needs --test")
+    if args.test and args.save_baseline:
+        p.error("--save-baseline is live only")
 
-    set_source("live")
-    if args.save_baseline:
-        print(f"baseline: {save_baseline('5m')}")
-    elif not config.BASELINE_FILE.exists():
-        print("warning: no baseline saved; run `python -m oncall baseline` while healthy")
-
-    record = None
-    try:
-        print(f"== inject {args.fault}")
-        incident.inject(args.fault)
-        wait(args.wait)
-        alert = build_alert()
-        print(f"== alert: {json.dumps(alert)}")
-        record = run_agent(alert, max_steps=args.max_steps)
-    finally:
-        print("== reset")
-        incident.reset()
+    if args.test:
+        set_source("test", fixture_dir=args.fixtures, allow_test=True)
+        print(f"!!! TEST MODE ({source_info()['source_detail']}): nothing is injected; "
+              f"the agent reads fixtures, not the demo")
+        record = run_agent(build_alert(), max_steps=args.max_steps)
+    else:
+        set_source("live")
+        if args.save_baseline:
+            print(f"baseline: {save_baseline('5m')}")
+        elif load_baseline() is None:
+            print("warning: no live baseline saved; run `python -m oncall baseline` while healthy")
+        record = None
+        try:
+            print(f"== inject {args.fault}")
+            incident.inject(args.fault)
+            wait(args.wait)
+            alert = build_alert()
+            print(f"== alert: {json.dumps(alert)}")
+            record = run_agent(alert, max_steps=args.max_steps)
+        finally:
+            print("== reset")
+            incident.reset()
 
     print("\n== summary JSON")
     print(json.dumps(record["summary"], indent=2, default=str))
-    print(f"run saved to {record['path']} (outcome: {record['outcome']})")
+    print(f"run saved to {record['path']} (outcome: {record['outcome']}, "
+          f"source: {record['source']} - {record['source_detail']})")
 
 
 if __name__ == "__main__":

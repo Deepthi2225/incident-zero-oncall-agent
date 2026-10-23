@@ -55,7 +55,7 @@ def submit(tid, origin_service, origin_evidence, anomalies=(), affected=(), conf
         "open_questions": []})
 
 
-def test_end_to_end_fake_checkout_errors_caused_by_payment(payment_down, monkeypatch, capsys):
+def test_end_to_end_test_mode_checkout_errors_caused_by_payment(payment_down, monkeypatch, capsys):
     """Alert on checkout errors; the run must end at payment with real evidence IDs."""
     alert = json.loads((FIXTURES / "payment_down" / "alert.json").read_text())
     seen = {}
@@ -89,7 +89,9 @@ def test_end_to_end_fake_checkout_errors_caused_by_payment(payment_down, monkeyp
     agent, _ = make_agent(monkeypatch, script)
     rec = agent.run(alert)
 
-    assert rec["outcome"] == "submitted" and rec["source"] == "fake"
+    assert rec["outcome"] == "submitted" and rec["source"] == "test"
+    assert rec["source_detail"] == "fixtures tests/fixtures/payment_down"
+    assert rec["path"].endswith("-test.json")
     assert [s["tool"] for s in rec["steps"]] == ["get_service_health", "get_deploy_history",
                                                  "find_error_traces", "search_logs"]
     s = rec["summary"]
@@ -101,10 +103,12 @@ def test_end_to_end_fake_checkout_errors_caused_by_payment(payment_down, monkeyp
     assert s["validation"]["dropped_evidence_ids"] == ["E555", "E999"]
     saved = json.loads(open(rec["path"], encoding="utf-8").read())
     assert saved["summary"] == s and len(saved["evidence"]) >= 5
+    assert saved["source"] == s["source"] == "test"
 
     out = capsys.readouterr().out
     assert "[1] -> get_service_health(window='5m')" in out          # live per-call line
-    assert "SYMPTOM SUMMARY [origin_suspected]" in out
+    assert "SYMPTOM SUMMARY [origin_suspected] source=test" in out
+    assert out.count("TEST MODE") == 2  # banner at start and in the summary
     assert "dropped anomaly without valid evidence: cart" in out
 
 

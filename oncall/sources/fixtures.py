@@ -1,4 +1,7 @@
-"""Fake source: answers from JSON fixtures shaped exactly like the real API responses.
+"""Test source: answers from JSON fixtures shaped exactly like the real API responses.
+
+Only for tests and rehearsals. It is selected only with an explicit --test flag (or
+set_source("test", allow_test=True)), and only reads directories under tests/fixtures/.
 
 Fixture directory layout (see tests/fixtures/payment_down):
     meta.json                        {"now": <epoch seconds>, "scenario": "..."}
@@ -16,17 +19,23 @@ Fixture directory layout (see tests/fixtures/payment_down):
 import json
 from pathlib import Path
 
+from oncall import config
 from oncall.sources.guard import allowed, check
 from oncall.sources.live import SourceError
 
+FIXTURES_ROOT = config.ROOT / "tests" / "fixtures"
 
-class FakeSource:
-    name = "fake"
+
+class FixtureSource:
+    name = "test"
 
     def __init__(self, directory):
-        self.dir = Path(directory)
+        self.dir = Path(directory).resolve()
+        if not self.dir.is_relative_to(FIXTURES_ROOT.resolve()):
+            raise ValueError(f"test fixtures must live under {FIXTURES_ROOT}, not {self.dir}")
         if not self.dir.is_dir():
             raise FileNotFoundError(f"fixture directory not found: {self.dir}")
+        self.detail = f"fixtures {self.dir.relative_to(config.ROOT).as_posix()}"
         self.meta = self._json("meta.json", {})
 
     def _json(self, rel, default=None):
@@ -57,7 +66,7 @@ class FakeSource:
 
     # --- Jaeger ----------------------------------------------------------------
     def jaeger_base(self):
-        return f"fake:{self.dir}"
+        return f"test:{self.dir}"
 
     def jaeger_services(self):
         return self._json("jaeger/services.json", {"data": []}).get("data") or []

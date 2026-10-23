@@ -33,6 +33,7 @@ class BundleSource:
             raise FileNotFoundError(f"bundle directory not found: {self.dir}")
         meta_file = self.dir / "meta.json"
         self.meta = json.loads(meta_file.read_text()) if meta_file.exists() else {}
+        self.detail = f"recorded bundle {self.dir}"
         self._cache = {}
 
     def now(self):
@@ -61,7 +62,8 @@ class RecordingSource:
 
     def __init__(self, inner, directory, note=""):
         self.inner = inner
-        self.name = f"{inner.name}+record"
+        self.name = inner.name
+        self.detail = f"{inner.detail}; recording to {directory}"
         self.dir = Path(directory)
         self.dir.mkdir(parents=True, exist_ok=True)
         (self.dir / "meta.json").write_text(json.dumps({"captured_at": time.time(), "note": note}))

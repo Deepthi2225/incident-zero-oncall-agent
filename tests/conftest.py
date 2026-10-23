@@ -8,6 +8,7 @@ from oncall.tools import _common
 class MemorySource:
     """In-memory source. Tests fill the attributes they need."""
     name = "mem"
+    detail = "in-memory unit-test double"
 
     def __init__(self):
         self.names = []
@@ -73,14 +74,14 @@ FIXTURES = config.ROOT / "tests" / "fixtures"
 
 @pytest.fixture
 def payment_down(monkeypatch, tmp_path):
-    """FakeSource over the synthetic payment_down fixtures (payment container stopped)."""
+    """Test source over the synthetic payment_down fixtures (payment container stopped)."""
     monkeypatch.setattr(config, "BASELINE_FILE", tmp_path / "baseline.json")
     monkeypatch.setattr(config, "RUNS_DIR", tmp_path / "runs")
     monkeypatch.setattr(config, "ACTION_LOG", tmp_path / "actions.jsonl")
     monkeypatch.setattr(config, "KILL_SWITCH_FILE", tmp_path / "STOP")
     _common._metric_names.clear()
     registry.reset()
-    src = sources.set_source("fake", fixture_dir=FIXTURES / "payment_down")
+    src = sources.set_source("test", fixture_dir=FIXTURES / "payment_down", allow_test=True)
     yield src
     sources._source = None
     _common._metric_names.clear()

@@ -11,8 +11,9 @@ BASELINE_FILE = Path(os.getenv("ONCALL_BASELINE", RUNS_DIR / "baseline.json"))
 ACTION_LOG = Path(os.getenv("ONCALL_ACTION_LOG", RUNS_DIR / "actions.jsonl"))
 
 # --- data source -------------------------------------------------------------
-# "live" talks to the running demo; "fake" answers from JSON fixtures shaped like the real APIs;
-# "bundle" replays a directory recorded from a live run (--record).
+# "live" talks to the running demo (default); "bundle" replays a directory recorded from a live run.
+# The "test" source (fixtures under tests/fixtures/) is never selected from the environment: it
+# needs an explicit --test flag.
 SOURCE = os.getenv("ONCALL_SOURCE", "live")
 FIXTURE_DIR = Path(os.getenv("ONCALL_FIXTURE_DIR", ROOT / "tests" / "fixtures" / "payment_down"))
 BUNDLE_DIR = Path(os.getenv("ONCALL_BUNDLE_DIR", ROOT / "bundles" / "current"))

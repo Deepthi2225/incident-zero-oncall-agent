@@ -34,9 +34,13 @@ flowchart LR
 ```
 
 ## How it works
-- **Sources.** Every tool reads through one interface. `live` uses Prometheus, Jaeger and the
-  docker CLI. `fake` uses JSON fixtures shaped exactly like those API responses
-  (`tests/fixtures/<scenario>/`). `bundle` replays a recorded live run.
+- **Sources.** Every tool reads through one interface. `live` (the default) uses Prometheus,
+  Jaeger and the docker CLI. `bundle` replays a recorded live run. `test` uses JSON fixtures shaped
+  exactly like those API responses. It only reads `tests/fixtures/<scenario>/` and only runs when
+  `--test` is passed explicitly; the environment cannot select it. Every report (run file, summary,
+  tool output, baseline) records `source` and `source_detail`, and test runs are saved as
+  `runs/<ts>-test.json`. Baselines are captured live only, and a live run ignores any baseline
+  that was not.
 - **Small results.** Tools return summarised dicts of at most about 2 KB: worst services first,
   grouped log patterns, the trace origin, never raw dumps.
 - **Evidence.** Each tool registers what it saw and returns IDs. Missing signals count too, such
@@ -53,9 +57,10 @@ flowchart LR
 ```
 pip install -r requirements.txt
 python -m pytest -q                                                    # all tests, no demo needed
-python -m oncall.agent.run tests/fixtures/payment_down/alert.json --source fake
+python -m oncall.agent.run tests/fixtures/payment_down/alert.json --test
 python -m oncall check                                                 # live endpoints (read-only)
 python -m oncall baseline                                              # while healthy
-python scripts/demo.py stop-payment                                    # inject, agent, reset
-python -m oncall.tools.traces --source fake checkout                   # any tool standalone
+python scripts/demo.py stop-payment                                    # live: inject, agent, reset
+python scripts/demo.py stop-payment --test                             # rehearsal on fixtures, no docker
+python -m oncall.tools.traces --test checkout                          # any tool standalone
 ```
