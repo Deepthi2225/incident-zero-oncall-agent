@@ -1,25 +1,34 @@
-"""Agent loop: LLM decides which read-only tool to call next, then submits a diagnosis.
+"""Agent run: the LLM picks the next read-only tool until it can submit a symptom summary.
 
-Prints every tool call live, enforces the step cap and the kill switch, validates evidence,
-and saves the whole run to runs/<timestamp>.json.
+Input is an alert JSON. Prints every tool call with a one-line result live, enforces the step cap
+(config.MAX_STEPS, default 10) and the kill switch, drops claims whose evidence IDs are not in the
+registry, and saves the whole run to runs/<timestamp>.json.
+
+CLI: python -m oncall.agent.run tests/fixtures/payment_down/alert.json --source fake
 """
+import argparse
 import json
 import time
 from datetime import datetime
+from pathlib import Path
 
 import anthropic
 
 from oncall import config
-from oncall.agent.diagnosis import SUBMIT_TOOL, to_output_schema, validate
 from oncall.agent.prompt import alert_message, build_system_prompt
+from oncall.agent.summary import SUBMIT_TOOL, empty_summary, render, validate
 from oncall.evidence import registry
-from oncall.sources import get_source
+from oncall.sources import get_source, set_source
 from oncall.tools.catalog import TOOL_SPECS, dispatch
 
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
 
 
 class KillSwitch(RuntimeError):
+    pass
+
+
+class NoCredentials(RuntimeError):
     pass
 
 
@@ -44,7 +53,21 @@ def _one_line(result, is_error):
                 walk(v)
     walk(result)
     sizes = ", ".join(f"{k}={len(v)}" for k, v in result.items() if isinstance(v, list))
-    return f"{sizes or 'ok'} | evidence {', '.join(ids[:8])}{'...' if len(ids) > 8 else ''}"
+    first = registry.get(ids[0])["summary"][:110] if ids else ""
+    return (f"{sizes or 'ok'} | evidence {', '.join(ids[:6])}{'...' if len(ids) > 6 else ''}"
+            + (f" | {first}" if first else ""))
+
+
+def _add_user_text(messages, text):
+    """Add text to the trailing user turn (e.g. after tool results) instead of a second user turn."""
+    last = messages[-1]
+    if last["role"] == "user":
+        content = last["content"]
+        if isinstance(content, str):
+            content = [{"type": "text", "text": content}]
+        last["content"] = content + [{"type": "text", "text": text}]
+    else:
+        messages.append({"role": "user", "content": text})
 
 
 class Agent:
@@ -55,13 +78,21 @@ class Agent:
         self.verbose = verbose
         self.use_fallbacks = config.USE_FALLBACKS
         self.tools = TOOL_SPECS + [SUBMIT_TOOL]
-        self.system = build_system_prompt()
+        self.system = build_system_prompt(self.max_steps)
 
     def log(self, text):
         if self.verbose:
             print(text, flush=True)
 
     def _call_model(self, messages):
+        try:
+            return self._create(messages)
+        except TypeError as e:  # the SDK raises TypeError when no API key or token is configured
+            if "authentication" not in str(e):
+                raise
+            raise NoCredentials("no LLM credentials: set ANTHROPIC_API_KEY") from e
+
+    def _create(self, messages):
         kwargs = dict(
             model=self.model, max_tokens=16000, system=self.system, tools=self.tools,
             messages=messages,
@@ -86,15 +117,16 @@ class Agent:
         record = {"run_id": run_id, "alert": alert, "model": self.model,
                   "source": get_source().name, "steps": [], "usage": {"input": 0, "output": 0}}
         messages = [{"role": "user", "content": alert_message(alert)}]
-        diagnosis, outcome = None, "incomplete"
-        self.log(f"=== investigation {run_id} | alert: {json.dumps(alert, default=str)[:200]}")
+        summary, outcome = None, "incomplete"
+        self.log(f"=== run {run_id} | source={record['source']} | alert: "
+                 f"{json.dumps(alert, default=str)[:200]}")
 
         try:
             for step in range(1, self.max_steps + 1):
                 check_kill_switch()
                 if step == self.max_steps:
-                    _add_user_text(messages, "Step budget exhausted. Call submit_diagnosis now "
-                                   "with what you have; escalate if the evidence is not conclusive.")
+                    _add_user_text(messages, "Step budget exhausted. Call submit_summary now with "
+                                   "what you have; use origin 'unknown' if it is not clear.")
                 response = self._call_model(messages)
                 record["usage"]["input"] += response.usage.input_tokens
                 record["usage"]["output"] += response.usage.output_tokens
@@ -112,14 +144,14 @@ class Agent:
                 tool_uses = [b for b in response.content if b.type == "tool_use"]
                 if not tool_uses:
                     messages.append({"role": "user", "content":
-                                     "Use the tools to continue, or call submit_diagnosis."})
+                                     "Use the tools to continue, or call submit_summary."})
                     continue
 
-                submit = next((b for b in tool_uses if b.name == "submit_diagnosis"), None)
+                submit = next((b for b in tool_uses if b.name == SUBMIT_TOOL["name"]), None)
                 if submit:
-                    diagnosis = validate(submit.input)
+                    summary = validate(submit.input)
                     outcome = "submitted"
-                    self.log(f"[{step}] -> submit_diagnosis")
+                    self.log(f"[{step}] -> {SUBMIT_TOOL['name']}")
                     break
 
                 results = []
@@ -139,56 +171,49 @@ class Agent:
         except KillSwitch as e:
             outcome = "killed"
             self.log(f"!!! {e}")
+        except NoCredentials as e:
+            outcome = "llm_error"
+            record["error"] = str(e)
+            self.log(f"!!! {e}")
         except anthropic.APIError as e:
             outcome = "llm_error"
             record["error"] = f"{type(e).__name__}: {e}"
             self.log(f"!!! LLM error: {record['error'][:300]}")
 
-        if diagnosis is None:
-            diagnosis = validate({
-                "status": "escalate", "summary": f"Investigation ended without a diagnosis ({outcome}).",
-                "symptoms": [], "root_causes": [], "affected_services": [], "confidence": 0,
-                "proposed_action": {"action": "none", "target": "", "reason": ""},
-                "escalation_reason": f"agent outcome: {outcome}", "next_checks": []})
+        if summary is None:
+            summary = empty_summary(f"agent outcome: {outcome}")
 
         record.update(outcome=outcome, seconds=round(time.time() - started, 1),
-                      evidence=registry.dump(), diagnosis=diagnosis,
-                      output=to_output_schema(diagnosis, alert, run_id))
+                      evidence=registry.dump(), summary=summary)
         config.RUNS_DIR.mkdir(parents=True, exist_ok=True)
         path = config.RUNS_DIR / f"{run_id}.json"
         path.write_text(json.dumps(record, indent=2, default=str), encoding="utf-8")
         record["path"] = str(path)
-        self.log(_render(diagnosis))
+        self.log(render(summary))
         self.log(f"=== saved {path}")
         return record
 
 
-def _add_user_text(messages, text):
-    """Add text to the trailing user turn (e.g. after tool results) instead of a second user turn."""
-    last = messages[-1]
-    if last["role"] == "user":
-        content = last["content"]
-        if isinstance(content, str):
-            content = [{"type": "text", "text": content}]
-        last["content"] = content + [{"type": "text", "text": text}]
-    else:
-        messages.append({"role": "user", "content": text})
-
-
-def _render(d):
-    lines = [f"\n--- DIAGNOSIS: {d['status'].upper()} (confidence {d['confidence']})", d.get("summary", "")]
-    for rc in d["root_causes"]:
-        lines.append(f"* {rc['component']} [{rc['fault_class']}] {rc['cause']} "
-                     f"(conf {rc['confidence']}; evidence {', '.join(rc['evidence'])})")
-        lines.extend(f"    {e}: {s[:160]}" for e, s in zip(rc["evidence"], rc["evidence_detail"]))
-    a = d["proposed_action"]
-    lines.append(f"Proposed action: {a['action']} {a.get('target', '')} - {a.get('reason', '')}")
-    if d["status"] == "escalate":
-        lines.append(f"Escalation: {d.get('escalation_reason', '')}")
-    for note in d["validation"]["notes"]:
-        lines.append(f"(validator) {note}")
-    return "\n".join(lines)
-
-
-def investigate(alert, **kwargs):
+def run_agent(alert, **kwargs):
     return Agent(**kwargs).run(alert)
+
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__,
+                                formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("alert", help="alert JSON file")
+    p.add_argument("--source", choices=["live", "fake", "bundle"], default=config.SOURCE)
+    p.add_argument("--fixtures", help="fixture directory for --source fake")
+    p.add_argument("--bundle")
+    p.add_argument("--record")
+    p.add_argument("--max-steps", type=int)
+    p.add_argument("--model")
+    args = p.parse_args()
+    set_source(args.source, bundle_dir=args.bundle, record_to=args.record, fixture_dir=args.fixtures)
+    alert = json.loads(Path(args.alert).read_text())
+    record = run_agent(alert, model=args.model, max_steps=args.max_steps)
+    raise SystemExit(0 if record["outcome"] == "submitted" else 1)
+
+
+if __name__ == "__main__":
+    main()
