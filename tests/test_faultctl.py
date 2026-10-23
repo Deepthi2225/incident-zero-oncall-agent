@@ -11,11 +11,19 @@ class FakeDocker:
     def __init__(self):
         self.calls = []
         self.containers = {c: {"running": True, "nano": 0, "mem": 160 * 2 ** 20, "swap": 320 * 2 ** 20}
-                           for c in {f.container for f in core.FAULTS.values()}}
+                           for c in {f.container for f in core.FAULTS.values()} | {"frontend"}}
+        self.started_at = {c: "t0" for c in self.containers}
+        self.exec_effect = True  # does an in-container SIGTERM actually restart the container?
 
     def __call__(self, *args, check=True):
         self.calls.append(args)
         verb, c = args[0], args[-1]
+        if verb == "ps":
+            return SimpleNamespace(stdout="\n".join(sorted(self.containers)), returncode=0)
+        if verb == "exec":
+            if self.exec_effect:
+                self.started_at[args[1]] = "t1"
+            return SimpleNamespace(stdout="", returncode=0)
         if verb == "stop":
             self.containers[c]["running"] = False
         elif verb == "start":
@@ -34,7 +42,9 @@ class FakeDocker:
 
     def inspect(self, c):
         s = self.containers[c]
-        return {"State": {"Running": s["running"], "Status": "running" if s["running"] else "exited"},
+        return {"State": {"Running": s["running"], "Status": "running" if s["running"] else "exited",
+                          "StartedAt": self.started_at[c]},
+                "Config": {"Labels": {"com.docker.compose.project": "demo"}},
                 "RestartCount": 0,
                 "HostConfig": {"NanoCpus": s["nano"], "Memory": s["mem"], "MemorySwap": s["swap"]}}
 
@@ -43,6 +53,9 @@ class FakeDocker:
 def fake(monkeypatch, tmp_path):
     d = FakeDocker()
     monkeypatch.setattr(core, "STATE_FILE", tmp_path / "state.json")
+    monkeypatch.setattr(core, "ORIGINALS_FILE", tmp_path / "originals.json")
+    monkeypatch.setattr(core, "loop_pids", lambda: [])
+    monkeypatch.setattr(core.time, "sleep", lambda s: None)
     monkeypatch.setattr(core, "docker", d)
     monkeypatch.setattr(core, "inspect", d.inspect)
     return d
@@ -94,3 +107,35 @@ def test_one_fault_per_container_and_unknown_ids(fake):
     with pytest.raises(KeyError):
         core.inject("stop-everything")
     core.reset()
+
+
+def test_reset_starts_any_stopped_demo_container(fake):
+    fake.containers["frontend"]["running"] = False  # not a faultctl target, stopped for any reason
+    assert "started frontend" in core.reset()
+    assert core.reset() == ["nothing to reset"]
+
+
+def test_limits_restored_even_if_state_is_lost(fake):
+    core.inject("cpu-starve-cart")
+    core.STATE_FILE.unlink()  # crash: state.json gone, originals.json survives
+    lines = core.reset()
+    assert "restored cart cpus to 20" in lines and fake.containers["cart"]["nano"] == 20 * 10 ** 9
+    core.inject("mem-starve-ad")
+    core.STATE_FILE.unlink()
+    assert "restored ad memory to 160MiB" in core.reset()
+    assert fake.containers["ad"]["mem"] == 160 * 2 ** 20
+
+
+def test_reset_kills_orphaned_restart_loops(fake, monkeypatch):
+    killed = []
+    monkeypatch.setattr(core, "loop_pids", lambda: [4242])
+    monkeypatch.setattr(core, "_stop_loop", lambda e: killed.append(e["pid"]))
+    assert "killed leftover restart loop (pid 4242)" in core.reset() and killed == [4242]
+
+
+def test_crash_falls_back_when_sigterm_has_no_effect(fake):
+    fake.exec_effect = False  # e.g. node as PID 1 ignores SIGTERM without a handler
+    assert core.crash_once("payment") == "kill+start"
+    assert ("kill", "payment") in fake.calls and ("start", "payment") in fake.calls
+    fake.exec_effect = True
+    assert core.crash_once("cart") == "sigterm"

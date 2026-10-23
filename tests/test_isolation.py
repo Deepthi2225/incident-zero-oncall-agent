@@ -55,5 +55,5 @@ def test_faultctl_only_uses_docker_lifecycle_and_resource_commands():
     calls = [n for n in ast.walk(ast.parse(source))
              if isinstance(n, ast.Call) and getattr(n.func, "id", "") == "docker"]
     verbs = {c.args[0].value for c in calls if c.args and isinstance(c.args[0], ast.Constant)}
-    assert verbs <= {"stop", "start", "kill", "inspect", "stats", "update", "exec", "info"}
+    assert verbs <= {"stop", "start", "kill", "inspect", "stats", "update", "exec", "info", "ps"}
     assert "flagd" not in source and "opentelemetry-demo" not in source  # no flags, no demo files

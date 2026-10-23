@@ -1,0 +1,1431 @@
+{
+  "started": "2026-10-23T16:40:15",
+  "healthy_containers": {
+    "opensearch": {
+      "status": "running",
+      "health": "healthy",
+      "restarts": 0,
+      "nano_cpus": 0,
+      "memory": 1073741824
+    },
+    "load-generator": {
+      "status": "running",
+      "health": "healthy",
+      "restarts": 0,
+      "nano_cpus": 0,
+      "memory": 1572864000
+    },
+    "frontend-proxy": {
+      "status": "running",
+      "health": "healthy",
+      "restarts": 0,
+      "nano_cpus": 0,
+      "memory": 94371840
+    },
+    "frontend": {
+      "status": "running",
+      "health": "healthy",
+      "restarts": 0,
+      "nano_cpus": 0,
+      "memory": 262144000
+    },
+    "checkout": {
+      "status": "running",
+      "health": "healthy",
+      "restarts": 0,
+      "nano_cpus": 0,
+      "memory": 20971520
+    },
+    "recommendation": {
+      "status": "running",
+      "health": "healthy",
+      "restarts": 0,
+      "nano_cpus": 0,
+      "memory": 524288000
+    },
+    "ad": {
+      "status": "running",
+      "health": "healthy",
+      "restarts": 1,
+      "nano_cpus": 20000000000,
+      "memory": 314572800
+    },
+    "product-catalog": {
+      "status": "running",
+      "health": "healthy",
+      "restarts": 0,
+      "nano_cpus": 0,
+      "memory": 20971520
+    },
+    "cart": {
+      "status": "running",
+      "health": "none",
+      "restarts": 1,
+      "nano_cpus": 0,
+      "memory": 167772160
+    },
+    "payment": {
+      "status": "running",
+      "health": "healthy",
+      "restarts": 0,
+      "nano_cpus": 0,
+      "memory": 146800640
+    },
+    "image-provider": {
+      "status": "running",
+      "health": "healthy",
+      "restarts": 0,
+      "nano_cpus": 0,
+      "memory": 125829120
+    },
+    "shipping": {
+      "status": "running",
+      "health": "healthy",
+      "restarts": 0,
+      "nano_cpus": 0,
+      "memory": 20971520
+    },
+    "quote": {
+      "status": "running",
+      "health": "healthy",
+      "restarts": 1,
+      "nano_cpus": 0,
+      "memory": 41943040
+    },
+    "flagd-ui": {
+      "status": "running",
+      "health": "healthy",
+      "restarts": 0,
+      "nano_cpus": 0,
+      "memory": 209715200
+    },
+    "email": {
+      "status": "running",
+      "health": "healthy",
+      "restarts": 0,
+      "nano_cpus": 0,
+      "memory": 104857600
+    },
+    "currency": {
+      "status": "running",
+      "health": "healthy",
+      "restarts": 0,
+      "nano_cpus": 0,
+      "memory": 20971520
+    },
+    "otel-collector": {
+      "status": "running",
+      "health": "none",
+      "restarts": 0,
+      "nano_cpus": 0,
+      "memory": 419430400
+    },
+    "astronomy-db": {
+      "status": "running",
+      "health": "healthy",
+      "restarts": 0,
+      "nano_cpus": 0,
+      "memory": 83886080
+    },
+    "jaeger": {
+      "status": "running",
+      "health": "none",
+      "restarts": 0,
+      "nano_cpus": 0,
+      "memory": 1258291200
+    },
+    "grafana": {
+      "status": "running",
+      "health": "none",
+      "restarts": 0,
+      "nano_cpus": 0,
+      "memory": 524288000
+    },
+    "flagd": {
+      "status": "running",
+      "health": "none",
+      "restarts": 0,
+      "nano_cpus": 0,
+      "memory": 78643200
+    },
+    "telemetry-docs": {
+      "status": "running",
+      "health": "healthy",
+      "restarts": 0,
+      "nano_cpus": 0,
+      "memory": 104857600
+    },
+    "prometheus": {
+      "status": "running",
+      "health": "none",
+      "restarts": 0,
+      "nano_cpus": 0,
+      "memory": 209715200
+    },
+    "valkey-cart": {
+      "status": "running",
+      "health": "healthy",
+      "restarts": 0,
+      "nano_cpus": 0,
+      "memory": 20971520
+    },
+    "opamp-server": {
+      "status": "running",
+      "health": "healthy",
+      "restarts": 0,
+      "nano_cpus": 0,
+      "memory": 68157440
+    }
+  },
+  "healthy_telemetry": {
+    "load-generator": {
+      "rps": 1.6374210097296167,
+      "err": 0.0
+    },
+    "recommendation": {
+      "rps": 1.7761989342806395,
+      "err": 0.0
+    },
+    "frontend-proxy": {
+      "rps": 23.371038608955782,
+      "err": 0.0006662225183211192
+    },
+    "shipping": {
+      "rps": 0.3973076563522483,
+      "err": 0.0
+    },
+    "email": {
+      "rps": 0.1558069240597052,
+      "err": 0.0
+    },
+    "frontend": {
+      "rps": 24.726558848275218,
+      "err": 0.0
+    },
+    "frontend-web": {
+      "rps": 0.4206786949612041,
+      "err": 0.0
+    },
+    "flagd": {
+      "rps": 12.760587080489856,
+      "err": 0.0
+    },
+    "image-provider": {
+      "rps": 2.968121903337384,
+      "err": 0.0
+    },
+    "ad": {
+      "rps": 0.5453242342089683,
+      "err": 0.0
+    },
+    "quote": {
+      "rps": 0.5141628493970272,
+      "err": 0.0
+    },
+    "cart": {
+      "rps": 3.552397868561279,
+      "err": 0.0
+    },
+    "product-catalog": {
+      "rps": 8.242186282758405,
+      "err": 0.0
+    },
+    "payment": {
+      "rps": 0.11095011062291607,
+      "err": 0.0
+    },
+    "currency": {
+      "rps": 0.841357389922408,
+      "err": 0.0
+    },
+    "checkout": {
+      "rps": 0.49079181078807144,
+      "err": 0.0
+    },
+    "telemetry-docs": {
+      "rps": 0.17917796266866098,
+      "err": 0.0
+    }
+  },
+  "healthy_shop": {
+    "home": 200,
+    "products": 200,
+    "product": 200,
+    "recommendations": 200,
+    "ads": 200,
+    "cart_add": 200,
+    "cart_get": 200,
+    "checkout": 200
+  },
+  "faults": [
+    {
+      "fault": "stop-payment",
+      "target": "payment",
+      "kind": "stop",
+      "inject": "injected stop-payment: docker stop payment (service down)",
+      "effect": {
+        "confirmed": true,
+        "status": "exited",
+        "restarts": 0,
+        "nano_cpus": 0,
+        "memory": 146800640
+      },
+      "reset": [
+        "reset stop-payment"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 6,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 18,
+        "callers": [
+          "checkout"
+        ],
+        "problems": [],
+        "callers_running": {
+          "checkout": "running"
+        }
+      },
+      "telemetry": {
+        "ok": false,
+        "seconds": null,
+        "watched": [
+          "payment",
+          "checkout"
+        ],
+        "problems": [
+          "payment rps 0.047 < 50% of 0.111"
+        ]
+      },
+      "recover_seconds": null
+    },
+    {
+      "fault": "stop-cart",
+      "target": "cart",
+      "kind": "stop",
+      "inject": "injected stop-cart: docker stop cart (service down)",
+      "effect": {
+        "confirmed": true,
+        "status": "exited",
+        "restarts": 1,
+        "nano_cpus": 0,
+        "memory": 167772160
+      },
+      "reset": [
+        "reset stop-cart"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 1,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 13,
+        "callers": [
+          "checkout",
+          "frontend"
+        ],
+        "problems": [],
+        "callers_running": {
+          "checkout": "running",
+          "frontend": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 140,
+        "watched": [
+          "cart",
+          "checkout",
+          "frontend"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 159
+    },
+    {
+      "fault": "stop-checkout",
+      "target": "checkout",
+      "kind": "stop",
+      "inject": "injected stop-checkout: docker stop checkout (service down)",
+      "effect": {
+        "confirmed": true,
+        "status": "exited",
+        "restarts": 0,
+        "nano_cpus": 0,
+        "memory": 20971520
+      },
+      "reset": [
+        "reset stop-checkout"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 6,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 5,
+        "callers": [
+          "frontend"
+        ],
+        "problems": [],
+        "callers_running": {
+          "frontend": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 0,
+        "watched": [
+          "checkout",
+          "frontend"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 14
+    },
+    {
+      "fault": "stop-product-catalog",
+      "target": "product-catalog",
+      "kind": "stop",
+      "inject": "injected stop-product-catalog: docker stop product-catalog (service down)",
+      "effect": {
+        "confirmed": true,
+        "status": "exited",
+        "restarts": 0,
+        "nano_cpus": 0,
+        "memory": 20971520
+      },
+      "reset": [
+        "reset stop-product-catalog"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 6,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 11,
+        "callers": [
+          "checkout",
+          "frontend",
+          "recommendation"
+        ],
+        "problems": [],
+        "callers_running": {
+          "checkout": "running",
+          "frontend": "running",
+          "recommendation": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 161,
+        "watched": [
+          "product-catalog",
+          "checkout",
+          "frontend",
+          "recommendation"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 181
+    },
+    {
+      "fault": "stop-recommendation",
+      "target": "recommendation",
+      "kind": "stop",
+      "inject": "injected stop-recommendation: docker stop recommendation (service down)",
+      "effect": {
+        "confirmed": true,
+        "status": "exited",
+        "restarts": 0,
+        "nano_cpus": 0,
+        "memory": 524288000
+      },
+      "reset": [
+        "reset stop-recommendation"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 7,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 39,
+        "callers": [
+          "frontend"
+        ],
+        "problems": [],
+        "callers_running": {
+          "frontend": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 0,
+        "watched": [
+          "recommendation",
+          "frontend"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 48
+    },
+    {
+      "fault": "stop-ad",
+      "target": "ad",
+      "kind": "stop",
+      "inject": "injected stop-ad: docker stop ad (service down)",
+      "effect": {
+        "confirmed": true,
+        "status": "exited",
+        "restarts": 1,
+        "nano_cpus": 20000000000,
+        "memory": 314572800
+      },
+      "reset": [
+        "reset stop-ad"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 11,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 2,
+        "callers": [
+          "frontend"
+        ],
+        "problems": [],
+        "callers_running": {
+          "frontend": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 80,
+        "watched": [
+          "ad",
+          "frontend"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 96
+    },
+    {
+      "fault": "cache-down",
+      "target": "valkey-cart",
+      "kind": "stop",
+      "inject": "injected cache-down: docker stop valkey-cart (cart's cache down)",
+      "effect": {
+        "confirmed": true,
+        "status": "exited",
+        "restarts": 0,
+        "nano_cpus": 0,
+        "memory": 20971520
+      },
+      "reset": [
+        "reset cache-down"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 6,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 0,
+        "callers": [
+          "cart"
+        ],
+        "problems": [],
+        "callers_running": {
+          "cart": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 0,
+        "watched": [
+          "valkey-cart",
+          "cart"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 9
+    },
+    {
+      "fault": "db-down",
+      "target": "astronomy-db",
+      "kind": "stop",
+      "inject": "injected db-down: docker stop astronomy-db (product-catalog's database down)",
+      "effect": {
+        "confirmed": true,
+        "status": "exited",
+        "restarts": 0,
+        "nano_cpus": 0,
+        "memory": 83886080
+      },
+      "reset": [
+        "reset db-down"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 6,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 0,
+        "callers": [
+          "product-catalog"
+        ],
+        "problems": [],
+        "callers_running": {
+          "product-catalog": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 160,
+        "watched": [
+          "astronomy-db",
+          "product-catalog"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 169
+    },
+    {
+      "fault": "restart-loop-payment",
+      "target": "payment",
+      "kind": "restart_loop",
+      "inject": "injected restart-loop-payment: crash payment every 20s so it keeps restarting",
+      "effect": {
+        "confirmed": false,
+        "status": "running",
+        "restarts": 0,
+        "nano_cpus": 0,
+        "memory": 146800640
+      },
+      "reset": [
+        "reset restart-loop-payment"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 6,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 0,
+        "callers": [
+          "checkout"
+        ],
+        "problems": [],
+        "callers_running": {
+          "checkout": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 60,
+        "watched": [
+          "payment",
+          "checkout"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 94
+    },
+    {
+      "fault": "restart-loop-cart",
+      "target": "cart",
+      "kind": "restart_loop",
+      "inject": "injected restart-loop-cart: crash cart every 20s so it keeps restarting",
+      "effect": {
+        "confirmed": true,
+        "status": "running",
+        "restarts": 2,
+        "nano_cpus": 0,
+        "memory": 167772160
+      },
+      "reset": [
+        "reset restart-loop-cart"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 0,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 0,
+        "callers": [
+          "checkout",
+          "frontend"
+        ],
+        "problems": [],
+        "callers_running": {
+          "checkout": "running",
+          "frontend": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 0,
+        "watched": [
+          "cart",
+          "checkout",
+          "frontend"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 29
+    },
+    {
+      "fault": "restart-loop-checkout",
+      "target": "checkout",
+      "kind": "restart_loop",
+      "inject": "injected restart-loop-checkout: crash checkout every 20s so it keeps restarting",
+      "effect": {
+        "confirmed": false,
+        "status": "running",
+        "restarts": 0,
+        "nano_cpus": 0,
+        "memory": 20971520
+      },
+      "reset": [
+        "reset restart-loop-checkout"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 6,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 1,
+        "callers": [
+          "frontend"
+        ],
+        "problems": [],
+        "callers_running": {
+          "frontend": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 60,
+        "watched": [
+          "checkout",
+          "frontend"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 95
+    },
+    {
+      "fault": "restart-loop-product-catalog",
+      "target": "product-catalog",
+      "kind": "restart_loop",
+      "inject": "injected restart-loop-product-catalog: crash product-catalog every 20s so it keeps restarting",
+      "effect": {
+        "confirmed": false,
+        "status": "running",
+        "restarts": 0,
+        "nano_cpus": 0,
+        "memory": 20971520
+      },
+      "reset": [
+        "reset restart-loop-product-catalog"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 6,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 0,
+        "callers": [
+          "checkout",
+          "frontend",
+          "recommendation"
+        ],
+        "problems": [],
+        "callers_running": {
+          "checkout": "running",
+          "frontend": "running",
+          "recommendation": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 161,
+        "watched": [
+          "product-catalog",
+          "checkout",
+          "frontend",
+          "recommendation"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 195
+    },
+    {
+      "fault": "restart-loop-recommendation",
+      "target": "recommendation",
+      "kind": "restart_loop",
+      "inject": "injected restart-loop-recommendation: crash recommendation every 20s so it keeps restarting",
+      "effect": {
+        "confirmed": true,
+        "status": "running",
+        "restarts": 2,
+        "nano_cpus": 0,
+        "memory": 524288000
+      },
+      "reset": [
+        "reset restart-loop-recommendation"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 1,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 0,
+        "callers": [
+          "frontend"
+        ],
+        "problems": [],
+        "callers_running": {
+          "frontend": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 0,
+        "watched": [
+          "recommendation",
+          "frontend"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 29
+    },
+    {
+      "fault": "restart-loop-ad",
+      "target": "ad",
+      "kind": "restart_loop",
+      "inject": "injected restart-loop-ad: crash ad every 20s so it keeps restarting",
+      "effect": {
+        "confirmed": true,
+        "status": "running",
+        "restarts": 2,
+        "nano_cpus": 20000000000,
+        "memory": 314572800
+      },
+      "reset": [
+        "reset restart-loop-ad"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 0,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 0,
+        "callers": [
+          "frontend"
+        ],
+        "problems": [],
+        "callers_running": {
+          "frontend": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 0,
+        "watched": [
+          "ad",
+          "frontend"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 29
+    },
+    {
+      "fault": "cpu-starve-payment",
+      "target": "payment",
+      "kind": "cpu_starve",
+      "inject": "injected cpu-starve-payment: limit payment to 0.1 CPU",
+      "effect": {
+        "confirmed": true,
+        "status": "running",
+        "restarts": 0,
+        "nano_cpus": 100000000,
+        "memory": 146800640
+      },
+      "reset": [
+        "reset cpu-starve-payment"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 0,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 0,
+        "callers": [
+          "checkout"
+        ],
+        "problems": [],
+        "callers_running": {
+          "checkout": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 0,
+        "watched": [
+          "payment",
+          "checkout"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 3
+    },
+    {
+      "fault": "cpu-starve-cart",
+      "target": "cart",
+      "kind": "cpu_starve",
+      "inject": "injected cpu-starve-cart: limit cart to 0.1 CPU",
+      "effect": {
+        "confirmed": true,
+        "status": "running",
+        "restarts": 3,
+        "nano_cpus": 100000000,
+        "memory": 167772160
+      },
+      "reset": [
+        "reset cpu-starve-cart"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 0,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 0,
+        "callers": [
+          "checkout",
+          "frontend"
+        ],
+        "problems": [],
+        "callers_running": {
+          "checkout": "running",
+          "frontend": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 0,
+        "watched": [
+          "cart",
+          "checkout",
+          "frontend"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 4
+    },
+    {
+      "fault": "cpu-starve-checkout",
+      "target": "checkout",
+      "kind": "cpu_starve",
+      "inject": "injected cpu-starve-checkout: limit checkout to 0.1 CPU",
+      "effect": {
+        "confirmed": true,
+        "status": "running",
+        "restarts": 0,
+        "nano_cpus": 100000000,
+        "memory": 20971520
+      },
+      "reset": [
+        "reset cpu-starve-checkout"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 0,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 0,
+        "callers": [
+          "frontend"
+        ],
+        "problems": [],
+        "callers_running": {
+          "frontend": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 0,
+        "watched": [
+          "checkout",
+          "frontend"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 3
+    },
+    {
+      "fault": "cpu-starve-product-catalog",
+      "target": "product-catalog",
+      "kind": "cpu_starve",
+      "inject": "injected cpu-starve-product-catalog: limit product-catalog to 0.1 CPU",
+      "effect": {
+        "confirmed": true,
+        "status": "running",
+        "restarts": 0,
+        "nano_cpus": 100000000,
+        "memory": 20971520
+      },
+      "reset": [
+        "reset cpu-starve-product-catalog"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 0,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 0,
+        "callers": [
+          "checkout",
+          "frontend",
+          "recommendation"
+        ],
+        "problems": [],
+        "callers_running": {
+          "checkout": "running",
+          "frontend": "running",
+          "recommendation": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 0,
+        "watched": [
+          "product-catalog",
+          "checkout",
+          "frontend",
+          "recommendation"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 4
+    },
+    {
+      "fault": "cpu-starve-recommendation",
+      "target": "recommendation",
+      "kind": "cpu_starve",
+      "inject": "injected cpu-starve-recommendation: limit recommendation to 0.1 CPU",
+      "effect": {
+        "confirmed": true,
+        "status": "running",
+        "restarts": 3,
+        "nano_cpus": 100000000,
+        "memory": 524288000
+      },
+      "reset": [
+        "reset cpu-starve-recommendation"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 0,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 0,
+        "callers": [
+          "frontend"
+        ],
+        "problems": [],
+        "callers_running": {
+          "frontend": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 0,
+        "watched": [
+          "recommendation",
+          "frontend"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 3
+    },
+    {
+      "fault": "cpu-starve-ad",
+      "target": "ad",
+      "kind": "cpu_starve",
+      "inject": "injected cpu-starve-ad: limit ad to 0.1 CPU",
+      "effect": {
+        "confirmed": true,
+        "status": "running",
+        "restarts": 3,
+        "nano_cpus": 100000000,
+        "memory": 314572800
+      },
+      "reset": [
+        "reset cpu-starve-ad"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 0,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 0,
+        "callers": [
+          "frontend"
+        ],
+        "problems": [],
+        "callers_running": {
+          "frontend": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 0,
+        "watched": [
+          "ad",
+          "frontend"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 3
+    },
+    {
+      "fault": "mem-starve-payment",
+      "target": "payment",
+      "kind": "mem_starve",
+      "inject": "injected mem-starve-payment: cut payment's memory limit to ~half its current usage",
+      "effect": {
+        "confirmed": true,
+        "status": "running",
+        "restarts": 4,
+        "nano_cpus": 20000000000,
+        "memory": 32075939
+      },
+      "reset": [
+        "reset mem-starve-payment"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 11,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 0,
+        "callers": [
+          "checkout"
+        ],
+        "problems": [],
+        "callers_running": {
+          "checkout": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 120,
+        "watched": [
+          "payment",
+          "checkout"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 134
+    },
+    {
+      "fault": "mem-starve-cart",
+      "target": "cart",
+      "kind": "mem_starve",
+      "inject": "injected mem-starve-cart: cut cart's memory limit to ~half its current usage",
+      "effect": {
+        "confirmed": true,
+        "status": "restarting",
+        "restarts": 7,
+        "nano_cpus": 20000000000,
+        "memory": 27823964
+      },
+      "reset": [
+        "reset mem-starve-cart"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 6,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 21,
+        "callers": [
+          "checkout",
+          "frontend"
+        ],
+        "problems": [],
+        "callers_running": {
+          "checkout": "running",
+          "frontend": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 161,
+        "watched": [
+          "cart",
+          "checkout",
+          "frontend"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 190
+    },
+    {
+      "fault": "mem-starve-checkout",
+      "target": "checkout",
+      "kind": "mem_starve",
+      "inject": "injected mem-starve-checkout: cut checkout's memory limit to ~half its current usage",
+      "effect": {
+        "confirmed": true,
+        "status": "restarting",
+        "restarts": 5,
+        "nano_cpus": 20000000000,
+        "memory": 6349127
+      },
+      "reset": [
+        "reset mem-starve-checkout"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 61,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 11,
+        "callers": [
+          "frontend"
+        ],
+        "problems": [],
+        "callers_running": {
+          "frontend": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 60,
+        "watched": [
+          "checkout",
+          "frontend"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 133
+    },
+    {
+      "fault": "mem-starve-product-catalog",
+      "target": "product-catalog",
+      "kind": "mem_starve",
+      "inject": "injected mem-starve-product-catalog: cut product-catalog's memory limit to ~half its current usage",
+      "effect": {
+        "confirmed": true,
+        "status": "restarting",
+        "restarts": 5,
+        "nano_cpus": 20000000000,
+        "memory": 7549747
+      },
+      "reset": [
+        "reset mem-starve-product-catalog"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 60,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 31,
+        "callers": [
+          "checkout",
+          "frontend",
+          "recommendation"
+        ],
+        "problems": [],
+        "callers_running": {
+          "checkout": "running",
+          "frontend": "running",
+          "recommendation": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 161,
+        "watched": [
+          "product-catalog",
+          "checkout",
+          "frontend",
+          "recommendation"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 254
+    },
+    {
+      "fault": "mem-starve-recommendation",
+      "target": "recommendation",
+      "kind": "mem_starve",
+      "inject": "injected mem-starve-recommendation: cut recommendation's memory limit to ~half its current usage",
+      "effect": {
+        "confirmed": true,
+        "status": "running",
+        "restarts": 5,
+        "nano_cpus": 20000000000,
+        "memory": 113141350
+      },
+      "reset": [
+        "reset mem-starve-recommendation"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 27,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 0,
+        "callers": [
+          "frontend"
+        ],
+        "problems": [],
+        "callers_running": {
+          "frontend": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 160,
+        "watched": [
+          "recommendation",
+          "frontend"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 190
+    },
+    {
+      "fault": "mem-starve-ad",
+      "target": "ad",
+      "kind": "mem_starve",
+      "inject": "injected mem-starve-ad: cut ad's memory limit to ~half its current usage",
+      "effect": {
+        "confirmed": true,
+        "status": "running",
+        "restarts": 5,
+        "nano_cpus": 20000000000,
+        "memory": 121215385
+      },
+      "reset": [
+        "reset mem-starve-ad"
+      ],
+      "container": {
+        "ok": true,
+        "seconds": 22,
+        "problems": []
+      },
+      "dependents": {
+        "ok": true,
+        "seconds": 31,
+        "callers": [
+          "frontend"
+        ],
+        "problems": [],
+        "callers_running": {
+          "frontend": "running"
+        }
+      },
+      "telemetry": {
+        "ok": true,
+        "seconds": 100,
+        "watched": [
+          "ad",
+          "frontend"
+        ],
+        "problems": []
+      },
+      "recover_seconds": 156
+    }
+  ],
+  "side_effects": {
+    "checkout": {
+      "restarts": "0 -> 10",
+      "status": "running",
+      "health": "healthy",
+      "expected": true
+    },
+    "recommendation": {
+      "restarts": "0 -> 12",
+      "status": "running",
+      "health": "healthy",
+      "expected": true
+    },
+    "ad": {
+      "restarts": "1 -> 12",
+      "status": "running",
+      "health": "healthy",
+      "expected": true
+    },
+    "product-catalog": {
+      "restarts": "0 -> 10",
+      "status": "running",
+      "health": "healthy",
+      "expected": true
+    },
+    "cart": {
+      "restarts": "1 -> 12",
+      "status": "running",
+      "health": "none",
+      "expected": true
+    },
+    "payment": {
+      "restarts": "0 -> 9",
+      "status": "running",
+      "health": "healthy",
+      "expected": true
+    }
+  },
+  "finished": "2026-10-23T17:50:20"
+}

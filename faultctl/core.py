@@ -20,6 +20,9 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 STATE_FILE = Path(os.getenv("FAULTCTL_STATE", HERE / "state.json"))
+# Each container's limits as first seen by faultctl. Never cleared, so reset can restore limits
+# even if state.json is lost.
+ORIGINALS_FILE = Path(os.getenv("FAULTCTL_ORIGINALS", HERE / "originals.json"))
 SERVICES = ["payment", "cart", "checkout", "product-catalog", "recommendation", "ad"]
 LOOP_INTERVAL = 20
 CPU_LIMIT = 0.1
@@ -120,6 +123,7 @@ def inject(fault_id):
              "original": {"running": info["State"]["Running"], "nano_cpus": host.get("NanoCpus", 0),
                           "memory": host.get("Memory", 0), "memory_swap": host.get("MemorySwap", 0)}}
     # Record first, change second: a crash in between still leaves reset enough to undo it.
+    remember_original(fault.container, entry["original"])
     state["faults"][fault_id] = entry
     save_state(state)
 
@@ -157,10 +161,18 @@ CRASH_COMMANDS = [
 
 def crash_once(container):
     """Crash the container's main process so the restart policy restarts it."""
+    before = inspect(container)["State"].get("StartedAt")
     for cmd in CRASH_COMMANDS:
-        if docker("exec", container, *cmd, check=False).returncode == 0:
-            return "sigterm"
-    docker("kill", container, check=False)  # no runtime inside: simulate with kill + start
+        if docker("exec", container, *cmd, check=False).returncode != 0:
+            continue
+        # The command can succeed without effect: PID 1 ignores signals it has no handler for.
+        for _ in range(8):
+            time.sleep(1)
+            st = inspect(container)["State"]
+            if st.get("StartedAt") != before or not st.get("Running"):
+                return "sigterm"
+        break
+    docker("kill", container, check=False)  # no usable runtime inside: simulate with kill + start
     time.sleep(3)
     docker("start", container, check=False)
     return "kill+start"
@@ -213,9 +225,64 @@ def _undo(entry):
         docker("start", c)
 
 
+def load_originals():
+    if ORIGINALS_FILE.exists():
+        return json.loads(ORIGINALS_FILE.read_text(encoding="utf-8"))
+    return {}
+
+
+def remember_original(container, original):
+    originals = load_originals()
+    if container not in originals:
+        originals[container] = {k: original[k] for k in ("nano_cpus", "memory", "memory_swap")}
+        ORIGINALS_FILE.write_text(json.dumps(originals, indent=2), encoding="utf-8")
+
+
+def loop_pids():
+    """PIDs of any `faultctl _loop` processes, found by command line (orphans included)."""
+    if os.name == "nt":
+        cmd = ["powershell", "-NoProfile", "-Command",
+               "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match 'faultctl _loop' } "
+               "| ForEach-Object { $_.ProcessId }"]
+    else:
+        cmd = ["pgrep", "-f", "faultctl _loop"]
+    out = subprocess.run(cmd, capture_output=True, text=True).stdout
+    return [int(p) for p in out.split() if p.isdigit() and int(p) != os.getpid()]
+
+
+def _sweep_limits(c, lines):
+    """Restore limits that still carry a fault's signature, using originals.json."""
+    orig = load_originals().get(c)
+    if not orig:
+        return
+    host = inspect(c)["HostConfig"]
+    if host.get("NanoCpus") == int(CPU_LIMIT * 1e9):
+        cpus = orig["nano_cpus"] / 1e9 if orig["nano_cpus"] else host_cpus()
+        docker("update", "--cpus", f"{cpus:g}", c)
+        lines.append(f"restored {c} cpus to {cpus:g}")
+    if orig["memory"] and host.get("Memory", 0) < orig["memory"]:
+        docker("update", "--memory", str(orig["memory"]), "--memory-swap", str(orig["memory_swap"]), c)
+        lines.append(f"restored {c} memory to {orig['memory'] // 1024 ** 2}MiB")
+
+
+def _project_containers():
+    """Every container of the compose project the catalogue's containers belong to."""
+    for c in sorted({f.container for f in FAULTS.values()}):
+        try:
+            project = inspect(c)["Config"]["Labels"].get("com.docker.compose.project")
+        except (DockerError, KeyError, TypeError):
+            continue
+        if project:
+            out = docker("ps", "-a", "--filter", f"label=com.docker.compose.project={project}",
+                         "--format", "{{.Names}}").stdout
+            return sorted(out.split())
+    return sorted({f.container for f in FAULTS.values()})
+
+
 def reset():
-    """Undo every recorded fault, then make sure every catalogue container is running.
-    Safe to run repeatedly and after a crash (driven by state.json)."""
+    """Undo every recorded fault, then sweep: kill leftover restart loops, restore limits that
+    still look starved, and start every stopped container of the demo. Safe to run repeatedly
+    and after a crash (state.json, originals.json and the process list drive it)."""
     state = load_state()
     lines = []
     for fault_id, entry in list(state["faults"].items()):
@@ -229,7 +296,15 @@ def reset():
             state["faults"][fault_id] = entry  # keep it so the next reset retries
             save_state(state)
             lines.append(f"FAILED to reset {fault_id}: {e}")
+    for pid in loop_pids():
+        _stop_loop({"pid": pid})
+        lines.append(f"killed leftover restart loop (pid {pid})")
     for c in sorted({f.container for f in FAULTS.values()}):
+        try:
+            _sweep_limits(c, lines)
+        except DockerError as e:
+            lines.append(f"could not restore limits of {c}: {e}")
+    for c in _project_containers():
         try:
             if not inspect(c)["State"]["Running"]:
                 docker("start", c)

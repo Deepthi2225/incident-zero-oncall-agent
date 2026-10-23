@@ -10,3 +10,4 @@ bundles/
 incidents.jsonl
 faultctl/state.json
 /baseline.json
+faultctl/originals.json
