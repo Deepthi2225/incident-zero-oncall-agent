@@ -7,16 +7,20 @@ import requests
 
 from oncall import config
 from oncall.sources.guard import allowed, check
+from oncall.sources.jaeger_v3 import has_error, otlp_to_jaeger
 
 
 class SourceError(RuntimeError):
     pass
 
 
-def _get(url, params=None):
+def _get(url, params=None, empty_on_404=None):
+    """GET JSON. empty_on_404: value to return when the API answers 404 for "nothing found"."""
     check(url)
     try:
         resp = requests.get(url, params=params, timeout=config.HTTP_TIMEOUT)
+        if resp.status_code == 404 and empty_on_404 is not None:
+            return empty_on_404
         resp.raise_for_status()
         return resp.json()
     except requests.RequestException as e:
@@ -72,18 +76,36 @@ class LiveSource:
                 errors.append(str(e))
         raise SourceError("no Jaeger API reachable; set JAEGER_URL. " + " | ".join(errors))
 
+    def _v3(self):
+        return self.jaeger_base().rstrip("/").endswith("/v3")
+
     def jaeger_services(self):
-        return _get(f"{self.jaeger_base()}/services").get("data") or []
+        body = _get(f"{self.jaeger_base()}/services")
+        services = body.get("services" if self._v3() else "data") or []
+        return [s for s in services if allowed(s)]
 
     def jaeger_traces(self, service, lookback_s, limit, error_only=True):
-        end_us = int(self.now() * 1e6)
-        params = {
-            "service": service, "limit": limit,
-            "start": end_us - int(lookback_s * 1e6), "end": end_us,
-        }
+        check(service)
+        if not self._v3():
+            end_us = int(self.now() * 1e6)
+            params = {"service": service, "limit": limit,
+                      "start": end_us - int(lookback_s * 1e6), "end": end_us}
+            if error_only:
+                params["tags"] = json.dumps({"error": "true"})
+            return _get(f"{self.jaeger_base()}/traces", params).get("data") or []
+
+        # v3: attribute filters are unreliable in Jaeger 2.21's memory store, so fetch a deeper
+        # batch of recent traces and keep the failing ones ourselves.
+        end = self.now()
+        fmt = lambda t: time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(t))  # noqa: E731
+        params = {"query.service_name": service,
+                  "query.start_time_min": fmt(end - lookback_s), "query.start_time_max": fmt(end + 1),
+                  "query.search_depth": min(max(limit * 5, 50), 200) if error_only else limit}
+        body = _get(f"{self.jaeger_base()}/traces", params, empty_on_404={"result": {}})
+        traces = otlp_to_jaeger(body.get("result"))
         if error_only:
-            params["tags"] = json.dumps({"error": "true"})
-        return _get(f"{self.jaeger_base()}/traces", params).get("data") or []
+            traces = [t for t in traces if has_error(t)]
+        return traces[:limit]
 
     # --- Docker --------------------------------------------------------------
     def container_names(self):

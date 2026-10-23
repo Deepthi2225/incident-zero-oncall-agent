@@ -40,10 +40,13 @@ BUNDLE_DIR = Path(os.getenv("ONCALL_BUNDLE_DIR", ROOT / "bundles" / "current"))
 PROMETHEUS_URL = os.getenv("PROMETHEUS_URL", "http://localhost:9090")
 # Tried in order until one answers /services. The 16686 port is published randomly by compose,
 # so set JAEGER_URL explicitly if the proxy path does not work.
+# Verified live: Jaeger 2.21 serves only API v3 under base_path /jaeger/ui. A base ending in /v3
+# uses the v3 adapter (sources/jaeger_v3.py); others use the legacy v1 API.
 JAEGER_CANDIDATES = [u for u in [
     os.getenv("JAEGER_URL"),
+    "http://localhost:8080/jaeger/ui/api/v3",
     "http://localhost:8080/jaeger/ui/api",
-    "http://localhost:16686/api",
+    "http://localhost:16686/jaeger/ui/api/v3",
 ] if u]
 OPENSEARCH_URL = os.getenv("OPENSEARCH_URL", "")  # optional; docker logs is the baseline
 ACTION_API_URL = os.getenv("ACTION_API_URL", "")  # Day 2; unknown until organisers publish it
