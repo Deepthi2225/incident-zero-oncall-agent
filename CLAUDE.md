@@ -1,3 +1,5 @@
+Never add "Co-Authored-By" or "Claude-Session" lines to commit messages.
+
 # Incident Zero – AI On-Call Engineer
 Bosch one-day AI hackathon at PES University (Day 1: Fri 23 Oct 2026, Day 2: Sat 24 Oct 2026).
 Theme: Agentic AI for IT Operations, from alert to a safe, approved fix.
