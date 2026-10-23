@@ -1,7 +1,9 @@
-"""search_logs: grouped log patterns per service from `docker logs`.
+"""search_logs: grouped log patterns per service.
 
-Lines are normalised (ids, numbers, addresses collapsed) and grouped, so the agent sees
-"connection refused to <ip> x 412, first/last seen, one example" instead of 412 lines.
+Reads OpenSearch (logs the collector ships over OTLP) when it is available and has records for
+the service, otherwise `docker logs` (some services only log to stdout). Lines are normalised
+(ids, numbers, addresses collapsed) and grouped, so the agent sees "connection refused to <ip>
+x 412, first/last seen, one example" instead of 412 lines. Each service reports its log_source.
 
 CLI: python -m oncall.tools.logs cart checkout --since 10m --level warn
 """
@@ -16,6 +18,7 @@ from oncall.tools._common import cap, normalise, parse_window, run_cli
 
 TOOL = "search_logs"
 LEVELS = {"debug": 0, "info": 1, "warn": 2, "error": 3}
+OTEL_MIN_SEVERITY = {"debug": 0, "info": 9, "warn": 13, "error": 17}  # OTel severity numbers
 TOP_PATTERNS = 15
 MAX_SERVICES = 5
 
@@ -87,7 +90,7 @@ def search_logs(services, since="5m", level="warn", contains=None):
     out = {"since_s": since_s, "min_level": level, "contains": contains, "services": {}}
     for svc in services:
         try:
-            text = get_source().docker_logs(svc, since_s)
+            text, log_source = read_logs(svc, since_s, level)
         except SourceError as e:
             out["services"][svc] = {"error": str(e)[:200]}
             continue
@@ -96,17 +99,53 @@ def search_logs(services, since="5m", level="warn", contains=None):
             if r["level"] in ("error", "warn") or contains:
                 r["evidence"] = registry.add(
                     TOOL, "log",
-                    f"{svc} logs ({since_s}s): {r['count']}x {r['level'].upper()} '{r['example'][:160]}'"
-                    f" first {r['first_seen']} last {r['last_seen']}",
-                    {"service": svc, **r})
-        entry = {"matching_lines": total, "patterns": rows[:TOP_PATTERNS]}
+                    f"{svc} logs ({log_source}, {since_s}s): {r['count']}x {r['level'].upper()} "
+                    f"'{r['example'][:160]}' first {r['first_seen']} last {r['last_seen']}",
+                    {"service": svc, "log_source": log_source, **r})
+        entry = {"log_source": log_source, "matching_lines": total, "patterns": rows[:TOP_PATTERNS]}
         if not rows:
             entry["evidence"] = registry.add(
                 TOOL, "log", f"{svc}: no {level}+ log lines"
-                f"{' containing ' + repr(contains) if contains else ''} in last {since_s}s",
-                {"service": svc, "since_s": since_s, "level": level, "contains": contains})
+                f"{' containing ' + repr(contains) if contains else ''} in last {since_s}s ({log_source})",
+                {"service": svc, "since_s": since_s, "level": level, "contains": contains,
+                 "log_source": log_source})
         out["services"][svc] = entry
     return cap(_flatten_for_cap(out))
+
+
+def _level_word(doc):
+    n = doc.get("severity_number")
+    if isinstance(n, (int, float)) and n:
+        return "ERROR" if n >= 17 else "WARN" if n >= 13 else "INFO" if n >= 9 else "DEBUG"
+    return (doc.get("severity_text") or "INFO").upper()
+
+
+def records_to_text(docs):
+    """OpenSearch records (newest first) -> 'timestamp LEVEL: body' lines, oldest first."""
+    lines = []
+    for d in reversed(docs):
+        body = d.get("body")
+        body = body if isinstance(body, str) else json.dumps(body, default=str)
+        lines.append(f"{d.get('ts', '')} {_level_word(d)}: {' '.join(str(body).split())}")
+    return "\n".join(lines)
+
+
+def read_logs(service, since_s, level):
+    """(text, log_source): OpenSearch when it has records for the service, else docker logs."""
+    src = get_source()
+    reader = getattr(src, "opensearch_logs", None)
+    checked = []
+    if reader:
+        try:
+            docs = reader(service, since_s, OTEL_MIN_SEVERITY[level])
+        except SourceError:
+            docs = None
+        if docs:
+            return records_to_text(docs), "opensearch"
+        if docs is not None:
+            checked.append("opensearch (none)")
+    text = src.docker_logs(service, since_s)
+    return text, " + ".join(checked + ["docker logs"])
 
 
 def _flatten_for_cap(out):

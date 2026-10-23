@@ -8,6 +8,7 @@ import requests
 from oncall import config
 from oncall.sources.guard import allowed, check
 from oncall.sources.jaeger_v3 import has_error, otlp_to_jaeger
+from oncall.sources.sanitize import contains_flags, strip_flags
 
 
 class SourceError(RuntimeError):
@@ -40,12 +41,23 @@ def _docker(*args, timeout=30):
     return out.stdout, out.stderr
 
 
+def _severity_filter(min_severity):
+    """OTel severity >= min. Records without a severity (e.g. Envoy access logs) count as info."""
+    if not min_severity:
+        return {"match_all": {}}
+    should = [{"range": {"severity.number": {"gte": min_severity}}}]
+    if min_severity <= 9:
+        should.append({"bool": {"must_not": {"exists": {"field": "severity.number"}}}})
+    return {"bool": {"should": should, "minimum_should_match": 1}}
+
+
 class LiveSource:
     name = "live"
 
     def __init__(self):
         self._jaeger_base = None
-        self.detail = f"prometheus {config.PROMETHEUS_URL}, jaeger, docker CLI"
+        self._opensearch = None
+        self.detail = f"prometheus {config.PROMETHEUS_URL}, jaeger, opensearch, docker CLI"
 
     def now(self):
         return time.time()
@@ -55,12 +67,12 @@ class LiveSource:
         return _get(f"{config.PROMETHEUS_URL}/api/v1/label/__name__/values")["data"]
 
     def prom_query(self, query):
-        return _get(f"{config.PROMETHEUS_URL}/api/v1/query", {"query": query})["data"]["result"]
+        return strip_flags(_get(f"{config.PROMETHEUS_URL}/api/v1/query", {"query": query})["data"]["result"])
 
     def prom_range(self, query, window_s, step_s):
         end = self.now()
         params = {"query": query, "start": end - window_s, "end": end, "step": step_s}
-        return _get(f"{config.PROMETHEUS_URL}/api/v1/query_range", params)["data"]["result"]
+        return strip_flags(_get(f"{config.PROMETHEUS_URL}/api/v1/query_range", params)["data"]["result"])
 
     # --- Jaeger --------------------------------------------------------------
     def jaeger_base(self):
@@ -132,4 +144,58 @@ class LiveSource:
         # Services write to stdout and stderr; both matter.
         stdout, stderr = _docker("logs", "--timestamps", "--since", f"{int(since_s)}s",
                                  "--tail", str(tail), name)
-        return stdout + stderr
+        return strip_flags(stdout + stderr)
+
+    # --- OpenSearch (logs shipped over OTLP by the collector) -------------------
+    def opensearch_base(self):
+        """OPENSEARCH_URL, else the host port docker published for the opensearch container.
+        Returns None when OpenSearch is not running (search_logs then uses docker logs)."""
+        if self._opensearch:
+            return self._opensearch
+        base = config.OPENSEARCH_URL
+        if not base:
+            try:
+                stdout, _ = _docker("port", "opensearch", "9200", timeout=10)
+            except SourceError:
+                return None
+            port = stdout.strip().splitlines()[0].rsplit(":", 1)[-1] if stdout.strip() else ""
+            base = f"http://localhost:{port}" if port else ""
+        try:
+            if base and requests.get(base, timeout=3).ok:
+                self._opensearch = base
+        except requests.RequestException:
+            pass
+        return self._opensearch
+
+    def opensearch_logs(self, service, since_s, min_severity=0, size=500):
+        """Recent log records of one service, newest first, or None if OpenSearch is unavailable."""
+        check(service)
+        base = self.opensearch_base()
+        if not base:
+            return None
+        query = {
+            "size": size, "sort": [{"@timestamp": "desc"}],
+            "_source": ["@timestamp", "severity", "body", "traceId"],
+            "query": {"bool": {"filter": [
+                {"term": {"resource.service.name.keyword": service}},
+                {"range": {"@timestamp": {"gte": f"now-{int(since_s)}s"}}},
+                _severity_filter(min_severity),
+            ]}},
+        }
+        url = f"{base}/{config.OPENSEARCH_INDEX}/_search"
+        check(url)
+        try:
+            resp = requests.post(url, json=query, timeout=config.HTTP_TIMEOUT)
+            resp.raise_for_status()
+        except requests.RequestException as e:
+            raise SourceError(f"POST {url} failed: {e}") from e
+        docs = []
+        for hit in resp.json().get("hits", {}).get("hits", []):
+            src = hit.get("_source", {})
+            sev = src.get("severity") or {}
+            doc = {"ts": src.get("@timestamp"), "severity_number": sev.get("number"),
+                   "severity_text": sev.get("text"), "body": src.get("body"),
+                   "trace_id": src.get("traceId")}
+            if not contains_flags(doc):  # HARD RULE 2: never pass flag data on
+                docs.append(doc)
+        return docs

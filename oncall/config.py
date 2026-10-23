@@ -48,7 +48,10 @@ JAEGER_CANDIDATES = [u for u in [
     "http://localhost:8080/jaeger/ui/api",
     "http://localhost:16686/jaeger/ui/api/v3",
 ] if u]
-OPENSEARCH_URL = os.getenv("OPENSEARCH_URL", "")  # optional; docker logs is the baseline
+# Logs: OpenSearch first (host port discovered with `docker port opensearch 9200` when this is
+# empty), docker logs as the fallback. Verified index pattern: otel-logs-yyyy-MM-dd.
+OPENSEARCH_URL = os.getenv("OPENSEARCH_URL", "")
+OPENSEARCH_INDEX = os.getenv("OPENSEARCH_INDEX", "otel-logs-*")
 ACTION_API_URL = os.getenv("ACTION_API_URL", "")  # Day 2; unknown until organisers publish it
 DEMO_DIR = os.getenv("OTEL_DEMO_DIR", "")         # folder with compose.yaml, for `docker compose`
 # Limit container listing to the demo's compose project (verified label: opentelemetry-demo), so

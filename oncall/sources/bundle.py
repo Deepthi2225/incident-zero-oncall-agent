@@ -16,8 +16,10 @@ import json
 import time
 from pathlib import Path
 
+from oncall.sources.sanitize import contains_flags, strip_flags
+
 METHODS = ["prom_names", "prom_query", "prom_range", "jaeger_services", "jaeger_traces",
-           "container_names", "docker_inspect", "docker_stats", "docker_logs"]
+           "container_names", "docker_inspect", "docker_stats", "docker_logs", "opensearch_logs"]
 
 
 def _key(args, kwargs):
@@ -72,6 +74,10 @@ class RecordingSource:
         return self.inner.now()
 
     def _save(self, method, args, kwargs, result):
+        # HARD RULE 2: never store feature-flag data from the demo in a bundle.
+        result = strip_flags(result)
+        if contains_flags(result):
+            return  # could not be cleaned (e.g. a single-line string); do not record it
         f = self.dir / f"{method}.json"
         table = json.loads(f.read_text(encoding="utf-8")) if f.exists() else {}
         table[_key(args, kwargs)] = result
