@@ -4,10 +4,12 @@
   python -m oncall baseline --window 5m          save healthy numbers (before injecting faults)
   python -m oncall investigate --service checkout --signal error_rate --value 0.3
   python -m oncall investigate --alert-file alert.json
+  python -m oncall --source fake investigate --alert-file tests/fixtures/payment_down/alert.json
   python -m oncall watch                         threshold watcher -> investigation
   python -m oncall stop | resume                 kill switch on / off
 
-Shared flags: --source live|bundle, --bundle DIR, --record DIR (save a replayable bundle).
+Shared flags (before the command): --source live|fake|bundle, --fixtures DIR, --bundle DIR,
+--record DIR (save a replayable bundle).
 """
 import argparse
 import json
@@ -68,15 +70,16 @@ def _alert_from_args(args):
 
 
 def cmd_investigate(args):
-    from oncall.agent import investigate
-    record = investigate(_alert_from_args(args), model=args.model, max_steps=args.max_steps)
-    print(json.dumps(record["output"], indent=2, default=str) if args.json else "")
+    from oncall.agent.run import run_agent
+    record = run_agent(_alert_from_args(args), model=args.model, max_steps=args.max_steps)
+    if args.json:
+        print(json.dumps(record["summary"], indent=2, default=str))
 
 
 def cmd_watch(args):
-    from oncall.agent import investigate
+    from oncall.agent.run import run_agent
     from oncall.watcher import watch
-    watch(lambda alert: investigate(alert), interval=args.interval, window=args.window,
+    watch(lambda alert: run_agent(alert), interval=args.interval, window=args.window,
           once=args.once)
 
 
@@ -93,7 +96,8 @@ def cmd_resume(_args):
 def main():
     p = argparse.ArgumentParser(prog="oncall", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--source", choices=["live", "bundle"], default=config.SOURCE)
+    p.add_argument("--source", choices=["live", "fake", "bundle"], default=config.SOURCE)
+    p.add_argument("--fixtures")
     p.add_argument("--bundle")
     p.add_argument("--record")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -107,7 +111,7 @@ def main():
     inv.add_argument("--alert-file")
     inv.add_argument("--model")
     inv.add_argument("--max-steps", type=int)
-    inv.add_argument("--json", action="store_true", help="print the output JSON at the end")
+    inv.add_argument("--json", action="store_true", help="print the summary JSON at the end")
     w = sub.add_parser("watch")
     w.add_argument("--interval", type=int, default=15)
     w.add_argument("--window", default="2m")
@@ -115,7 +119,7 @@ def main():
     sub.add_parser("stop")
     sub.add_parser("resume")
     args = p.parse_args()
-    set_source(args.source, bundle_dir=args.bundle, record_to=args.record)
+    set_source(args.source, bundle_dir=args.bundle, record_to=args.record, fixture_dir=args.fixtures)
     {"check": cmd_check, "baseline": cmd_baseline, "investigate": cmd_investigate,
      "watch": cmd_watch, "stop": cmd_stop, "resume": cmd_resume}[args.cmd](args)
 

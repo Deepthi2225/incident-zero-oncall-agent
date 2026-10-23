@@ -1,6 +1,6 @@
 import pytest
 
-from oncall.agent.diagnosis import validate
+from oncall.agent.summary import validate
 from oncall.evidence import Registry, registry
 from oncall.sources.guard import ForbiddenAccess, check
 from oncall.tools._common import cap, normalise, parse_docker_time, parse_window
@@ -57,25 +57,20 @@ def test_parse_docker_time():
     assert t == pytest.approx(1792739400.5)
 
 
-def test_validate_drops_invented_evidence_and_escalates():
+def test_validate_drops_invented_evidence():
     registry.reset()
-    real = registry.add("t", "trace", "payment errors originate in payment")
-    diag = validate({
-        "status": "diagnosed", "summary": "s", "symptoms": [],
-        "root_causes": [
-            {"component": "payment", "fault_class": "service_error", "cause": "c",
-             "confidence": 0.9, "evidence": [real, "E99"]},
-            {"component": "cart", "fault_class": "service_error", "cause": "made up",
-             "confidence": 0.9, "evidence": ["E42"]},
-        ],
-        "affected_services": [], "confidence": 0.95,
-        "proposed_action": {"action": "restart_service", "target": "payment", "reason": "r"},
-        "escalation_reason": "", "next_checks": [],
+    real = registry.add("t", "trace", "checkout's Charge call to payment got no server span")
+    s = validate({
+        "headline": "h",
+        "affected_services": [{"service": "checkout", "impact": "i", "evidence": [real, "E99"]}],
+        "anomalies": [{"service": "cart", "signal": "made up", "observed": "1", "baseline": "0",
+                       "evidence": ["E42"]}],
+        "suspected_origin": {"service": "payment", "reasoning": "r", "confidence": 1.7,
+                             "evidence": [real]},
+        "open_questions": [],
     })
-    assert [rc["component"] for rc in diag["root_causes"]] == ["payment"]
-    assert diag["root_causes"][0]["evidence"] == [real]
-    assert diag["validation"]["dropped_evidence_ids"] == ["E42", "E99"]
-    assert diag["status"] == "diagnosed" and diag["confidence"] == 0.9
-
-    weak = validate({**diag, "root_causes": [], "status": "diagnosed", "confidence": 0.9})
-    assert weak["status"] == "escalate" and weak["confidence"] <= 0.3
+    assert s["affected_services"][0]["evidence"] == [real]
+    assert s["anomalies"] == []
+    assert s["validation"]["dropped_evidence_ids"] == ["E42", "E99"]
+    assert s["suspected_origin"]["confidence"] == 1.0 and s["status"] == "origin_suspected"
+    assert s["suspected_origin"]["evidence_detail"][real].startswith("checkout's Charge")

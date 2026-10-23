@@ -1,9 +1,14 @@
-"""Agent loop mechanics with a scripted fake LLM (no API key or network needed)."""
+"""Agent run mechanics with a scripted fake LLM (no API key or network needed).
+
+The scripted model plays the LLM's part; everything else (tools, fixtures, registry, validator,
+run record) is the real code path.
+"""
 import copy
 import json
 from types import SimpleNamespace
 
-from oncall.agent import loop
+from oncall.agent import run
+from tests.conftest import FIXTURES
 from tests.test_tools import propagated_payment_failure
 
 
@@ -28,57 +33,117 @@ class ScriptedClient:
         return self.script(len(self.calls), kwargs)
 
 
-def make_agent(monkeypatch, script):
+def make_agent(monkeypatch, script, **kw):
     client = ScriptedClient(script)
-    monkeypatch.setattr(loop.anthropic, "Anthropic", lambda: client)
-    agent = loop.Agent(verbose=False)
+    monkeypatch.setattr(run.anthropic, "Anthropic", lambda: client)
+    agent = run.Agent(verbose=True, **kw)
     agent.use_fallbacks = False
     return agent, client
 
 
-def test_loop_runs_tools_then_submits(mem, monkeypatch):
-    mem.traces = [propagated_payment_failure(f"t{i}") for i in range(3)]
+def tool_results(kwargs):
+    """Tool results the agent sent back in its latest request, by tool_use_id."""
+    return {r["tool_use_id"]: json.loads(r["content"])
+            for r in kwargs["messages"][-1]["content"] if r.get("type") == "tool_result"}
+
+
+def submit(tid, origin_service, origin_evidence, anomalies=(), affected=(), confidence=0.85):
+    return block_tool(tid, "submit_summary", {
+        "headline": "h", "affected_services": list(affected), "anomalies": list(anomalies),
+        "suspected_origin": {"service": origin_service, "reasoning": "r",
+                             "confidence": confidence, "evidence": origin_evidence},
+        "open_questions": []})
+
+
+def test_end_to_end_fake_checkout_errors_caused_by_payment(payment_down, monkeypatch, capsys):
+    """Alert on checkout errors; the run must end at payment with real evidence IDs."""
+    alert = json.loads((FIXTURES / "payment_down" / "alert.json").read_text())
+    seen = {}
+
+    def script(n, kwargs):
+        if n == 1:
+            return response(block_tool("h", "get_service_health", {"window": "5m"}),
+                            block_tool("d", "get_deploy_history", {"lookback": "30m"}))
+        seen.update(tool_results(kwargs))
+        if n == 2:
+            return response(block_tool("t", "find_error_traces", {"service": "checkout"}),
+                            block_tool("l", "search_logs", {"services": ["checkout"], "since": "5m"}))
+        checkout = seen["h"]["flagged"][0]
+        payment_silent = next(r for r in seen["h"]["flagged"] if r["service"] == "payment")
+        payment_container = seen["d"]["changed_or_unhealthy"][0]
+        trace_origin = seen["t"]["origins"][0]
+        log_pattern = seen["l"]["patterns"][0]
+        return response(submit(
+            "s", "payment",
+            [payment_container["evidence"], trace_origin["evidence"], payment_silent["evidence"], "E999"],
+            anomalies=[
+                {"service": "checkout", "signal": "error_rate", "observed": "95.2%",
+                 "baseline": "0.0%", "evidence": [checkout["evidence"]]},
+                {"service": "checkout", "signal": "log_errors", "observed": "6x name resolver error",
+                 "baseline": "unknown", "evidence": [log_pattern["evidence"]]},
+                {"service": "cart", "signal": "made_up", "observed": "x", "baseline": "y",
+                 "evidence": ["E555"]},
+            ],
+            affected=[{"service": "checkout", "impact": "orders fail", "evidence": [checkout["evidence"]]}]))
+
+    agent, _ = make_agent(monkeypatch, script)
+    rec = agent.run(alert)
+
+    assert rec["outcome"] == "submitted" and rec["source"] == "fake"
+    assert [s["tool"] for s in rec["steps"]] == ["get_service_health", "get_deploy_history",
+                                                 "find_error_traces", "search_logs"]
+    s = rec["summary"]
+    assert s["status"] == "origin_suspected"
+    assert s["suspected_origin"]["service"] == "payment"
+    assert "E999" not in s["suspected_origin"]["evidence"] and len(s["suspected_origin"]["evidence"]) == 3
+    assert any("exited" in t for t in s["suspected_origin"]["evidence_detail"].values())
+    assert [a["signal"] for a in s["anomalies"]] == ["error_rate", "log_errors"]  # made-up one dropped
+    assert s["validation"]["dropped_evidence_ids"] == ["E555", "E999"]
+    saved = json.loads(open(rec["path"], encoding="utf-8").read())
+    assert saved["summary"] == s and len(saved["evidence"]) >= 5
+
+    out = capsys.readouterr().out
+    assert "[1] -> get_service_health(window='5m')" in out          # live per-call line
+    assert "SYMPTOM SUMMARY [origin_suspected]" in out
+    assert "dropped anomaly without valid evidence: cart" in out
+
+
+def test_origin_without_valid_evidence_becomes_unknown(payment_down, monkeypatch):
+    agent, _ = make_agent(monkeypatch, lambda n, kw: response(submit("s", "payment", ["E1"])))
+    rec = agent.run({"service": "checkout"})  # no tool ran, so E1 does not exist
+    o = rec["summary"]["suspected_origin"]
+    assert o["service"] == "unknown" and o["confidence"] == 0.0
+    assert rec["summary"]["status"] == "needs_human"
+
+
+def test_low_confidence_needs_human(mem, monkeypatch):
+    mem.traces = [propagated_payment_failure("t1")]
 
     def script(n, kwargs):
         if n == 1:
             return response(block_tool("u1", "find_error_traces", {"service": "frontend"}))
-        # The model cites the evidence ID the tool returned, plus one invented ID.
-        result = json.loads(kwargs["messages"][-1]["content"][0]["content"])
-        eid = result["origins"][0]["evidence"]
-        return response(block_tool("u2", "submit_diagnosis", {
-            "status": "diagnosed", "summary": "payment fails", "symptoms": [],
-            "root_causes": [{"component": "payment", "fault_class": "service_error",
-                             "cause": "charge fails", "confidence": 0.85, "evidence": [eid, "E77"]}],
-            "affected_services": ["frontend", "checkout", "payment"], "confidence": 0.85,
-            "proposed_action": {"action": "none", "target": "", "reason": ""},
-            "escalation_reason": "", "next_checks": []}))
+        eid = tool_results(kwargs)["u1"]["origins"][0]["evidence"]
+        return response(submit("u2", "payment", [eid], confidence=0.4))
 
     agent, client = make_agent(monkeypatch, script)
-    rec = agent.run({"service": "frontend", "signal": "error_rate", "value": 0.3})
-    assert rec["outcome"] == "submitted"
-    d = rec["diagnosis"]
-    assert d["status"] == "diagnosed" and d["root_causes"][0]["component"] == "payment"
-    assert d["validation"]["dropped_evidence_ids"] == ["E77"]
-    assert rec["steps"][0]["tool"] == "find_error_traces"
-    saved = json.loads(open(rec["path"], encoding="utf-8").read())
-    assert saved["evidence"] and saved["output"]["run_id"] == rec["run_id"]
+    rec = agent.run({"service": "frontend"})
+    assert rec["summary"]["status"] == "needs_human"
     assert "thinking" in client.calls[0] and client.calls[0]["model"] == "claude-opus-5-5"
 
 
-def test_step_budget_forces_escalation(mem, monkeypatch):
-    monkeypatch.setattr(loop.config, "MAX_STEPS", 3)
+def test_default_step_cap_is_10(mem, monkeypatch):
     agent, client = make_agent(monkeypatch, lambda n, kw: response(
         block_tool(f"u{n}", "list_trace_services", {})))
     rec = agent.run({"service": "cart"})
-    assert rec["outcome"] == "incomplete" and rec["diagnosis"]["status"] == "escalate"
-    assert len(client.calls) == 3
+    assert len(client.calls) == 10
+    assert rec["outcome"] == "incomplete" and rec["summary"]["suspected_origin"]["service"] == "unknown"
     last = client.calls[-1]["messages"][-1]
     assert last["role"] == "user" and last["content"][0]["type"] == "tool_result"
     assert "Step budget exhausted" in last["content"][-1]["text"]
 
 
 def test_kill_switch_stops_run(mem, monkeypatch):
-    loop.config.KILL_SWITCH_FILE.write_text("stop")
+    run.config.KILL_SWITCH_FILE.write_text("stop")
     agent, client = make_agent(monkeypatch, lambda n, kw: response())
     rec = agent.run({"service": "cart"})
     assert rec["outcome"] == "killed" and not client.calls
