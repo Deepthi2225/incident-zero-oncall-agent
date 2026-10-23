@@ -137,6 +137,19 @@ generator is **Locust** (`LOCUST_*` in .env, autostart, 5 users), not k6. Images
 if the USB images carry a different tag, prefix compose with `DEMO_VERSION=<tag>` (never edit .env).
 Extra service in this version: `telemetry-docs`.
 
+### Verified live (23 Oct 2026, core + observability, without opensearch/load-generator)
+- Span metrics: `traces_span_metrics_calls_total` and `traces_span_metrics_duration_milliseconds_bucket`,
+  labels `service_name`, `span_kind` (`SPAN_KIND_SERVER`/`SPAN_KIND_CLIENT`/...), `status_code`
+  (`STATUS_CODE_ERROR`), `span_name`, `service_criticality`. Rate windows below 3m often return nothing.
+- Container metrics flow (`container_cpu_utilization_ratio`, `container_memory_percent_ratio`,
+  `container_memory_usage_total_bytes`, `container_memory_usage_limit_bytes`, `container_uptime_seconds`, ...).
+  Runtime metrics: `jvm_*` (ad), `dotnet_gc_*` / `dotnet_process_*` (cart), `go_memory_*`,
+  `process_cpu_time_seconds_total`, `process_memory_usage_bytes`.
+- Docker compose project label is `opentelemetry-demo`. flagd appears in span metrics and as a Jaeger
+  service, and other services' spans can carry `feature_flag.*` data: our tools filter all of it out.
+- With opensearch not running, the collector logs "opensearch exporter ... Exporting failed" errors;
+  harmless, traces and metrics still flow.
+
 ### Expected telemetry (read from src/otel-collector/otelcol-config*.yml and src/prometheus/prometheus-config.yaml; confirm live)
 - Metrics reach Prometheus by OTLP push (`--web.enable-otlp-receiver`), not scraping. Resource
   attributes `service.name`, `service.criticality`, `container.name` and others are promoted to labels
@@ -180,7 +193,7 @@ Extra service in this version: `telemetry-docs`.
 |---|---|
 | Shop through Envoy proxy | http://localhost:8080 |
 | Prometheus HTTP API | http://localhost:9090 (fixed host port mapping) |
-| Jaeger | through proxy at http://localhost:8080/jaeger/ (discover the API path, e.g. /jaeger/ui/api/services), or `docker compose port jaeger 16686` |
+| Jaeger | VERIFIED: API v3 only, http://localhost:8080/jaeger/ui/api/v3 (`/services`, `/traces?query.service_name=...`). Legacy `/api/services` and `/api/traces` return 404. Responses are OTLP JSON; v3 attribute filters are unreliable, so filter error traces client-side |
 | Grafana | http://localhost:8080/grafana/ |
 | OpenSearch (logs) | random host port: `docker compose port opensearch 9200` |
 | Envoy admin stats | http://localhost:10000 |
