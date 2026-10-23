@@ -17,10 +17,12 @@ Calibrate once, after the stack has run ~10 minutes with NO feature flags on.
 All settings can be overridden with environment variables (see CONFIG).
 """
 import json
+import math
 import os
 import sys
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 
 import requests
 
@@ -36,7 +38,9 @@ LATENCY_MULT = float(os.getenv("LATENCY_MULT", "2.0"))     # x the service's hea
 MIN_RPS = float(os.getenv("MIN_RPS", "0.02"))              # ignore (near) idle services
 CONSECUTIVE = int(os.getenv("CONSECUTIVE", "2"))           # breaches in a row before alerting
 COOLDOWN_SECS = int(os.getenv("COOLDOWN_SECS", "300"))     # per service+signal re-alert delay
-BASELINE_FILE = os.getenv("BASELINE_FILE", "baseline.json")
+HERE = Path(__file__).resolve().parent
+BASELINE_FILE = Path(os.getenv("BASELINE_FILE", HERE / "baseline.json"))
+INCIDENTS_FILE = Path(os.getenv("INCIDENTS_FILE", HERE / "incidents.jsonl"))
 # Traffic generator and browser-side spans are not part of the system being diagnosed.
 EXCLUDE = {s for s in os.getenv("EXCLUDE", "load-generator,frontend-web").split(",") if s}
 
@@ -45,10 +49,13 @@ CALLS = os.getenv("CALLS_METRIC", "traces_span_metrics_calls_total")
 DURATION = os.getenv("DURATION_METRIC", "traces_span_metrics_duration_milliseconds_bucket")
 SVC = os.getenv("SERVICE_LABEL", "service_name")
 
+# Error rate counts only incoming requests (server spans); a failed outgoing call is the
+# callee's problem and is counted there. rps stays on all spans.
+SERVER = 'span_kind="SPAN_KIND_SERVER"'
 QUERIES = {
     "error_rate": (
-        f'sum by ({SVC}) (rate({CALLS}{{status_code="STATUS_CODE_ERROR"}}[{WINDOW}]))'
-        f" / sum by ({SVC}) (rate({CALLS}[{WINDOW}]))"
+        f'sum by ({SVC}) (rate({CALLS}{{{SERVER},status_code="STATUS_CODE_ERROR"}}[{WINDOW}]))'
+        f" / sum by ({SVC}) (rate({CALLS}{{{SERVER}}}[{WINDOW}]))"
     ),
     "p95_ms": (
         f"histogram_quantile(0.95, sum by (le, {SVC}) (rate({DURATION}[{WINDOW}])))"
@@ -59,7 +66,7 @@ QUERIES = {
 
 # ---------------------------------------------------------------- PROMETHEUS
 def query(expr):
-    """Run an instant query, return {service: value}. NaN results are dropped."""
+    """Run an instant query, return {service: value}. NaN and +/-Inf results are dropped."""
     r = requests.get(f"{PROM}/api/v1/query", params={"query": expr}, timeout=10)
     r.raise_for_status()
     body = r.json()
@@ -68,7 +75,7 @@ def query(expr):
     out = {}
     for series in body["data"]["result"]:
         value = float(series["value"][1])
-        if value == value:  # not NaN
+        if math.isfinite(value):
             out[series["metric"].get(SVC, "unknown")] = value
     return out
 
@@ -100,7 +107,7 @@ def calibrate(seconds):
         snap = snapshot()
         for svc, rps in snap["rps"].items():
             p = snap["p95_ms"].get(svc)
-            if rps >= MIN_RPS and p is not None and svc not in EXCLUDE:
+            if rps >= MIN_RPS and p is not None and math.isfinite(p) and svc not in EXCLUDE:
                 seen.setdefault(svc, []).append(p)
         if time.time() >= end:
             break
@@ -117,10 +124,18 @@ def calibrate(seconds):
 
 
 # ---------------------------------------------------------------- DETECTION
-def poll(baseline):
-    """Return (breaches, snapshot). A breach is a service crossing a threshold."""
+def poll(baseline, known=()):
+    """Return (breaches, snapshot). A breach is a service crossing a threshold.
+
+    known: services that had traffic before (baseline or earlier polls). One of them with no
+    data or rps below MIN_RPS now is a "silent" breach (stopped, crashed or cut off).
+    """
     snap = snapshot()
     breaches = []
+    for svc in sorted(set(known) | set(baseline)):
+        rps = snap["rps"].get(svc, 0.0)
+        if svc not in EXCLUDE and rps < MIN_RPS:
+            breaches.append(breach(svc, "silent", rps, MIN_RPS))
     for svc, rate in snap["rps"].items():
         if rate < MIN_RPS or svc in EXCLUDE:
             continue
@@ -136,14 +151,16 @@ def poll(baseline):
 
 
 def breach(service, signal, value, threshold):
+    silent = signal == "silent"
     return {
         "service": service,
         "signal": signal,
         "value": round(value, 4),
         "threshold": round(threshold, 4),
         "window": WINDOW,
-        "promql": QUERIES[signal],
-        "severity": round(value / threshold, 2),  # how far over the line
+        "promql": QUERIES["rps" if silent else signal],
+        # How far over the line; a silent service has no ratio, so rank it high.
+        "severity": 10.0 if silent else round(value / threshold, 2),
     }
 
 
@@ -151,7 +168,7 @@ def breach(service, signal, value, threshold):
 def start_investigation(incident):
     """Hand-off point. Checkpoint 2 plugs the agent in here."""
     print(json.dumps(incident, indent=2), flush=True)
-    with open("incidents.jsonl", "a") as f:
+    with open(INCIDENTS_FILE, "a") as f:
         f.write(json.dumps(incident) + "\n")
     # Checkpoint 2:
     #   from agent import investigate
@@ -175,6 +192,7 @@ def make_incident(breaches):
 # ---------------------------------------------------------------- MAIN LOOP
 def run():
     baseline = load_baseline()
+    known = set(baseline)  # services that have had traffic; silence is checked for these
     streak = {}       # (service, signal) -> consecutive breach count
     last_fired = {}   # (service, signal) -> unix time of last alert
     print(f"watching {PROM} every {POLL_SECS}s | error_rate>{ERR_RATE_MAX} | "
@@ -186,7 +204,8 @@ def run():
               "Run: python detector.py --calibrate", flush=True)
     while True:
         try:
-            breaches, _ = poll(baseline)
+            breaches, snap = poll(baseline, known)
+            known |= {s for s, r in snap["rps"].items() if r >= MIN_RPS and s not in EXCLUDE}
         except Exception as ex:  # keep running if Prometheus hiccups
             print(f"[warn] poll failed: {ex}", file=sys.stderr, flush=True)
             time.sleep(POLL_SECS)

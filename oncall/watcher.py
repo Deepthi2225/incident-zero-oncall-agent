@@ -44,7 +44,7 @@ def make_alert(found, window_s):
     }
 
 
-def watch(on_alert, interval=15, window="2m", cooldown=600, once=False):
+def watch(on_alert, interval=15, window="3m", cooldown=600, once=False):
     baseline = load_baseline()
     if not baseline:
         print("warning: no baseline; latency-vs-baseline and traffic_stopped checks are off")

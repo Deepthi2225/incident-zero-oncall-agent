@@ -142,7 +142,7 @@ Extra service in this version: `telemetry-docs`.
   attributes `service.name`, `service.criticality`, `container.name` and others are promoted to labels
   (`service_name`, `service_criticality`, `container_name`).
 - **Interval is about 60 s**: no `OTEL_METRIC_EXPORT_INTERVAL` is set (SDK default 60 s) and Prometheus
-  comments that it aligns with it. Use rate windows of at least 2m; metric alerts lag about 1–2 min.
+  comments that it aligns with it. Use rate windows of at least 3m (team: 1m returns empty); alerts lag 2–3 min.
   Traces, logs and docker state are near real time.
 - **Span metrics** (`span_metrics` connector, defaults): expected `traces_span_metrics_calls_total` and
   `traces_span_metrics_duration_milliseconds_bucket`, labels `service_name`, `span_name`, `span_kind`,

@@ -1,6 +1,6 @@
 """End-to-end demo: inject a fault -> wait -> run the agent -> print the summary -> reset.
 
-    python scripts/demo.py stop-payment [--wait 90] [--save-baseline]
+    python scripts/demo.py stop-payment [--wait 180] [--save-baseline]
     python scripts/demo.py stop-payment --test     rehearsal on fixtures: no docker, no injection
 
 Live by default. The agent only receives an alert built from telemetry by the threshold watcher;
@@ -28,7 +28,7 @@ from oncall.watcher import breaches, make_alert  # noqa: E402
 def build_alert():
     """Alert from the watcher's thresholds; generic entry-point alert if metrics have not caught up."""
     try:
-        health = compute_health("2m")
+        health = compute_health("3m")
         found = breaches(health, load_baseline())
         if found:
             return make_alert(found, health["window_s"])
@@ -51,7 +51,8 @@ def main():
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("fault", choices=sorted(incident.FAULTS))
-    p.add_argument("--wait", type=int, default=90, help="seconds between inject and agent run")
+    p.add_argument("--wait", type=int, default=180,
+                   help="seconds between inject and agent run (metrics lag ~1-2 min)")
     p.add_argument("--save-baseline", action="store_true",
                    help="capture the healthy baseline before injecting")
     p.add_argument("--max-steps", type=int)

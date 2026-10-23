@@ -115,7 +115,7 @@ def main():
     inv.add_argument("--json", action="store_true", help="print the summary JSON at the end")
     w = sub.add_parser("watch")
     w.add_argument("--interval", type=int, default=15)
-    w.add_argument("--window", default="2m")
+    w.add_argument("--window", default="3m")
     w.add_argument("--once", action="store_true", help="exit after the first investigation")
     sub.add_parser("stop")
     sub.add_parser("resume")

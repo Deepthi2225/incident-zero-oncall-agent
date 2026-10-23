@@ -24,8 +24,8 @@ def parse_window(value, default=300):
 
 def prom_window(seconds):
     """Prometheus range selector. Metrics arrive about every 60 s (OTLP push), so rate() needs
-    at least 2m to see two samples."""
-    return f"{max(int(seconds), 120)}s"
+    at least 3m (2m windows often return no data; checked by the team on the live demo)."""
+    return f"{max(int(seconds), 180)}s"
 
 
 def cap(result, max_bytes=None):

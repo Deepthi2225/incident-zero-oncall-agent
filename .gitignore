@@ -7,3 +7,4 @@ STOP
 runs/*.json
 !runs/.gitkeep
 bundles/
+incidents.jsonl
