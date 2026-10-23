@@ -6,7 +6,7 @@ from oncall.sources.bundle import BundleSource, RecordingSource
 from oncall.tools.catalog import dispatch
 from oncall.tools.logs import classify, search_logs
 from oncall.tools.deploys import get_deploy_history
-from oncall.tools.metrics import get_service_health, save_baseline
+from oncall.tools.metrics import compute_health, get_service_health
 from oncall.tools.traces import analyze_trace, find_error_traces
 
 
@@ -74,6 +74,11 @@ def test_no_traces_is_registered_as_evidence(mem):
     assert out["traces_examined"] == 0 and registry.get(out["evidence"])
 
 
+def write_baseline():
+    """Capture a baseline from the in-memory source (save_baseline itself is live-only)."""
+    config.BASELINE_FILE.write_text(json.dumps({"source": "mem", **compute_health("5m")}))
+
+
 def _series(svc, value):
     return {"metric": {"service_name": svc}, "value": [0, str(value)]}
 
@@ -91,7 +96,7 @@ def _health_data(mem, err_cart):
 
 def test_service_health_flags_against_baseline(mem):
     _health_data(mem, err_cart=0.0)
-    save_baseline("5m")
+    write_baseline()
     _health_data(mem, err_cart=4.0)
     out = get_service_health("5m")
     top = out["flagged"][0]
@@ -103,7 +108,7 @@ def test_service_health_flags_against_baseline(mem):
 
 def test_silent_service_flagged(mem):
     _health_data(mem, err_cart=0.0)
-    save_baseline("5m")
+    write_baseline()
     mem.instant = {k: [s for s in v if s["metric"]["service_name"] != "cart"]
                     for k, v in mem.instant.items()}
     out = get_service_health("5m")

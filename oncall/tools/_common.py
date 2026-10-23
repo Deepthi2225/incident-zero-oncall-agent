@@ -5,7 +5,7 @@ import re
 
 from oncall import config
 from oncall.evidence import registry
-from oncall.sources import get_source, set_source
+from oncall.sources import add_source_args, apply_source_args, get_source, source_info
 
 _UNITS = {"s": 1, "m": 60, "h": 3600, "d": 86400}
 
@@ -101,17 +101,13 @@ def fmt_num(x, digits=3):
 
 
 def run_cli(fn, parser: argparse.ArgumentParser, to_kwargs):
-    """Standard CLI entry: --source live|fake|bundle, --fixtures DIR, --bundle DIR, --record DIR.
-    Prints the result (and with --evidence, the registered evidence)."""
-    parser.add_argument("--source", choices=["live", "fake", "bundle"], default=config.SOURCE)
-    parser.add_argument("--fixtures", help="fixture directory for --source fake")
-    parser.add_argument("--bundle", help="bundle directory for --source bundle")
-    parser.add_argument("--record", help="save live answers into this bundle directory")
+    """Standard CLI entry with the shared source flags (live by default; fixtures only with --test).
+    Prints the result stamped with the source used (and with --evidence, the registered evidence)."""
+    add_source_args(parser)
     parser.add_argument("--evidence", action="store_true", help="also print registered evidence")
     args = parser.parse_args()
-    set_source(args.source, bundle_dir=args.bundle, record_to=args.record,
-               fixture_dir=args.fixtures)
-    result = fn(**to_kwargs(args))
+    apply_source_args(parser, args)
+    result = {**source_info(), **fn(**to_kwargs(args))}
     print(json.dumps(result, indent=2, default=str))
     if args.evidence:
         print(json.dumps(registry.dump(), indent=2))
