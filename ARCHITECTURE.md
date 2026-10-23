@@ -8,7 +8,7 @@ report come next.
 
 ```mermaid
 flowchart LR
-    AL["Alert JSON<br/>watcher thresholds (no LLM)<br/>or manual / organiser"] --> AG
+    AL["Alert JSON<br/>detector.py: calibrated per-service limits (no LLM)<br/>or manual / organiser"] --> AG
 
     subgraph AG["agent/run.py: tool-calling loop (Claude, max 10 steps, kill switch)"]
         direction TB

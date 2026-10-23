@@ -82,11 +82,12 @@ ERROR_STATUS = os.getenv("ONCALL_ERROR_STATUS", "STATUS_CODE_ERROR")
 SPAN_KIND_LABEL = "span_kind"
 SERVER_KINDS = ["SPAN_KIND_SERVER", "SPAN_KIND_CONSUMER"]
 
-# --- alert thresholds (watcher, no LLM) --------------------------------------
-ALERT_ERROR_RATE = float(os.getenv("ALERT_ERROR_RATE", "0.05"))      # 5 % of calls
-ALERT_P95_MS = float(os.getenv("ALERT_P95_MS", "1500"))
-ALERT_P95_X_BASELINE = float(os.getenv("ALERT_P95_X_BASELINE", "3"))  # 3x baseline p95
-ALERT_MIN_RPS = float(os.getenv("ALERT_MIN_RPS", "0.05"))             # ignore near-idle series
+# --- investigation thresholds (get_service_health) ---------------------------
+# Alerting itself lives in detector.py (the one detector); these only decide which services
+# the agent's health view flags. Same relative rules as the detector.
+SLOW_NO_BASELINE_MS = float(os.getenv("SLOW_NO_BASELINE_MS", "1500"))  # used only without a baseline
+SILENT_RATIO = float(os.getenv("SILENT_RATIO", "0.2"))                 # rps below 20% of baseline
+SILENT_MIN_BASE_RPS = float(os.getenv("SILENT_MIN_BASE_RPS", "0.005"))  # idle services never silent
 
 # --- agent -------------------------------------------------------------------
 MODEL = os.getenv("ONCALL_MODEL", "claude-opus-5-5")

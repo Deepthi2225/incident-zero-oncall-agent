@@ -5,7 +5,7 @@
   python -m oncall investigate --service checkout --signal error_rate --value 0.3
   python -m oncall investigate --alert-file alert.json
   python -m oncall --test investigate --alert-file tests/fixtures/payment_down/alert.json
-  python -m oncall watch                         threshold watcher -> investigation
+  python -m oncall watch                         detector.py -> investigation
   python -m oncall stop | resume                 kill switch on / off
 
 Source flags (before the command). Default is live. --source bundle --bundle DIR replays a recording;
@@ -81,10 +81,12 @@ def cmd_investigate(args):
 
 
 def cmd_watch(args):
+    # One source of truth for detection: detector.py and its calibrated per-service limits.
+    sys.path.insert(0, str(config.ROOT))
+    import detector
     from oncall.agent.run import run_agent
-    from oncall.watcher import watch
-    watch(lambda alert: run_agent(alert), interval=args.interval, window=args.window,
-          once=args.once)
+    detector.POLL_SECS = args.interval
+    detector.run(on_incident=run_agent, once=args.once)
 
 
 def cmd_stop(_args):
@@ -114,8 +116,7 @@ def main():
     inv.add_argument("--max-steps", type=int)
     inv.add_argument("--json", action="store_true", help="print the summary JSON at the end")
     w = sub.add_parser("watch")
-    w.add_argument("--interval", type=int, default=15)
-    w.add_argument("--window", default="3m")
+    w.add_argument("--interval", type=int, default=30, help="seconds between polls")
     w.add_argument("--once", action="store_true", help="exit after the first investigation")
     sub.add_parser("stop")
     sub.add_parser("resume")

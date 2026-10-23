@@ -3,8 +3,8 @@
     python scripts/demo.py stop-payment [--wait 180] [--save-baseline]
     python scripts/demo.py stop-payment --test     rehearsal on fixtures: no docker, no injection
 
-Live by default. The agent only receives an alert built from telemetry by the threshold watcher;
-it is never told which fault was injected. The fault is always reset at the end, even on Ctrl-C
+Live by default. The agent only receives an alert that detector.py (the one detector, with its
+calibrated per-service limits) builds from telemetry; it is never told which fault was injected. The fault is always reset at the end, even on Ctrl-C
 or errors. The summary records which source was used.
 """
 import argparse
@@ -17,22 +17,24 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 
+import detector  # noqa: E402
 import faultctl  # noqa: E402
 from oncall.agent.run import run_agent  # noqa: E402
 from oncall.sources import set_source, source_info  # noqa: E402
-from oncall.tools.metrics import compute_health, load_baseline, save_baseline  # noqa: E402
-from oncall.watcher import breaches, make_alert  # noqa: E402
+from oncall.tools.metrics import load_baseline, save_baseline  # noqa: E402
 
 
 def build_alert():
-    """Alert from the watcher's thresholds; generic entry-point alert if metrics have not caught up."""
+    """Incident from detector.py's calibrated limits; generic entry-point alert if nothing
+    breaches yet (metrics lag) or Prometheus is unreachable."""
+    if not detector.load_baseline():
+        print("warning: no detector baseline; run `python detector.py --calibrate 300` while healthy")
     try:
-        health = compute_health("3m")
-        found = breaches(health, load_baseline())
-        if found:
-            return make_alert(found, health["window_s"])
+        incident = detector.detect_once()
+        if incident:
+            return incident
     except Exception as e:  # metrics unavailable should not stop the demo
-        print(f"(watcher check failed: {e})")
+        print(f"(detector check failed: {e})")
     return {"source": "demo", "fired_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "service": "frontend-proxy", "signal": "user_reports",
             "note": "no metric threshold breached yet (metrics arrive about every 60 s); "
@@ -69,7 +71,10 @@ def main():
         set_source("test", fixture_dir=args.fixtures, allow_test=True)
         print(f"!!! TEST MODE ({source_info()['source_detail']}): nothing is injected; "
               f"the agent reads fixtures, not the demo")
-        record = run_agent(build_alert(), max_steps=args.max_steps)
+        # detector.py reads live Prometheus, so test mode uses the scenario's own alert.
+        fixture_dir = Path(source_info()["source_detail"].removeprefix("fixtures "))
+        alert = json.loads((HERE.parent / fixture_dir / "alert.json").read_text())
+        record = run_agent(alert, max_steps=args.max_steps)
     else:
         set_source("live")
         if args.save_baseline:
@@ -92,7 +97,8 @@ def main():
     print(json.dumps(record["summary"], indent=2, default=str))
     print(f"run saved to {record['path']} (outcome: {record['outcome']}, "
           f"source: {record['source']} - {record['source_detail']})")
+    return 0 if record["outcome"] == "submitted" else 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

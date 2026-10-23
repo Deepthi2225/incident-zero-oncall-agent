@@ -72,7 +72,7 @@ def _queries(window_s, kind_filter):
 
 
 def compute_health(window="5m"):
-    """Raw per-service numbers, no evidence registration. Used by the watcher and baseline."""
+    """Raw per-service numbers, no evidence registration. Used by get_service_health and baseline."""
     window_s = parse_window(window)
     queries = _queries(window_s, kind_filter=True)
     data = {k: _by_service(q) for k, q in queries.items()}
@@ -120,6 +120,12 @@ def save_baseline(window="5m"):
     return {"saved": str(config.BASELINE_FILE), "services": len(health["services"]), **info}
 
 
+def is_silent(rps_now, rps_baseline):
+    """True when a service that had real traffic dropped below SILENT_RATIO of it."""
+    base = rps_baseline or 0.0
+    return base >= config.SILENT_MIN_BASE_RPS and (rps_now or 0.0) < config.SILENT_RATIO * base
+
+
 def _ratio(now, before):
     if now is None or before in (None, 0):
         return None
@@ -143,9 +149,12 @@ def _assess(svc, row, base):
     if worse("client_error_rate"):
         flags.append("client_call_errors")
     p95 = row["p95_ms"]
-    if p95 is not None and p95 >= SLOW_MIN_MS and (
-            p95 >= config.ALERT_P95_MS or (row.get("p95_ratio") or 0) >= SLOW_RATIO):
-        flags.append("slow")
+    # Slow is relative to the service's own baseline; the absolute limit applies only without one.
+    if p95 is not None and p95 >= SLOW_MIN_MS:
+        ratio = row.get("p95_ratio")
+        if (ratio is not None and ratio >= SLOW_RATIO) or (
+                ratio is None and p95 >= config.SLOW_NO_BASELINE_MS):
+            flags.append("slow")
     if row.get("rps_ratio") is not None:
         if row["rps_ratio"] >= SPIKE_RATIO:
             flags.append("traffic_spike")
@@ -168,10 +177,9 @@ def get_service_health(window="5m", compare_baseline=True):
     for svc, row in health["services"].items():
         rows.append({"service": svc, **_assess(svc, dict(row), base_services)})
 
-    # Services that served traffic in the baseline but have no server spans now.
+    # Silent: traffic below SILENT_RATIO of the service's own baseline (or gone entirely).
     for svc, b in base_services.items():
-        if (b.get("rps") or 0) >= config.ALERT_MIN_RPS and \
-                (health["services"].get(svc, {}).get("rps") or 0) < config.ALERT_MIN_RPS:
+        if is_silent(health["services"].get(svc, {}).get("rps"), b.get("rps")):
             existing = next((r for r in rows if r["service"] == svc), None)
             if existing:
                 existing["flags"].append("silent")
