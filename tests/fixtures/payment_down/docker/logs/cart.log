@@ -1,0 +1,10 @@
+2026-10-23T07:16:40.000000000Z info: cart.cartstore.ValkeyCartStore[0] GetCartAsync called with userId=user-0
+2026-10-23T07:17:00.000000000Z info: cart.cartstore.ValkeyCartStore[0] GetCartAsync called with userId=user-1
+2026-10-23T07:17:20.000000000Z info: cart.cartstore.ValkeyCartStore[0] GetCartAsync called with userId=user-2
+2026-10-23T07:17:40.000000000Z info: cart.cartstore.ValkeyCartStore[0] GetCartAsync called with userId=user-3
+2026-10-23T07:18:00.000000000Z info: cart.cartstore.ValkeyCartStore[0] GetCartAsync called with userId=user-4
+2026-10-23T07:18:20.000000000Z info: cart.cartstore.ValkeyCartStore[0] GetCartAsync called with userId=user-5
+2026-10-23T07:18:40.000000000Z info: cart.cartstore.ValkeyCartStore[0] GetCartAsync called with userId=user-6
+2026-10-23T07:19:00.000000000Z info: cart.cartstore.ValkeyCartStore[0] GetCartAsync called with userId=user-7
+2026-10-23T07:19:20.000000000Z info: cart.cartstore.ValkeyCartStore[0] GetCartAsync called with userId=user-8
+2026-10-23T07:19:40.000000000Z info: cart.cartstore.ValkeyCartStore[0] GetCartAsync called with userId=user-9

@@ -1,0 +1,5 @@
+{
+ "now": 1792740000,
+ "scenario": "payment container stopped with docker stop",
+ "synthetic": true
+}

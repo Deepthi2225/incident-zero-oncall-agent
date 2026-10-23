@@ -101,13 +101,16 @@ def fmt_num(x, digits=3):
 
 
 def run_cli(fn, parser: argparse.ArgumentParser, to_kwargs):
-    """Standard CLI entry: --source live|bundle, --bundle DIR, --record DIR; prints result + evidence."""
-    parser.add_argument("--source", choices=["live", "bundle"], default=config.SOURCE)
+    """Standard CLI entry: --source live|fake|bundle, --fixtures DIR, --bundle DIR, --record DIR.
+    Prints the result (and with --evidence, the registered evidence)."""
+    parser.add_argument("--source", choices=["live", "fake", "bundle"], default=config.SOURCE)
+    parser.add_argument("--fixtures", help="fixture directory for --source fake")
     parser.add_argument("--bundle", help="bundle directory for --source bundle")
     parser.add_argument("--record", help="save live answers into this bundle directory")
     parser.add_argument("--evidence", action="store_true", help="also print registered evidence")
     args = parser.parse_args()
-    set_source(args.source, bundle_dir=args.bundle, record_to=args.record)
+    set_source(args.source, bundle_dir=args.bundle, record_to=args.record,
+               fixture_dir=args.fixtures)
     result = fn(**to_kwargs(args))
     print(json.dumps(result, indent=2, default=str))
     if args.evidence:

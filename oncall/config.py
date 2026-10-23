@@ -11,8 +11,10 @@ BASELINE_FILE = Path(os.getenv("ONCALL_BASELINE", RUNS_DIR / "baseline.json"))
 ACTION_LOG = Path(os.getenv("ONCALL_ACTION_LOG", RUNS_DIR / "actions.jsonl"))
 
 # --- data source -------------------------------------------------------------
-# "live" talks to the running demo; "bundle" replays a recorded bundle directory.
+# "live" talks to the running demo; "fake" answers from JSON fixtures shaped like the real APIs;
+# "bundle" replays a directory recorded from a live run (--record).
 SOURCE = os.getenv("ONCALL_SOURCE", "live")
+FIXTURE_DIR = Path(os.getenv("ONCALL_FIXTURE_DIR", ROOT / "tests" / "fixtures" / "payment_down"))
 BUNDLE_DIR = Path(os.getenv("ONCALL_BUNDLE_DIR", ROOT / "bundles" / "current"))
 
 # --- endpoints ---------------------------------------------------------------
@@ -62,7 +64,7 @@ ALERT_MIN_RPS = float(os.getenv("ALERT_MIN_RPS", "0.05"))             # ignore n
 # --- agent -------------------------------------------------------------------
 MODEL = os.getenv("ONCALL_MODEL", "claude-opus-5-5")
 EFFORT = os.getenv("ONCALL_EFFORT", "high")
-MAX_STEPS = int(os.getenv("ONCALL_MAX_STEPS", "12"))
+MAX_STEPS = int(os.getenv("ONCALL_MAX_STEPS", "10"))
 # Server-side refusal fallback. Disable if the organisers' key/proxy rejects the beta.
 USE_FALLBACKS = os.getenv("ONCALL_FALLBACKS", "1") == "1"
 TOOL_RESULT_MAX_BYTES = 2000

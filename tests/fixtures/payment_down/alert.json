@@ -1,0 +1,17 @@
+{
+ "source": "watcher",
+ "fired_at": "2026-10-23T07:20:00Z",
+ "service": "checkout",
+ "signal": "error_rate",
+ "value": 0.952,
+ "threshold": 0.05,
+ "window_s": 120,
+ "other_breaches": [
+  {
+   "service": "frontend",
+   "signal": "error_rate",
+   "value": 0.044,
+   "threshold": 0.05
+  }
+ ]
+}

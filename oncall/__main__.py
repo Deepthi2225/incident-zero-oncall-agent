@@ -55,7 +55,7 @@ def cmd_check(_args):
 
 
 def cmd_baseline(args):
-    from oncall.tools.service_health import save_baseline
+    from oncall.tools.metrics import save_baseline
     print(json.dumps(save_baseline(args.window), indent=2))
 
 

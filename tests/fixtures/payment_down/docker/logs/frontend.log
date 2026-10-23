@@ -1,0 +1,12 @@
+2026-10-23T07:18:25.059999943Z Error: 13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses
+2026-10-23T07:18:25.059999943Z     at callErrorFromStatus (/app/node_modules/@grpc/grpc-js/build/src/call.js:31:19)
+2026-10-23T07:18:40.059999943Z Error: 13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses
+2026-10-23T07:18:40.059999943Z     at callErrorFromStatus (/app/node_modules/@grpc/grpc-js/build/src/call.js:31:19)
+2026-10-23T07:18:55.059999943Z Error: 13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses
+2026-10-23T07:18:55.059999943Z     at callErrorFromStatus (/app/node_modules/@grpc/grpc-js/build/src/call.js:31:19)
+2026-10-23T07:19:10.059999943Z Error: 13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses
+2026-10-23T07:19:10.059999943Z     at callErrorFromStatus (/app/node_modules/@grpc/grpc-js/build/src/call.js:31:19)
+2026-10-23T07:19:25.059999943Z Error: 13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses
+2026-10-23T07:19:25.059999943Z     at callErrorFromStatus (/app/node_modules/@grpc/grpc-js/build/src/call.js:31:19)
+2026-10-23T07:19:40.059999943Z Error: 13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses
+2026-10-23T07:19:40.059999943Z     at callErrorFromStatus (/app/node_modules/@grpc/grpc-js/build/src/call.js:31:19)
