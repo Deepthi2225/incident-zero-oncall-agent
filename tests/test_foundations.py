@@ -74,3 +74,18 @@ def test_validate_drops_invented_evidence():
     assert s["validation"]["dropped_evidence_ids"] == ["E42", "E99"]
     assert s["suspected_origin"]["confidence"] == 1.0 and s["status"] == "origin_suspected"
     assert s["suspected_origin"]["evidence_detail"][real].startswith("checkout's Charge")
+
+
+def test_load_dotenv(tmp_path, monkeypatch):
+    from oncall.config import load_dotenv
+    env = tmp_path / ".env"
+    env.write_text('# comment\nONCALL_T1="from-file"\nexport ONCALL_T2=two\nONCALL_T3=file\nBROKEN\n')
+    monkeypatch.delenv("ONCALL_T1", raising=False)
+    monkeypatch.delenv("ONCALL_T2", raising=False)
+    monkeypatch.setenv("ONCALL_T3", "real-env-wins")
+    load_dotenv(env)
+    import os
+    assert os.environ["ONCALL_T1"] == "from-file" and os.environ["ONCALL_T2"] == "two"
+    assert os.environ["ONCALL_T3"] == "real-env-wins"
+    monkeypatch.delenv("ONCALL_T1")
+    monkeypatch.delenv("ONCALL_T2")
