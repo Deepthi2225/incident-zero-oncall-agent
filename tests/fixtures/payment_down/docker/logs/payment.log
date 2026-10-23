@@ -1,0 +1,16 @@
+2026-10-23T07:13:20.000000000Z {"level": 30, "time": 1792739600000, "pid": 1, "hostname": "payment", "msg": "Charge request received.", "request": {"amount": {"currencyCode": "USD", "units": 120}}}
+2026-10-23T07:13:20.019999981Z {"level": 30, "time": 1792739600020, "pid": 1, "hostname": "payment", "msg": "Transaction complete.", "transactionId": "00000000-0000-4000-8000-000000000000", "cardType": "visa"}
+2026-10-23T07:13:55.000000000Z {"level": 30, "time": 1792739635000, "pid": 1, "hostname": "payment", "msg": "Charge request received.", "request": {"amount": {"currencyCode": "USD", "units": 121}}}
+2026-10-23T07:13:55.019999981Z {"level": 30, "time": 1792739635020, "pid": 1, "hostname": "payment", "msg": "Transaction complete.", "transactionId": "00000001-0000-4000-8000-000000000000", "cardType": "visa"}
+2026-10-23T07:14:30.000000000Z {"level": 30, "time": 1792739670000, "pid": 1, "hostname": "payment", "msg": "Charge request received.", "request": {"amount": {"currencyCode": "USD", "units": 122}}}
+2026-10-23T07:14:30.019999981Z {"level": 30, "time": 1792739670020, "pid": 1, "hostname": "payment", "msg": "Transaction complete.", "transactionId": "00000002-0000-4000-8000-000000000000", "cardType": "visa"}
+2026-10-23T07:15:05.000000000Z {"level": 30, "time": 1792739705000, "pid": 1, "hostname": "payment", "msg": "Charge request received.", "request": {"amount": {"currencyCode": "USD", "units": 123}}}
+2026-10-23T07:15:05.019999981Z {"level": 30, "time": 1792739705020, "pid": 1, "hostname": "payment", "msg": "Transaction complete.", "transactionId": "00000003-0000-4000-8000-000000000000", "cardType": "visa"}
+2026-10-23T07:15:40.000000000Z {"level": 30, "time": 1792739740000, "pid": 1, "hostname": "payment", "msg": "Charge request received.", "request": {"amount": {"currencyCode": "USD", "units": 124}}}
+2026-10-23T07:15:40.019999981Z {"level": 30, "time": 1792739740020, "pid": 1, "hostname": "payment", "msg": "Transaction complete.", "transactionId": "00000004-0000-4000-8000-000000000000", "cardType": "visa"}
+2026-10-23T07:16:15.000000000Z {"level": 30, "time": 1792739775000, "pid": 1, "hostname": "payment", "msg": "Charge request received.", "request": {"amount": {"currencyCode": "USD", "units": 125}}}
+2026-10-23T07:16:15.019999981Z {"level": 30, "time": 1792739775020, "pid": 1, "hostname": "payment", "msg": "Transaction complete.", "transactionId": "00000005-0000-4000-8000-000000000000", "cardType": "visa"}
+2026-10-23T07:16:50.000000000Z {"level": 30, "time": 1792739810000, "pid": 1, "hostname": "payment", "msg": "Charge request received.", "request": {"amount": {"currencyCode": "USD", "units": 126}}}
+2026-10-23T07:16:50.019999981Z {"level": 30, "time": 1792739810020, "pid": 1, "hostname": "payment", "msg": "Transaction complete.", "transactionId": "00000006-0000-4000-8000-000000000000", "cardType": "visa"}
+2026-10-23T07:17:25.000000000Z {"level": 30, "time": 1792739845000, "pid": 1, "hostname": "payment", "msg": "Charge request received.", "request": {"amount": {"currencyCode": "USD", "units": 127}}}
+2026-10-23T07:17:25.019999981Z {"level": 30, "time": 1792739845020, "pid": 1, "hostname": "payment", "msg": "Transaction complete.", "transactionId": "00000007-0000-4000-8000-000000000000", "cardType": "visa"}

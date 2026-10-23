@@ -6,6 +6,12 @@ class ForbiddenAccess(RuntimeError):
     pass
 
 
+def allowed(target):
+    """True if target is not feature-flag related (used to filter container lists)."""
+    lowered = str(target).lower()
+    return not any(bad in lowered for bad in config.FORBIDDEN_SUBSTRINGS)
+
+
 def check(target):
     """Raise ForbiddenAccess if target (URL, path or command string) is off-limits."""
     lowered = str(target).lower()

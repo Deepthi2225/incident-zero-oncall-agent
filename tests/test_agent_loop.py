@@ -36,8 +36,8 @@ def make_agent(monkeypatch, script):
     return agent, client
 
 
-def test_loop_runs_tools_then_submits(fake, monkeypatch):
-    fake.traces = [propagated_payment_failure(f"t{i}") for i in range(3)]
+def test_loop_runs_tools_then_submits(mem, monkeypatch):
+    mem.traces = [propagated_payment_failure(f"t{i}") for i in range(3)]
 
     def script(n, kwargs):
         if n == 1:
@@ -65,7 +65,7 @@ def test_loop_runs_tools_then_submits(fake, monkeypatch):
     assert "thinking" in client.calls[0] and client.calls[0]["model"] == "claude-opus-5-5"
 
 
-def test_step_budget_forces_escalation(fake, monkeypatch):
+def test_step_budget_forces_escalation(mem, monkeypatch):
     monkeypatch.setattr(loop.config, "MAX_STEPS", 3)
     agent, client = make_agent(monkeypatch, lambda n, kw: response(
         block_tool(f"u{n}", "list_trace_services", {})))
@@ -77,7 +77,7 @@ def test_step_budget_forces_escalation(fake, monkeypatch):
     assert "Step budget exhausted" in last["content"][-1]["text"]
 
 
-def test_kill_switch_stops_run(fake, monkeypatch):
+def test_kill_switch_stops_run(mem, monkeypatch):
     loop.config.KILL_SWITCH_FILE.write_text("stop")
     agent, client = make_agent(monkeypatch, lambda n, kw: response())
     rec = agent.run({"service": "cart"})

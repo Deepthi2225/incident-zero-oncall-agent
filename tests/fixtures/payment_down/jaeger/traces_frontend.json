@@ -1,0 +1,3443 @@
+{
+ "data": [
+  {
+   "traceID": "7b2e4c00000000000000000000000000",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "7b2e4c00000000000000000000000000",
+     "spanID": "0000000000000001",
+     "operationName": "ingress",
+     "references": [],
+     "startTime": 1792739910000000,
+     "duration": 61000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "upstream_cluster",
+       "type": "string",
+       "value": "frontend"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "500"
+      }
+     ],
+     "logs": [],
+     "processID": "p1",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000000",
+     "spanID": "0000000000000002",
+     "operationName": "POST /api/checkout",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000000",
+       "spanID": "0000000000000001"
+      }
+     ],
+     "startTime": 1792739910000500,
+     "duration": 59000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000000",
+     "spanID": "0000000000000003",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000000",
+       "spanID": "0000000000000002"
+      }
+     ],
+     "startTime": 1792739910000900,
+     "duration": 56000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.CheckoutService"
+      },
+      {
+       "key": "rpc.grpc.status_code",
+       "type": "int64",
+       "value": 13
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000000",
+     "spanID": "0000000000000004",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000000",
+       "spanID": "0000000000000003"
+      }
+     ],
+     "startTime": 1792739910001500,
+     "duration": 52000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "rpc.grpc.status_code",
+       "type": "int64",
+       "value": 13
+      },
+      {
+       "key": "app.user.id",
+       "type": "string",
+       "value": "user-0"
+      },
+      {
+       "key": "app.user.currency",
+       "type": "string",
+       "value": "USD"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000000",
+     "spanID": "0000000000000005",
+     "operationName": "oteldemo.CartService/GetCart",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000000",
+       "spanID": "0000000000000004"
+      }
+     ],
+     "startTime": 1792739910002000,
+     "duration": 9000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.CartService"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000000",
+     "spanID": "0000000000000006",
+     "operationName": "oteldemo.CartService/GetCart",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000000",
+       "spanID": "0000000000000005"
+      }
+     ],
+     "startTime": 1792739910002400,
+     "duration": 7000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p4",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000000",
+     "spanID": "0000000000000007",
+     "operationName": "oteldemo.ProductCatalogService/GetProduct",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000000",
+       "spanID": "0000000000000004"
+      }
+     ],
+     "startTime": 1792739910012000,
+     "duration": 5000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.ProductCatalogService"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000000",
+     "spanID": "0000000000000008",
+     "operationName": "oteldemo.ProductCatalogService/GetProduct",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000000",
+       "spanID": "0000000000000007"
+      }
+     ],
+     "startTime": 1792739910012300,
+     "duration": 4100,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "app.product.id",
+       "type": "string",
+       "value": "OLJCESPC7Z"
+      }
+     ],
+     "logs": [],
+     "processID": "p5",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000000",
+     "spanID": "0000000000000009",
+     "operationName": "oteldemo.CurrencyService/Convert",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000000",
+       "spanID": "0000000000000004"
+      }
+     ],
+     "startTime": 1792739910018000,
+     "duration": 2500,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.CurrencyService"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000000",
+     "spanID": "000000000000000a",
+     "operationName": "Convert",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000000",
+       "spanID": "0000000000000009"
+      }
+     ],
+     "startTime": 1792739910018200,
+     "duration": 1800,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p6",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000000",
+     "spanID": "000000000000000b",
+     "operationName": "POST",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000000",
+       "spanID": "0000000000000004"
+      }
+     ],
+     "startTime": 1792739910022000,
+     "duration": 9500,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "url.full",
+       "type": "string",
+       "value": "http://shipping:50050/get-quote"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000000",
+     "spanID": "000000000000000c",
+     "operationName": "POST /get-quote",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000000",
+       "spanID": "000000000000000b"
+      }
+     ],
+     "startTime": 1792739910022400,
+     "duration": 8100,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p7",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000000",
+     "spanID": "000000000000000d",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000000",
+       "spanID": "0000000000000004"
+      }
+     ],
+     "startTime": 1792739910033000,
+     "duration": 1200,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.PaymentService"
+      },
+      {
+       "key": "rpc.method",
+       "type": "string",
+       "value": "Charge"
+      },
+      {
+       "key": "rpc.grpc.status_code",
+       "type": "int64",
+       "value": 14
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "payment"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "name resolver error: produced zero addresses"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    }
+   ]
+  },
+  {
+   "traceID": "7b2e4c00000000000000000000000001",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "7b2e4c00000000000000000000000001",
+     "spanID": "0100000000000001",
+     "operationName": "ingress",
+     "references": [],
+     "startTime": 1792739925000000,
+     "duration": 61000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "upstream_cluster",
+       "type": "string",
+       "value": "frontend"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "500"
+      }
+     ],
+     "logs": [],
+     "processID": "p1",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000001",
+     "spanID": "0100000000000002",
+     "operationName": "POST /api/checkout",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000001",
+       "spanID": "0100000000000001"
+      }
+     ],
+     "startTime": 1792739925000500,
+     "duration": 59000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000001",
+     "spanID": "0100000000000003",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000001",
+       "spanID": "0100000000000002"
+      }
+     ],
+     "startTime": 1792739925000900,
+     "duration": 56000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.CheckoutService"
+      },
+      {
+       "key": "rpc.grpc.status_code",
+       "type": "int64",
+       "value": 13
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000001",
+     "spanID": "0100000000000004",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000001",
+       "spanID": "0100000000000003"
+      }
+     ],
+     "startTime": 1792739925001500,
+     "duration": 52000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "rpc.grpc.status_code",
+       "type": "int64",
+       "value": 13
+      },
+      {
+       "key": "app.user.id",
+       "type": "string",
+       "value": "user-1"
+      },
+      {
+       "key": "app.user.currency",
+       "type": "string",
+       "value": "USD"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000001",
+     "spanID": "0100000000000005",
+     "operationName": "oteldemo.CartService/GetCart",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000001",
+       "spanID": "0100000000000004"
+      }
+     ],
+     "startTime": 1792739925002000,
+     "duration": 9000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.CartService"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000001",
+     "spanID": "0100000000000006",
+     "operationName": "oteldemo.CartService/GetCart",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000001",
+       "spanID": "0100000000000005"
+      }
+     ],
+     "startTime": 1792739925002400,
+     "duration": 7000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p4",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000001",
+     "spanID": "0100000000000007",
+     "operationName": "oteldemo.ProductCatalogService/GetProduct",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000001",
+       "spanID": "0100000000000004"
+      }
+     ],
+     "startTime": 1792739925012000,
+     "duration": 5000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.ProductCatalogService"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000001",
+     "spanID": "0100000000000008",
+     "operationName": "oteldemo.ProductCatalogService/GetProduct",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000001",
+       "spanID": "0100000000000007"
+      }
+     ],
+     "startTime": 1792739925012300,
+     "duration": 4100,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "app.product.id",
+       "type": "string",
+       "value": "66VCHSJNUP"
+      }
+     ],
+     "logs": [],
+     "processID": "p5",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000001",
+     "spanID": "0100000000000009",
+     "operationName": "oteldemo.CurrencyService/Convert",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000001",
+       "spanID": "0100000000000004"
+      }
+     ],
+     "startTime": 1792739925018000,
+     "duration": 2500,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.CurrencyService"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000001",
+     "spanID": "010000000000000a",
+     "operationName": "Convert",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000001",
+       "spanID": "0100000000000009"
+      }
+     ],
+     "startTime": 1792739925018200,
+     "duration": 1800,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p6",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000001",
+     "spanID": "010000000000000b",
+     "operationName": "POST",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000001",
+       "spanID": "0100000000000004"
+      }
+     ],
+     "startTime": 1792739925022000,
+     "duration": 9500,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "url.full",
+       "type": "string",
+       "value": "http://shipping:50050/get-quote"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000001",
+     "spanID": "010000000000000c",
+     "operationName": "POST /get-quote",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000001",
+       "spanID": "010000000000000b"
+      }
+     ],
+     "startTime": 1792739925022400,
+     "duration": 8100,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p7",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000001",
+     "spanID": "010000000000000d",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000001",
+       "spanID": "0100000000000004"
+      }
+     ],
+     "startTime": 1792739925033000,
+     "duration": 1200,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.PaymentService"
+      },
+      {
+       "key": "rpc.method",
+       "type": "string",
+       "value": "Charge"
+      },
+      {
+       "key": "rpc.grpc.status_code",
+       "type": "int64",
+       "value": 14
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "payment"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "name resolver error: produced zero addresses"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    }
+   ]
+  },
+  {
+   "traceID": "7b2e4c00000000000000000000000002",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "7b2e4c00000000000000000000000002",
+     "spanID": "0200000000000001",
+     "operationName": "ingress",
+     "references": [],
+     "startTime": 1792739940000000,
+     "duration": 61000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "upstream_cluster",
+       "type": "string",
+       "value": "frontend"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "500"
+      }
+     ],
+     "logs": [],
+     "processID": "p1",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000002",
+     "spanID": "0200000000000002",
+     "operationName": "POST /api/checkout",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000002",
+       "spanID": "0200000000000001"
+      }
+     ],
+     "startTime": 1792739940000500,
+     "duration": 59000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000002",
+     "spanID": "0200000000000003",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000002",
+       "spanID": "0200000000000002"
+      }
+     ],
+     "startTime": 1792739940000900,
+     "duration": 56000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.CheckoutService"
+      },
+      {
+       "key": "rpc.grpc.status_code",
+       "type": "int64",
+       "value": 13
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000002",
+     "spanID": "0200000000000004",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000002",
+       "spanID": "0200000000000003"
+      }
+     ],
+     "startTime": 1792739940001500,
+     "duration": 52000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "rpc.grpc.status_code",
+       "type": "int64",
+       "value": 13
+      },
+      {
+       "key": "app.user.id",
+       "type": "string",
+       "value": "user-2"
+      },
+      {
+       "key": "app.user.currency",
+       "type": "string",
+       "value": "USD"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000002",
+     "spanID": "0200000000000005",
+     "operationName": "oteldemo.CartService/GetCart",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000002",
+       "spanID": "0200000000000004"
+      }
+     ],
+     "startTime": 1792739940002000,
+     "duration": 9000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.CartService"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000002",
+     "spanID": "0200000000000006",
+     "operationName": "oteldemo.CartService/GetCart",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000002",
+       "spanID": "0200000000000005"
+      }
+     ],
+     "startTime": 1792739940002400,
+     "duration": 7000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p4",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000002",
+     "spanID": "0200000000000007",
+     "operationName": "oteldemo.ProductCatalogService/GetProduct",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000002",
+       "spanID": "0200000000000004"
+      }
+     ],
+     "startTime": 1792739940012000,
+     "duration": 5000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.ProductCatalogService"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000002",
+     "spanID": "0200000000000008",
+     "operationName": "oteldemo.ProductCatalogService/GetProduct",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000002",
+       "spanID": "0200000000000007"
+      }
+     ],
+     "startTime": 1792739940012300,
+     "duration": 4100,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "app.product.id",
+       "type": "string",
+       "value": "1YMWWN1N4O"
+      }
+     ],
+     "logs": [],
+     "processID": "p5",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000002",
+     "spanID": "0200000000000009",
+     "operationName": "oteldemo.CurrencyService/Convert",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000002",
+       "spanID": "0200000000000004"
+      }
+     ],
+     "startTime": 1792739940018000,
+     "duration": 2500,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.CurrencyService"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000002",
+     "spanID": "020000000000000a",
+     "operationName": "Convert",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000002",
+       "spanID": "0200000000000009"
+      }
+     ],
+     "startTime": 1792739940018200,
+     "duration": 1800,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p6",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000002",
+     "spanID": "020000000000000b",
+     "operationName": "POST",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000002",
+       "spanID": "0200000000000004"
+      }
+     ],
+     "startTime": 1792739940022000,
+     "duration": 9500,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "url.full",
+       "type": "string",
+       "value": "http://shipping:50050/get-quote"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000002",
+     "spanID": "020000000000000c",
+     "operationName": "POST /get-quote",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000002",
+       "spanID": "020000000000000b"
+      }
+     ],
+     "startTime": 1792739940022400,
+     "duration": 8100,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p7",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000002",
+     "spanID": "020000000000000d",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000002",
+       "spanID": "0200000000000004"
+      }
+     ],
+     "startTime": 1792739940033000,
+     "duration": 1200,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.PaymentService"
+      },
+      {
+       "key": "rpc.method",
+       "type": "string",
+       "value": "Charge"
+      },
+      {
+       "key": "rpc.grpc.status_code",
+       "type": "int64",
+       "value": 14
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "payment"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "name resolver error: produced zero addresses"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    }
+   ]
+  },
+  {
+   "traceID": "7b2e4c00000000000000000000000003",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "7b2e4c00000000000000000000000003",
+     "spanID": "0300000000000001",
+     "operationName": "ingress",
+     "references": [],
+     "startTime": 1792739955000000,
+     "duration": 61000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "upstream_cluster",
+       "type": "string",
+       "value": "frontend"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "500"
+      }
+     ],
+     "logs": [],
+     "processID": "p1",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000003",
+     "spanID": "0300000000000002",
+     "operationName": "POST /api/checkout",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000003",
+       "spanID": "0300000000000001"
+      }
+     ],
+     "startTime": 1792739955000500,
+     "duration": 59000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000003",
+     "spanID": "0300000000000003",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000003",
+       "spanID": "0300000000000002"
+      }
+     ],
+     "startTime": 1792739955000900,
+     "duration": 56000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.CheckoutService"
+      },
+      {
+       "key": "rpc.grpc.status_code",
+       "type": "int64",
+       "value": 13
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000003",
+     "spanID": "0300000000000004",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000003",
+       "spanID": "0300000000000003"
+      }
+     ],
+     "startTime": 1792739955001500,
+     "duration": 52000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "rpc.grpc.status_code",
+       "type": "int64",
+       "value": 13
+      },
+      {
+       "key": "app.user.id",
+       "type": "string",
+       "value": "user-3"
+      },
+      {
+       "key": "app.user.currency",
+       "type": "string",
+       "value": "USD"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000003",
+     "spanID": "0300000000000005",
+     "operationName": "oteldemo.CartService/GetCart",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000003",
+       "spanID": "0300000000000004"
+      }
+     ],
+     "startTime": 1792739955002000,
+     "duration": 9000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.CartService"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000003",
+     "spanID": "0300000000000006",
+     "operationName": "oteldemo.CartService/GetCart",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000003",
+       "spanID": "0300000000000005"
+      }
+     ],
+     "startTime": 1792739955002400,
+     "duration": 7000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p4",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000003",
+     "spanID": "0300000000000007",
+     "operationName": "oteldemo.ProductCatalogService/GetProduct",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000003",
+       "spanID": "0300000000000004"
+      }
+     ],
+     "startTime": 1792739955012000,
+     "duration": 5000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.ProductCatalogService"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000003",
+     "spanID": "0300000000000008",
+     "operationName": "oteldemo.ProductCatalogService/GetProduct",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000003",
+       "spanID": "0300000000000007"
+      }
+     ],
+     "startTime": 1792739955012300,
+     "duration": 4100,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "app.product.id",
+       "type": "string",
+       "value": "OLJCESPC7Z"
+      }
+     ],
+     "logs": [],
+     "processID": "p5",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000003",
+     "spanID": "0300000000000009",
+     "operationName": "oteldemo.CurrencyService/Convert",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000003",
+       "spanID": "0300000000000004"
+      }
+     ],
+     "startTime": 1792739955018000,
+     "duration": 2500,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.CurrencyService"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000003",
+     "spanID": "030000000000000a",
+     "operationName": "Convert",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000003",
+       "spanID": "0300000000000009"
+      }
+     ],
+     "startTime": 1792739955018200,
+     "duration": 1800,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p6",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000003",
+     "spanID": "030000000000000b",
+     "operationName": "POST",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000003",
+       "spanID": "0300000000000004"
+      }
+     ],
+     "startTime": 1792739955022000,
+     "duration": 9500,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "url.full",
+       "type": "string",
+       "value": "http://shipping:50050/get-quote"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000003",
+     "spanID": "030000000000000c",
+     "operationName": "POST /get-quote",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000003",
+       "spanID": "030000000000000b"
+      }
+     ],
+     "startTime": 1792739955022400,
+     "duration": 8100,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p7",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000003",
+     "spanID": "030000000000000d",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000003",
+       "spanID": "0300000000000004"
+      }
+     ],
+     "startTime": 1792739955033000,
+     "duration": 1200,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.PaymentService"
+      },
+      {
+       "key": "rpc.method",
+       "type": "string",
+       "value": "Charge"
+      },
+      {
+       "key": "rpc.grpc.status_code",
+       "type": "int64",
+       "value": 14
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "payment"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "name resolver error: produced zero addresses"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    }
+   ]
+  },
+  {
+   "traceID": "7b2e4c00000000000000000000000004",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "7b2e4c00000000000000000000000004",
+     "spanID": "0400000000000001",
+     "operationName": "ingress",
+     "references": [],
+     "startTime": 1792739970000000,
+     "duration": 61000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "upstream_cluster",
+       "type": "string",
+       "value": "frontend"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "500"
+      }
+     ],
+     "logs": [],
+     "processID": "p1",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000004",
+     "spanID": "0400000000000002",
+     "operationName": "POST /api/checkout",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000004",
+       "spanID": "0400000000000001"
+      }
+     ],
+     "startTime": 1792739970000500,
+     "duration": 59000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000004",
+     "spanID": "0400000000000003",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000004",
+       "spanID": "0400000000000002"
+      }
+     ],
+     "startTime": 1792739970000900,
+     "duration": 56000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.CheckoutService"
+      },
+      {
+       "key": "rpc.grpc.status_code",
+       "type": "int64",
+       "value": 13
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000004",
+     "spanID": "0400000000000004",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000004",
+       "spanID": "0400000000000003"
+      }
+     ],
+     "startTime": 1792739970001500,
+     "duration": 52000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "rpc.grpc.status_code",
+       "type": "int64",
+       "value": 13
+      },
+      {
+       "key": "app.user.id",
+       "type": "string",
+       "value": "user-4"
+      },
+      {
+       "key": "app.user.currency",
+       "type": "string",
+       "value": "USD"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000004",
+     "spanID": "0400000000000005",
+     "operationName": "oteldemo.CartService/GetCart",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000004",
+       "spanID": "0400000000000004"
+      }
+     ],
+     "startTime": 1792739970002000,
+     "duration": 9000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.CartService"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000004",
+     "spanID": "0400000000000006",
+     "operationName": "oteldemo.CartService/GetCart",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000004",
+       "spanID": "0400000000000005"
+      }
+     ],
+     "startTime": 1792739970002400,
+     "duration": 7000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p4",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000004",
+     "spanID": "0400000000000007",
+     "operationName": "oteldemo.ProductCatalogService/GetProduct",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000004",
+       "spanID": "0400000000000004"
+      }
+     ],
+     "startTime": 1792739970012000,
+     "duration": 5000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.ProductCatalogService"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000004",
+     "spanID": "0400000000000008",
+     "operationName": "oteldemo.ProductCatalogService/GetProduct",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000004",
+       "spanID": "0400000000000007"
+      }
+     ],
+     "startTime": 1792739970012300,
+     "duration": 4100,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "app.product.id",
+       "type": "string",
+       "value": "66VCHSJNUP"
+      }
+     ],
+     "logs": [],
+     "processID": "p5",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000004",
+     "spanID": "0400000000000009",
+     "operationName": "oteldemo.CurrencyService/Convert",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000004",
+       "spanID": "0400000000000004"
+      }
+     ],
+     "startTime": 1792739970018000,
+     "duration": 2500,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.CurrencyService"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000004",
+     "spanID": "040000000000000a",
+     "operationName": "Convert",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000004",
+       "spanID": "0400000000000009"
+      }
+     ],
+     "startTime": 1792739970018200,
+     "duration": 1800,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p6",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000004",
+     "spanID": "040000000000000b",
+     "operationName": "POST",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000004",
+       "spanID": "0400000000000004"
+      }
+     ],
+     "startTime": 1792739970022000,
+     "duration": 9500,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "url.full",
+       "type": "string",
+       "value": "http://shipping:50050/get-quote"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000004",
+     "spanID": "040000000000000c",
+     "operationName": "POST /get-quote",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000004",
+       "spanID": "040000000000000b"
+      }
+     ],
+     "startTime": 1792739970022400,
+     "duration": 8100,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p7",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "7b2e4c00000000000000000000000004",
+     "spanID": "040000000000000d",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7b2e4c00000000000000000000000004",
+       "spanID": "0400000000000004"
+      }
+     ],
+     "startTime": 1792739970033000,
+     "duration": 1200,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.PaymentService"
+      },
+      {
+       "key": "rpc.method",
+       "type": "string",
+       "value": "Charge"
+      },
+      {
+       "key": "rpc.grpc.status_code",
+       "type": "int64",
+       "value": 14
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "payment"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "name resolver error: produced zero addresses"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    }
+   ]
+  }
+ ],
+ "total": 5,
+ "limit": 0,
+ "offset": 0,
+ "errors": null
+}

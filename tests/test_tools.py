@@ -4,9 +4,9 @@ from oncall import config
 from oncall.evidence import registry
 from oncall.sources.bundle import BundleSource, RecordingSource
 from oncall.tools.catalog import dispatch
-from oncall.tools.containers import get_container_health
 from oncall.tools.logs import classify, search_logs
-from oncall.tools.service_health import get_service_health, save_baseline
+from oncall.tools.deploys import get_deploy_history
+from oncall.tools.metrics import get_service_health, save_baseline
 from oncall.tools.traces import analyze_trace, find_error_traces
 
 
@@ -56,8 +56,8 @@ def test_unreachable_callee_detected():
     assert o["service"] == "checkout" and o["no_server_span"]
 
 
-def test_find_error_traces_groups_and_registers(fake):
-    fake.traces = [propagated_payment_failure(f"t{i}") for i in range(4)]
+def test_find_error_traces_groups_and_registers(mem):
+    mem.traces = [propagated_payment_failure(f"t{i}") for i in range(4)]
     out = find_error_traces("frontend")
     assert out["traces_examined"] == 4
     top = out["origins"][0]
@@ -69,7 +69,7 @@ def test_find_error_traces_groups_and_registers(fake):
     assert edge["avg_gap_ms"] == 600 and "evidence" in edge
 
 
-def test_no_traces_is_registered_as_evidence(fake):
+def test_no_traces_is_registered_as_evidence(mem):
     out = find_error_traces("cart")
     assert out["traces_examined"] == 0 and registry.get(out["evidence"])
 
@@ -78,10 +78,10 @@ def _series(svc, value):
     return {"metric": {"service_name": svc}, "value": [0, str(value)]}
 
 
-def _health_data(fake, err_cart):
+def _health_data(mem, err_cart):
     calls = "traces_span_metrics_calls_total"
-    fake.names = [calls, "traces_span_metrics_duration_milliseconds_bucket"]
-    fake.instant = {
+    mem.names = [calls, "traces_span_metrics_duration_milliseconds_bucket"]
+    mem.instant = {
         f'rate({calls}{{span_kind=~': [_series("cart", 10), _series("frontend", 20)],
         f'rate({calls}{{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER",status_code=': [
             _series("cart", err_cart)],
@@ -89,10 +89,10 @@ def _health_data(fake, err_cart):
     }
 
 
-def test_service_health_flags_against_baseline(fake):
-    _health_data(fake, err_cart=0.0)
+def test_service_health_flags_against_baseline(mem):
+    _health_data(mem, err_cart=0.0)
     save_baseline("5m")
-    _health_data(fake, err_cart=4.0)
+    _health_data(mem, err_cart=4.0)
     out = get_service_health("5m")
     top = out["flagged"][0]
     assert top["service"] == "cart" and "errors" in top["flags"]
@@ -101,17 +101,17 @@ def test_service_health_flags_against_baseline(fake):
     assert "40.0%" in registry.get(top["evidence"])["summary"]
 
 
-def test_silent_service_flagged(fake):
-    _health_data(fake, err_cart=0.0)
+def test_silent_service_flagged(mem):
+    _health_data(mem, err_cart=0.0)
     save_baseline("5m")
-    fake.instant = {k: [s for s in v if s["metric"]["service_name"] != "cart"]
-                    for k, v in fake.instant.items()}
+    mem.instant = {k: [s for s in v if s["metric"]["service_name"] != "cart"]
+                    for k, v in mem.instant.items()}
     out = get_service_health("5m")
     assert out["flagged"][0]["service"] == "cart" and "silent" in out["flagged"][0]["flags"]
 
 
-def test_logs_grouping(fake):
-    fake.logs["cart"] = "\n".join([
+def test_logs_grouping(mem):
+    mem.logs["cart"] = "\n".join([
         "2026-10-23T07:00:01.1Z fail: Cart.CartService[0] Can't access cart storage. "
         "System.ApplicationException: Wasn't able to connect to redis 10.0.0.5:6379",
         "2026-10-23T07:00:03.1Z fail: Cart.CartService[0] Can't access cart storage. "
@@ -127,7 +127,7 @@ def test_logs_grouping(fake):
     assert classify('{"level": 50, "msg": "boom"}') == ("error", "boom")
 
 
-def test_container_health_reports_oom_and_stopped(fake):
+def test_container_health_reports_oom_and_stopped(mem):
     def inspect(name, status="running", oom=False, restarts=0, health="healthy", mem=20 * 2 ** 20):
         return {"Name": "/" + name, "RestartCount": restarts, "Created": "2026-01-01T00:00:00Z",
                 "Config": {"Image": "demo"},
@@ -135,25 +135,25 @@ def test_container_health_reports_oom_and_stopped(fake):
                           "ExitCode": 137 if oom else 0, "StartedAt": "2026-01-01T00:00:00Z",
                           "Health": {"Status": health}},
                 "HostConfig": {"Memory": mem, "NanoCpus": 0}}
-    fake.inspect = [inspect("checkout", "exited", oom=True, restarts=3), inspect("cart")]
-    fake.stats = [{"Name": "cart", "CPUPerc": "1.5%", "MemUsage": "19.5MiB / 20MiB", "MemPerc": "97.5%"}]
-    out = get_container_health()
-    names = [p["name"] for p in out["problems"]]
-    assert names[0] == "checkout"
-    assert "OOMKilled" in out["problems"][0]["problems"]
-    assert any("memory 97.5%" in p for p in out["problems"][1]["problems"])
+    mem.inspect = [inspect("checkout", "exited", oom=True, restarts=3), inspect("cart")]
+    mem.stats = [{"Name": "cart", "CPUPerc": "1.5%", "MemUsage": "19.5MiB / 20MiB", "MemPerc": "97.5%"}]
+    out = get_deploy_history()
+    rows = out["changed_or_unhealthy"]
+    assert rows[0]["name"] == "checkout"
+    assert "OOMKilled" in rows[0]["problems"]
+    assert any("memory 97.5%" in p for p in rows[1]["problems"])
 
 
-def test_dispatch_catches_errors(fake):
+def test_dispatch_catches_errors(mem):
     result, is_error = dispatch("find_error_traces", {"service": "x", "lookback": "soon"})
     assert is_error and "ValueError" in result["error"]
     result, is_error = dispatch("get_metric", {"promql": "up{job=\"flagd\"}"})
     assert is_error and "HARD RULE 2" in result["error"]
 
 
-def test_bundle_record_and_replay(fake, tmp_path):
-    fake.traces = [propagated_payment_failure("t1")]
-    rec = RecordingSource(fake, tmp_path / "bundle")
+def test_bundle_record_and_replay(mem, tmp_path):
+    mem.traces = [propagated_payment_failure("t1")]
+    rec = RecordingSource(mem, tmp_path / "bundle")
     live_answer = rec.jaeger_traces("frontend", 900, 20, error_only=True)
     replay = BundleSource(tmp_path / "bundle")
     assert replay.jaeger_traces("frontend", 900, 20, error_only=True) == live_answer

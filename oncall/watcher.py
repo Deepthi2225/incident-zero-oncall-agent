@@ -3,7 +3,7 @@ import time
 from datetime import datetime, timezone
 
 from oncall import config
-from oncall.tools.service_health import compute_health, load_baseline
+from oncall.tools.metrics import compute_health, load_baseline
 
 CONSECUTIVE = 2
 

@@ -5,9 +5,9 @@ from oncall.evidence import registry
 from oncall.tools import _common
 
 
-class FakeSource:
+class MemorySource:
     """In-memory source. Tests fill the attributes they need."""
-    name = "fake"
+    name = "mem"
 
     def __init__(self):
         self.names = []
@@ -55,8 +55,8 @@ class FakeSource:
 
 
 @pytest.fixture
-def fake(monkeypatch, tmp_path):
-    src = FakeSource()
+def mem(monkeypatch, tmp_path):
+    src = MemorySource()
     monkeypatch.setattr(sources, "_source", src)
     monkeypatch.setattr(config, "BASELINE_FILE", tmp_path / "baseline.json")
     monkeypatch.setattr(config, "RUNS_DIR", tmp_path / "runs")
@@ -65,4 +65,22 @@ def fake(monkeypatch, tmp_path):
     _common._metric_names.clear()
     registry.reset()
     yield src
+    _common._metric_names.clear()
+
+
+FIXTURES = config.ROOT / "tests" / "fixtures"
+
+
+@pytest.fixture
+def payment_down(monkeypatch, tmp_path):
+    """FakeSource over the synthetic payment_down fixtures (payment container stopped)."""
+    monkeypatch.setattr(config, "BASELINE_FILE", tmp_path / "baseline.json")
+    monkeypatch.setattr(config, "RUNS_DIR", tmp_path / "runs")
+    monkeypatch.setattr(config, "ACTION_LOG", tmp_path / "actions.jsonl")
+    monkeypatch.setattr(config, "KILL_SWITCH_FILE", tmp_path / "STOP")
+    _common._metric_names.clear()
+    registry.reset()
+    src = sources.set_source("fake", fixture_dir=FIXTURES / "payment_down")
+    yield src
+    sources._source = None
     _common._metric_names.clear()

@@ -1,0 +1,12 @@
+2026-10-23T07:18:25.000000000Z {"level": "info", "msg": "[PlaceOrder] user_id=user-0 user_currency=USD", "time": "2026-10-23T07:18:25Z"}
+2026-10-23T07:18:25.049999952Z {"level": "error", "msg": "failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses", "time": "2026-10-23T07:18:25Z"}
+2026-10-23T07:18:40.000000000Z {"level": "info", "msg": "[PlaceOrder] user_id=user-1 user_currency=USD", "time": "2026-10-23T07:18:40Z"}
+2026-10-23T07:18:40.049999952Z {"level": "error", "msg": "failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses", "time": "2026-10-23T07:18:40Z"}
+2026-10-23T07:18:55.000000000Z {"level": "info", "msg": "[PlaceOrder] user_id=user-2 user_currency=USD", "time": "2026-10-23T07:18:55Z"}
+2026-10-23T07:18:55.049999952Z {"level": "error", "msg": "failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses", "time": "2026-10-23T07:18:55Z"}
+2026-10-23T07:19:10.000000000Z {"level": "info", "msg": "[PlaceOrder] user_id=user-3 user_currency=USD", "time": "2026-10-23T07:19:10Z"}
+2026-10-23T07:19:10.049999952Z {"level": "error", "msg": "failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses", "time": "2026-10-23T07:19:10Z"}
+2026-10-23T07:19:25.000000000Z {"level": "info", "msg": "[PlaceOrder] user_id=user-4 user_currency=USD", "time": "2026-10-23T07:19:25Z"}
+2026-10-23T07:19:25.049999952Z {"level": "error", "msg": "failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses", "time": "2026-10-23T07:19:25Z"}
+2026-10-23T07:19:40.000000000Z {"level": "info", "msg": "[PlaceOrder] user_id=user-5 user_currency=USD", "time": "2026-10-23T07:19:40Z"}
+2026-10-23T07:19:40.049999952Z {"level": "error", "msg": "failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses", "time": "2026-10-23T07:19:40Z"}

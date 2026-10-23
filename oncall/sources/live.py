@@ -6,7 +6,7 @@ import time
 import requests
 
 from oncall import config
-from oncall.sources.guard import check
+from oncall.sources.guard import allowed, check
 
 
 class SourceError(RuntimeError):
@@ -90,7 +90,8 @@ class LiveSource:
         if config.COMPOSE_PROJECT:
             args[2:2] = ["--filter", f"label=com.docker.compose.project={config.COMPOSE_PROJECT}"]
         stdout, _ = _docker(*args)
-        return [n for n in stdout.split() if n]
+        # Flag containers (flagd, flagd-ui) are never inspected: HARD RULE 2.
+        return [n for n in stdout.split() if n and allowed(n)]
 
     def docker_inspect(self, names=None):
         names = names or self.container_names()
@@ -101,7 +102,8 @@ class LiveSource:
 
     def docker_stats(self):
         stdout, _ = _docker("stats", "--no-stream", "--format", "{{json .}}", timeout=60)
-        return [json.loads(line) for line in stdout.splitlines() if line.strip()]
+        rows = [json.loads(line) for line in stdout.splitlines() if line.strip()]
+        return [r for r in rows if allowed(r.get("Name", ""))]
 
     def docker_logs(self, name, since_s, tail=2000):
         # Services write to stdout and stderr; both matter.

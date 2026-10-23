@@ -1,6 +1,7 @@
-"""Pick the data source for this process: live, bundle replay, or live with recording."""
+"""Pick the data source for this process: live, fake (fixtures), bundle replay, or live+record."""
 from oncall import config
 from oncall.sources.bundle import BundleSource, RecordingSource
+from oncall.sources.fake import FakeSource
 from oncall.sources.guard import ForbiddenAccess
 from oncall.sources.live import LiveSource, SourceError
 
@@ -14,10 +15,12 @@ def get_source():
     return _source
 
 
-def set_source(kind="live", bundle_dir=None, record_to=None):
-    """kind: "live" | "bundle". record_to: also save live answers into this bundle dir."""
+def set_source(kind="live", bundle_dir=None, record_to=None, fixture_dir=None):
+    """kind: "live" | "fake" | "bundle". record_to: also save live answers into this bundle dir."""
     global _source
-    if kind == "bundle":
+    if kind == "fake":
+        _source = FakeSource(fixture_dir or config.FIXTURE_DIR)
+    elif kind == "bundle":
         _source = BundleSource(bundle_dir or config.BUNDLE_DIR)
     else:
         _source = LiveSource()

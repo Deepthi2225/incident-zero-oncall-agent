@@ -3,11 +3,9 @@
 All tools are read-only. Each returns a small dict and registers its findings in the evidence
 registry; the IDs it returns ("evidence": "E7") are what the diagnosis must cite.
 """
-from oncall.tools.containers import get_container_health
 from oncall.tools.deploys import get_deploy_history
 from oncall.tools.logs import search_logs
-from oncall.tools.metrics import get_metric, list_metrics
-from oncall.tools.service_health import get_service_health
+from oncall.tools.metrics import get_metric, get_service_health, list_metrics
 from oncall.tools.traces import find_error_traces, list_trace_services
 
 FUNCTIONS = {
@@ -17,7 +15,6 @@ FUNCTIONS = {
     "find_error_traces": find_error_traces,
     "list_trace_services": list_trace_services,
     "search_logs": search_logs,
-    "get_container_health": get_container_health,
     "get_deploy_history": get_deploy_history,
 }
 
@@ -72,16 +69,13 @@ TOOL_SPECS = [
         }, ["services"]),
     },
     {
-        "name": "get_container_health",
-        "description": "Docker state for every container (or the named ones): running or not, "
-                       "OOMKilled, restart count, health check, uptime, CPU and memory vs limit.",
-        "input_schema": _schema({"names": {"type": "array", "items": {"type": "string"}}}),
-    },
-    {
         "name": "get_deploy_history",
-        "description": "Recent changes: containers created or (re)started in the lookback, "
-                       "organiser deploy history if configured, and our own past actions.",
-        "input_schema": _schema({"lookback": _WINDOW}),
+        "description": "Container health and recent changes from docker inspect/stats: status, "
+                       "start and stop times, restart count, OOMKilled, exit code, health check, "
+                       "CPU and memory vs limit, containers (re)started or created in the lookback, "
+                       "and our own past actions. Problem containers first.",
+        "input_schema": _schema({"lookback": _WINDOW,
+                                 "names": {"type": "array", "items": {"type": "string"}}}),
     },
     {
         "name": "list_metrics",

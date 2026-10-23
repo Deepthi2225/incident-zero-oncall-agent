@@ -1,0 +1,704 @@
+{
+ "data": [
+  {
+   "traceID": "3c19aa00000000000000000000000000",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "3c19aa00000000000000000000000000",
+     "spanID": "4000000000000001",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [],
+     "startTime": 1792739500000000,
+     "duration": 240000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "3c19aa00000000000000000000000000",
+     "spanID": "4000000000000002",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "3c19aa00000000000000000000000000",
+       "spanID": "4000000000000001"
+      }
+     ],
+     "startTime": 1792739500150000,
+     "duration": 38000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.PaymentService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "payment"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "3c19aa00000000000000000000000000",
+     "spanID": "4000000000000003",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "3c19aa00000000000000000000000000",
+       "spanID": "4000000000000002"
+      }
+     ],
+     "startTime": 1792739500150600,
+     "duration": 34000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "app.payment.card_type",
+       "type": "string",
+       "value": "visa"
+      },
+      {
+       "key": "app.payment.charged",
+       "type": "bool",
+       "value": true
+      }
+     ],
+     "logs": [],
+     "processID": "p8",
+     "warnings": null,
+     "flags": 1
+    }
+   ]
+  },
+  {
+   "traceID": "3c19aa00000000000000000000000001",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "3c19aa00000000000000000000000001",
+     "spanID": "4100000000000001",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [],
+     "startTime": 1792739560000000,
+     "duration": 240000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "3c19aa00000000000000000000000001",
+     "spanID": "4100000000000002",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "3c19aa00000000000000000000000001",
+       "spanID": "4100000000000001"
+      }
+     ],
+     "startTime": 1792739560150000,
+     "duration": 38000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.PaymentService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "payment"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "3c19aa00000000000000000000000001",
+     "spanID": "4100000000000003",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "3c19aa00000000000000000000000001",
+       "spanID": "4100000000000002"
+      }
+     ],
+     "startTime": 1792739560150600,
+     "duration": 34000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "app.payment.card_type",
+       "type": "string",
+       "value": "visa"
+      },
+      {
+       "key": "app.payment.charged",
+       "type": "bool",
+       "value": true
+      }
+     ],
+     "logs": [],
+     "processID": "p8",
+     "warnings": null,
+     "flags": 1
+    }
+   ]
+  },
+  {
+   "traceID": "3c19aa00000000000000000000000002",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      },
+      {
+       "key": "telemetry.sdk.language",
+       "type": "string",
+       "value": "go"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "3c19aa00000000000000000000000002",
+     "spanID": "4200000000000001",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [],
+     "startTime": 1792739620000000,
+     "duration": 240000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "3c19aa00000000000000000000000002",
+     "spanID": "4200000000000002",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "3c19aa00000000000000000000000002",
+       "spanID": "4200000000000001"
+      }
+     ],
+     "startTime": 1792739620150000,
+     "duration": 38000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.PaymentService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "payment"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null,
+     "flags": 1
+    },
+    {
+     "traceID": "3c19aa00000000000000000000000002",
+     "spanID": "4200000000000003",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "3c19aa00000000000000000000000002",
+       "spanID": "4200000000000002"
+      }
+     ],
+     "startTime": 1792739620150600,
+     "duration": 34000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "app.payment.card_type",
+       "type": "string",
+       "value": "visa"
+      },
+      {
+       "key": "app.payment.charged",
+       "type": "bool",
+       "value": true
+      }
+     ],
+     "logs": [],
+     "processID": "p8",
+     "warnings": null,
+     "flags": 1
+    }
+   ]
+  }
+ ],
+ "total": 3,
+ "limit": 0,
+ "offset": 0,
+ "errors": null
+}
