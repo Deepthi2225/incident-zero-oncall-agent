@@ -1,4 +1,4 @@
-"""Agent run: the LLM picks the next read-only tool until it can submit a symptom summary.
+"""Agent run: the LLM picks the next read-only tool until it can submit a diagnosis.
 
 Input is an alert JSON. Prints every tool call with a one-line result live, enforces the step cap
 (config.MAX_STEPS, default 10) and the kill switch, drops claims whose evidence IDs are not in the
@@ -17,7 +17,13 @@ import anthropic
 
 from oncall import config
 from oncall.agent.prompt import alert_message, build_system_prompt
-from oncall.agent.summary import SUBMIT_TOOL, empty_summary, render, validate
+from oncall.agent.diagnosis import (
+    SUBMIT_TOOL,
+    empty_summary,
+    render,
+    request_human_approval,
+    validate,
+)
 from oncall.evidence import registry
 from oncall.sources import add_source_args, apply_source_args, source_info
 from oncall.tools.catalog import TOOL_SPECS, dispatch
@@ -72,11 +78,13 @@ def _add_user_text(messages, text):
 
 
 class Agent:
-    def __init__(self, model=None, max_steps=None, verbose=True):
+    def __init__(self, model=None, max_steps=None, verbose=True, auto_approve=False, interactive=None):
         self.client = anthropic.Anthropic()
         self.model = model or config.MODEL
         self.max_steps = max_steps or config.MAX_STEPS
         self.verbose = verbose
+        self.auto_approve = auto_approve
+        self.interactive = (not auto_approve) if interactive is None else interactive
         self.use_fallbacks = config.USE_FALLBACKS
         self.tools = TOOL_SPECS + [SUBMIT_TOOL]
         self.system = build_system_prompt(self.max_steps)
@@ -129,8 +137,8 @@ class Agent:
             for step in range(1, self.max_steps + 1):
                 check_kill_switch()
                 if step == self.max_steps:
-                    _add_user_text(messages, "Step budget exhausted. Call submit_summary now with "
-                                   "what you have; use origin 'unknown' if it is not clear.")
+                    _add_user_text(messages, "Step budget exhausted. Call submit_diagnosis now with "
+                                   "what you have; use origin/root cause 'unknown' if it is not clear.")
                 response = self._call_model(messages)
                 record["usage"]["input"] += response.usage.input_tokens
                 record["usage"]["output"] += response.usage.output_tokens
@@ -148,14 +156,17 @@ class Agent:
                 tool_uses = [b for b in response.content if b.type == "tool_use"]
                 if not tool_uses:
                     messages.append({"role": "user", "content":
-                                     "Use the tools to continue, or call submit_summary."})
+                                     "Use the tools to continue, or call submit_diagnosis."})
                     continue
 
                 submit = next((b for b in tool_uses if b.name == SUBMIT_TOOL["name"]), None)
                 if submit:
                     summary = validate(submit.input)
+                    summary = request_human_approval(
+                        summary, auto_approve=self.auto_approve, interactive=self.interactive
+                    )
                     outcome = "submitted"
-                    self.log(f"[{step}] -> {SUBMIT_TOOL['name']}")
+                    self.log(f"[{step}] -> {submit.name}")
                     break
 
                 results = []
@@ -211,10 +222,16 @@ def main():
     add_source_args(p)
     p.add_argument("--max-steps", type=int)
     p.add_argument("--model")
+    p.add_argument("--auto-approve", "--yes", "-y", action="store_true",
+                   help="automatically approve the remediation plan (no interactive prompt)")
+    p.add_argument("--non-interactive", action="store_true",
+                   help="leave approval pending without prompting interactive human confirmation")
     args = p.parse_args()
     apply_source_args(p, args)
     alert = json.loads(Path(args.alert).read_text())
-    record = run_agent(alert, model=args.model, max_steps=args.max_steps)
+    interactive = False if (args.auto_approve or args.non_interactive) else None
+    record = run_agent(alert, model=args.model, max_steps=args.max_steps,
+                       auto_approve=args.auto_approve, interactive=interactive)
     raise SystemExit(0 if record["outcome"] == "submitted" else 1)
 
 

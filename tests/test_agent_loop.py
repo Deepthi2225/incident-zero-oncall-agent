@@ -47,11 +47,12 @@ def tool_results(kwargs):
             for r in kwargs["messages"][-1]["content"] if r.get("type") == "tool_result"}
 
 
-def submit(tid, origin_service, origin_evidence, anomalies=(), affected=(), confidence=0.85):
-    return block_tool(tid, "submit_summary", {
+def submit(tid, component, evidence, anomalies=(), affected=(), confidence=0.85):
+    return block_tool(tid, "submit_diagnosis", {
         "headline": "h", "affected_services": list(affected), "anomalies": list(anomalies),
-        "suspected_origin": {"service": origin_service, "reasoning": "r",
-                             "confidence": confidence, "evidence": origin_evidence},
+        "root_causes": [{"component": component, "fault_class": "container_stopped_or_restarting",
+                         "cause": "r", "confidence": confidence, "evidence": evidence}],
+        "proposed_action": {"action": "restart_service", "target": component, "reason": "r"},
         "open_questions": []})
 
 
@@ -95,10 +96,12 @@ def test_end_to_end_test_mode_checkout_errors_caused_by_payment(payment_down, mo
     assert [s["tool"] for s in rec["steps"]] == ["get_service_health", "get_deploy_history",
                                                  "find_error_traces", "search_logs"]
     s = rec["summary"]
-    assert s["status"] == "origin_suspected"
-    assert s["suspected_origin"]["service"] == "payment"
-    assert "E999" not in s["suspected_origin"]["evidence"] and len(s["suspected_origin"]["evidence"]) == 3
-    assert any("exited" in t for t in s["suspected_origin"]["evidence_detail"].values())
+    assert s["status"] == "diagnosed"
+    rc = s["root_causes"][0]
+    assert rc["component"] == "payment" and rc["fault_class"] == "container_stopped_or_restarting"
+    assert "E999" not in rc["evidence"] and len(rc["evidence"]) == 3
+    assert any("exited" in t for t in rc["evidence_detail"].values())
+    assert s["proposed_action"] == {**s["proposed_action"], "action": "restart_service", "dry_run": True}
     assert [a["signal"] for a in s["anomalies"]] == ["error_rate", "log_errors"]  # made-up one dropped
     assert s["validation"]["dropped_evidence_ids"] == ["E555", "E999"]
     saved = json.loads(open(rec["path"], encoding="utf-8").read())
@@ -107,20 +110,20 @@ def test_end_to_end_test_mode_checkout_errors_caused_by_payment(payment_down, mo
 
     out = capsys.readouterr().out
     assert "[1] -> get_service_health(window='5m')" in out          # live per-call line
-    assert "SYMPTOM SUMMARY [origin_suspected] source=test" in out
+    assert "DIAGNOSIS [diagnosed] source=test" in out
     assert out.count("TEST MODE") == 2  # banner at start and in the summary
     assert "dropped anomaly without valid evidence: cart" in out
 
 
-def test_origin_without_valid_evidence_becomes_unknown(payment_down, monkeypatch):
+def test_root_cause_without_valid_evidence_escalates(payment_down, monkeypatch):
     agent, _ = make_agent(monkeypatch, lambda n, kw: response(submit("s", "payment", ["E1"])))
     rec = agent.run({"service": "checkout"})  # no tool ran, so E1 does not exist
-    o = rec["summary"]["suspected_origin"]
-    assert o["service"] == "unknown" and o["confidence"] == 0.0
-    assert rec["summary"]["status"] == "needs_human"
+    s = rec["summary"]
+    assert s["root_causes"] == [] and s["suspected_origin"]["service"] == "unknown"
+    assert s["status"] == "escalate" and s["proposed_action"]["action"] == "escalate_to_human"
 
 
-def test_low_confidence_needs_human(mem, monkeypatch):
+def test_low_confidence_escalates(mem, monkeypatch):
     mem.traces = [propagated_payment_failure("t1")]
 
     def script(n, kwargs):
@@ -131,7 +134,7 @@ def test_low_confidence_needs_human(mem, monkeypatch):
 
     agent, client = make_agent(monkeypatch, script)
     rec = agent.run({"service": "frontend"})
-    assert rec["summary"]["status"] == "needs_human"
+    assert rec["summary"]["status"] == "escalate"
     assert "thinking" in client.calls[0] and client.calls[0]["model"] == "claude-opus-5-5"
 
 
@@ -151,3 +154,101 @@ def test_kill_switch_stops_run(mem, monkeypatch):
     agent, client = make_agent(monkeypatch, lambda n, kw: response())
     rec = agent.run({"service": "cart"})
     assert rec["outcome"] == "killed" and not client.calls
+
+
+def test_checkpoint2_diagnosis_with_root_cause_and_approval(mem, monkeypatch):
+    mem.traces = [propagated_payment_failure("t1")]
+
+    def script(n, kwargs):
+        if n == 1:
+            return response(block_tool("u1", "find_error_traces", {"service": "frontend"}))
+        eid = tool_results(kwargs)["u1"]["origins"][0]["evidence"]
+        return response(block_tool("u2", "submit_diagnosis", {
+            "headline": "Payment container stopped causing checkout failures",
+            "affected_services": [{"service": "checkout", "impact": "checkout errors", "evidence": [eid]}],
+            "anomalies": [{"service": "checkout", "signal": "error_rate", "observed": "100%", "baseline": "0%", "evidence": [eid]}],
+            "root_causes": [{
+                "component": "payment",
+                "fault_class": "container_stopped_or_restarting",
+                "cause": "Payment container is stopped; gRPC connection refused",
+                "confidence": 0.92,
+                "evidence": [eid],
+            }],
+            "proposed_action": {
+                "action": "restart_service",
+                "target": "payment",
+                "reason": "Restart container to resume charge endpoint",
+                "risk_assessment": "Low risk; service is already down",
+                "expected_outcome": "Checkout error rate returns to 0%",
+                "dry_run": True,
+            },
+            "open_questions": ["Check if restart loop occurs after start"],
+        }))
+
+    agent, _ = make_agent(monkeypatch, script, auto_approve=True)
+    rec = agent.run({"service": "frontend"})
+    assert rec["outcome"] == "submitted"
+    s = rec["summary"]
+    assert s["status"] == "diagnosed"
+    assert s["confidence"] == 0.92
+    assert s["root_causes"][0]["component"] == "payment"
+    assert s["root_causes"][0]["fault_class"] == "container_stopped_or_restarting"
+    assert len(s["root_causes"][0]["evidence"]) == 1 and s["root_causes"][0]["evidence"][0] in s["root_causes"][0]["evidence_detail"]
+    assert s["proposed_action"]["action"] == "restart_service"
+    assert s["proposed_action"]["dry_run"] is True
+    assert s["approval"]["status"] == "approved"
+
+
+def test_checkpoint2_diagnosis_escalation_when_confidence_low(mem, monkeypatch):
+    mem.traces = [propagated_payment_failure("t1")]
+
+    def script(n, kwargs):
+        if n == 1:
+            return response(block_tool("u1", "find_error_traces", {"service": "frontend"}))
+        eid = tool_results(kwargs)["u1"]["origins"][0]["evidence"]
+        return response(block_tool("u2", "submit_diagnosis", {
+            "headline": "Uncertain anomaly",
+            "affected_services": [{"service": "checkout", "impact": "possible errors", "evidence": [eid]}],
+            "anomalies": [],
+            "root_causes": [{
+                "component": "payment",
+                "fault_class": "unknown",
+                "cause": "Weak signal on payment",
+                "confidence": 0.45,
+                "evidence": [eid],
+            }],
+            "proposed_action": {"action": "restart_service", "target": "payment", "reason": "Guessing"},
+            "open_questions": [],
+        }))
+
+    agent, _ = make_agent(monkeypatch, script, auto_approve=False)
+    rec = agent.run({"service": "frontend"})
+    s = rec["summary"]
+    assert s["status"] == "escalate"
+    assert s["proposed_action"]["action"] == "escalate_to_human"
+    assert s["approval"]["status"] == "pending"
+
+
+def test_checkpoint2_invented_evidence_in_root_cause_dropped(mem, monkeypatch):
+    def script(n, kwargs):
+        return response(block_tool("u1", "submit_diagnosis", {
+            "headline": "Invented root cause",
+            "affected_services": [],
+            "anomalies": [],
+            "root_causes": [{
+                "component": "cart",
+                "fault_class": "memory_leak",
+                "cause": "Invented claim without tools",
+                "confidence": 0.99,
+                "evidence": ["E999"],
+            }],
+            "proposed_action": {"action": "restart_service", "target": "cart", "reason": "No evidence"},
+            "open_questions": [],
+        }))
+
+    agent, _ = make_agent(monkeypatch, script)
+    rec = agent.run({"service": "cart"})
+    s = rec["summary"]
+    assert s["status"] == "escalate"
+    assert len(s["root_causes"]) == 0
+    assert "E999" in s["validation"]["dropped_evidence_ids"]

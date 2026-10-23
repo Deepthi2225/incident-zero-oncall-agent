@@ -1,6 +1,6 @@
 import pytest
 
-from oncall.agent.summary import validate
+from oncall.agent.diagnosis import validate
 from oncall.evidence import Registry, registry
 from oncall.sources.guard import ForbiddenAccess, check
 from oncall.tools._common import cap, normalise, parse_docker_time, parse_window
@@ -72,8 +72,10 @@ def test_validate_drops_invented_evidence():
     assert s["affected_services"][0]["evidence"] == [real]
     assert s["anomalies"] == []
     assert s["validation"]["dropped_evidence_ids"] == ["E42", "E99"]
-    assert s["suspected_origin"]["confidence"] == 1.0 and s["status"] == "origin_suspected"
+    # Origin-only input: a root cause is synthesised from it (fault class unknown) and diagnosed.
+    assert s["suspected_origin"]["confidence"] == 1.0 and s["status"] == "diagnosed"
     assert s["suspected_origin"]["evidence_detail"][real].startswith("checkout's Charge")
+    assert s["root_causes"][0]["component"] == "payment" and s["proposed_action"]["dry_run"] is True
 
 
 def test_load_dotenv(tmp_path, monkeypatch):

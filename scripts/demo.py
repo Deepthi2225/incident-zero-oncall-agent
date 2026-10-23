@@ -58,6 +58,8 @@ def main():
     p.add_argument("--save-baseline", action="store_true",
                    help="capture the healthy baseline before injecting")
     p.add_argument("--max-steps", type=int)
+    p.add_argument("--auto-approve", "--yes", "-y", action="store_true",
+                   help="automatically approve the remediation plan (no interactive prompt)")
     p.add_argument("--test", action="store_true",
                    help="rehearse on fixtures under tests/fixtures/ (no docker, nothing injected)")
     p.add_argument("--fixtures", help="fixture directory under tests/fixtures/ (needs --test)")
@@ -74,7 +76,7 @@ def main():
         # detector.py reads live Prometheus, so test mode uses the scenario's own alert.
         fixture_dir = Path(source_info()["source_detail"].removeprefix("fixtures "))
         alert = json.loads((HERE.parent / fixture_dir / "alert.json").read_text())
-        record = run_agent(alert, max_steps=args.max_steps)
+        record = run_agent(alert, max_steps=args.max_steps, auto_approve=args.auto_approve)
     else:
         set_source("live")
         if args.save_baseline:
@@ -88,7 +90,7 @@ def main():
             wait(args.wait)
             alert = build_alert()
             print(f"== alert: {json.dumps(alert)}")
-            record = run_agent(alert, max_steps=args.max_steps)
+            record = run_agent(alert, max_steps=args.max_steps, auto_approve=args.auto_approve)
         finally:
             print("== reset")
             print("\n".join(faultctl.reset()))

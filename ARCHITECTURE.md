@@ -1,10 +1,10 @@
 # Incident Zero: architecture
 
 An AI on-call engineer for the OpenTelemetry demo. An alert starts an agent that chooses which
-read-only tool to call next. Every observation is registered as evidence with an ID. Checkpoint 1
-ends with a validated **symptom summary**: affected services, anomalies with numbers, the suspected
-origin, and the evidence IDs behind each claim. Diagnosis, approval, action, verification and the
-report come next.
+read-only tool to call next. Every observation is registered as evidence with an ID. Checkpoint 1 delivered a validated **symptom summary**: affected services, anomalies with numbers, the suspected
+origin, and the evidence IDs behind each claim. Checkpoint 2 delivers the validated **diagnosis and remediation plan**:
+root causes, standard fault classification, confidence score, cited evidence details, allowlisted runbook remedies, and
+a human approval gate. Action execution, recovery verification, and final report come next in Day 2.
 
 ```mermaid
 flowchart LR
@@ -22,15 +22,15 @@ flowchart LR
 
     PROM & JAE & LOGS & INS --> REG[("evidence registry<br/>E1, E2, ...")]
     REG -->|small summaries + IDs| AG
-    AG -->|submit_summary| VAL["validator<br/>drops claims citing<br/>unknown evidence IDs"]
+    AG -->|submit_diagnosis| VAL["validator<br/>drops claims citing<br/>unknown evidence IDs"]
     REG --> VAL
-    VAL --> SUM["SYMPTOM SUMMARY<br/>affected, anomalies, suspected origin<br/>runs/&lt;timestamp&gt;.json"]
+    VAL --> DX["DIAGNOSIS & PLAN<br/>root causes, fault class, confidence,<br/>allowlisted action, human approval<br/>runs/&lt;timestamp&gt;.json"]
 
-    SUM -.->|next| DX["diagnose<br/>root cause + confidence,<br/>organiser JSON schema"]
-    DX -.-> AP["approve<br/>human yes, dry run"] -.-> AC["act<br/>Action API only"] -.-> VE["verify<br/>metrics vs baseline,<br/>rollback + escalate"] -.-> RE["report<br/>timeline, evidence,<br/>prevention"]
+    DX -.-> AP["approve<br/>human yes, dry run"]
+    AP -.->|Day 2| AC["act<br/>Action API only"] -.-> VE["verify<br/>metrics vs baseline,<br/>rollback + escalate"] -.-> RE["report<br/>timeline, evidence,<br/>prevention"]
 
     classDef next stroke-dasharray: 5 5,color:#888
-    class DX,AP,AC,VE,RE next
+    class AC,VE,RE next
 ```
 
 ## How it works
