@@ -58,8 +58,9 @@ HTTP_TIMEOUT = float(os.getenv("ONCALL_HTTP_TIMEOUT", "10"))
 
 # HARD RULE 2: never read feature-flag state. Every outbound URL and file path is checked
 # against these substrings by sources/guard.py.
+# "faultctl" is our own fault injector: the agent must never read or call it (it knows the answer).
 FORBIDDEN_SUBSTRINGS = [
-    "/feature", "/flagservice", ":8013", ":8016", "flagd", "demo.flagd.json",
+    "/feature", "/flagservice", ":8013", ":8016", "flagd", "demo.flagd.json", "faultctl",
 ]
 
 # --- metrics -----------------------------------------------------------------

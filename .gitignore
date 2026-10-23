@@ -8,3 +8,5 @@ runs/*.json
 !runs/.gitkeep
 bundles/
 incidents.jsonl
+faultctl/state.json
+/baseline.json

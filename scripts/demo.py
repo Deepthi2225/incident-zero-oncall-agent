@@ -16,9 +16,8 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
-sys.path.insert(0, str(HERE))
 
-import incident  # noqa: E402
+import faultctl  # noqa: E402
 from oncall.agent.run import run_agent  # noqa: E402
 from oncall.sources import set_source, source_info  # noqa: E402
 from oncall.tools.metrics import compute_health, load_baseline, save_baseline  # noqa: E402
@@ -50,7 +49,8 @@ def wait(seconds):
 def main():
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("fault", choices=sorted(incident.FAULTS))
+    p.add_argument("fault", choices=sorted(faultctl.FAULTS), metavar="FAULT",
+                   help="a fault id from `python -m faultctl list`")
     p.add_argument("--wait", type=int, default=180,
                    help="seconds between inject and agent run (metrics lag ~1-2 min)")
     p.add_argument("--save-baseline", action="store_true",
@@ -79,14 +79,14 @@ def main():
         record = None
         try:
             print(f"== inject {args.fault}")
-            incident.inject(args.fault)
+            print(faultctl.inject(args.fault))
             wait(args.wait)
             alert = build_alert()
             print(f"== alert: {json.dumps(alert)}")
             record = run_agent(alert, max_steps=args.max_steps)
         finally:
             print("== reset")
-            incident.reset()
+            print("\n".join(faultctl.reset()))
 
     print("\n== summary JSON")
     print(json.dumps(record["summary"], indent=2, default=str))

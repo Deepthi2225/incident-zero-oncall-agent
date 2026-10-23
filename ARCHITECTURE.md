@@ -50,7 +50,7 @@ flowchart LR
   span. A failed client call with no server span means the callee never answered.
 - **Hard rules in code.** A guard blocks flagd URLs and ports, flag files and flag containers.
   All tools are read-only. The `STOP` file halts the agent. The fault injector
-  (`scripts/incident.py`) lives outside the agent package, and a test ensures the agent never
+  (`faultctl/`) lives outside the agent package, and a test ensures the agent never
   references it.
 
 ## Running
