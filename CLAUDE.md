@@ -129,8 +129,40 @@ a kill switch that works, and all deliverables in the repository.
 - Demo images were on USB drives at the venue.
 
 ## 7. Demo environment facts (verified from the opentelemetry-demo repo, main = v3.1.0)
-Confirm against the version the organisers actually gave us; the slides mention a Locust load
-generator while current main uses k6.
+Verified against our local checkout `C:\Placement\opentelemetry-demo` (commit ad06a6f9): the load
+generator is **Locust** (`LOCUST_*` in .env, autostart, 5 users), not k6. Images are tagged
+`${IMAGE_NAME}:${DEMO_VERSION}-<service>` with `DEMO_VERSION=latest` in .env (IMAGE_VERSION=3.1.0);
+if the USB images carry a different tag, prefix compose with `DEMO_VERSION=<tag>` (never edit .env).
+Extra service in this version: `telemetry-docs`.
+
+### Expected telemetry (read from src/otel-collector/otelcol-config*.yml and src/prometheus/prometheus-config.yaml; confirm live)
+- Metrics reach Prometheus by OTLP push (`--web.enable-otlp-receiver`), not scraping. Resource
+  attributes `service.name`, `service.criticality`, `container.name` and others are promoted to labels
+  (`service_name`, `service_criticality`, `container_name`).
+- **Interval is about 60 s**: no `OTEL_METRIC_EXPORT_INTERVAL` is set (SDK default 60 s) and Prometheus
+  comments that it aligns with it. Use rate windows of at least 2m; metric alerts lag about 1–2 min.
+  Traces, logs and docker state are near real time.
+- **Span metrics** (`span_metrics` connector, defaults): expected `traces_span_metrics_calls_total` and
+  `traces_span_metrics_duration_milliseconds_bucket`, labels `service_name`, `span_name`, `span_kind`,
+  `status_code`. Span names are rewritten by `set_semconv_span_name`; the original is kept in the
+  `original_span_name` attribute.
+- **Container stats** (`docker_stats` receiver via the mounted docker socket): `container.cpu.*`,
+  `container.memory.*` including usage/limit/percent, rss and hierarchical limit, `container.uptime`,
+  network packets and block I/O, labelled by `container_name`.
+- **Valkey** (`redis` receiver on valkey-cart:6379): `redis.*` (clients, memory, commands, uptime).
+  Gaps in these series are themselves a signal that the cache is down.
+- **PostgreSQL** (`postgresql` receiver, in the BASE config, not only full): `postgresql.*` (backends,
+  commits, rollbacks, deadlocks, tuples, blocks) plus query-sample and top-query log events.
+- **Host** (`host_metrics` on /hostfs = the Docker VM on Windows): `system.cpu.utilization`,
+  `system.memory.utilization`, load, disk, network, paging, processes.
+- **Availability probe** (`http_check/frontend-proxy`): `httpcheck.status` / `httpcheck.duration`.
+- **nginx** (image-provider status) and **ad** (Prometheus scrape of ad:9465 for custom ad metrics).
+- **Runtime/GC metrics** come from each SDK over OTLP (JVM for ad; .NET for cart; Node for payment
+  and frontend; Go; Python). Exact names vary, so discover them with `list_metrics`.
+- Exact Prometheus names depend on Prometheus 3.13's OTLP name translation (unit and type suffixes,
+  e.g. `_bytes`, `_ratio`, `_total`). Discover them via `/api/v1/label/__name__/values`.
+- **Traces** go to Jaeger 2.21 (`otlp_grpc/jaeger`). **Logs** go to OpenSearch index
+  `otel-logs-yyyy-MM-dd` (only services that log over OTLP). `docker logs` remains the baseline.
 
 ### Compose layers
 - `compose.yaml`: core shop only. In this layer the collector exports ONLY to its debug output, so
@@ -177,7 +209,7 @@ All other service ports are container-internal only (published to random host po
 | recommendation | Python | 9001 | 500M | medium |
 | quote | PHP | 8090 | 40M | low |
 | image-provider | nginx | 8081 | 120M | low |
-| load-generator | k6 | n/a | 512M | low |
+| load-generator | Locust (Python) | 8089 web | 512M | low |
 | valkey-cart (cache) | | 6379 | 20M | |
 | astronomy-db (Postgres) | | 5432 | 80M | |
 | kafka (full layer) | | 9092 | | |
