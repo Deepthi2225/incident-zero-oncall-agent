@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "deny": [
+      "Edit(//C:/Placement/opentelemetry-demo/**)",
+      "Write(//C:/Placement/opentelemetry-demo/**)",
+      "Edit(//c/Placement/opentelemetry-demo/**)",
+      "Write(//c/Placement/opentelemetry-demo/**)",
+      "Bash(git -C /c/Placement/opentelemetry-demo commit:*)",
+      "Bash(git -C /c/Placement/opentelemetry-demo push:*)",
+      "Bash(git -C /c/Placement/opentelemetry-demo checkout:*)",
+      "Bash(git -C /c/Placement/opentelemetry-demo reset:*)",
+      "Bash(git -C /c/Placement/opentelemetry-demo stash:*)",
+      "Bash(git -C /c/Placement/opentelemetry-demo pull:*)",
+      "Bash(git -C C:/Placement/opentelemetry-demo commit:*)",
+      "Bash(git -C C:/Placement/opentelemetry-demo push:*)",
+      "Bash(git -C C:/Placement/opentelemetry-demo checkout:*)",
+      "Bash(git -C C:/Placement/opentelemetry-demo reset:*)"
+    ]
+  }
+}

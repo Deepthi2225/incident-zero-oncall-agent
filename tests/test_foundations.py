@@ -1,0 +1,81 @@
+import pytest
+
+from oncall.agent.diagnosis import validate
+from oncall.evidence import Registry, registry
+from oncall.sources.guard import ForbiddenAccess, check
+from oncall.tools._common import cap, normalise, parse_docker_time, parse_window
+
+
+def test_registry_ids_and_validation():
+    r = Registry()
+    a = r.add("t", "metric", "one")
+    b = r.add("t", "log", "two", {"x": 1})
+    assert (a, b) == ("E1", "E2")
+    assert r.validate(["E2", "E9"]) == (["E2"], ["E9"])
+    r.reset()
+    assert len(r) == 0 and r.add("t", "metric", "again") == "E1"
+
+
+@pytest.mark.parametrize("target", [
+    "http://localhost:8080/feature", "http://localhost:8080/feature/api/x",
+    "http://localhost:8080/flagservice/ofrep/v1", "http://localhost:8013/x",
+    "http://localhost:8016", "/demo/src/flagd/demo.flagd.json", "docker logs flagd",
+])
+def test_guard_blocks_flag_access(target):
+    with pytest.raises(ForbiddenAccess):
+        check(target)
+
+
+def test_guard_allows_telemetry():
+    for url in ("http://localhost:9090/api/v1/query", "http://localhost:8080/jaeger/ui/api/services"):
+        assert check(url) == url
+
+
+def test_parse_window():
+    assert parse_window("5m") == 300
+    assert parse_window("90s") == 90
+    assert parse_window(120) == 120
+    assert parse_window(None, default=7) == 7
+    with pytest.raises(ValueError):
+        parse_window("five")
+
+
+def test_normalise_groups_similar_messages():
+    a = normalise("timeout after 5003ms talking to 10.0.0.12:8080 id 3f2a9c1d-1111-2222-3333-444455556666")
+    b = normalise("timeout after 12ms talking to 10.0.0.99:8080 id 0a2a9c1d-1111-2222-3333-444455556666")
+    assert a == b
+
+
+def test_cap_trims_lists():
+    out = cap({"rows": [{"x": "y" * 100} for _ in range(100)]}, max_bytes=1000)
+    assert out["truncated"] and len(out["rows"]) < 100
+
+
+def test_parse_docker_time():
+    assert parse_docker_time("0001-01-01T00:00:00Z") is None
+    t = parse_docker_time("2026-10-23T07:10:00.500000000Z")
+    assert t == pytest.approx(1792739400.5)
+
+
+def test_validate_drops_invented_evidence_and_escalates():
+    registry.reset()
+    real = registry.add("t", "trace", "payment errors originate in payment")
+    diag = validate({
+        "status": "diagnosed", "summary": "s", "symptoms": [],
+        "root_causes": [
+            {"component": "payment", "fault_class": "service_error", "cause": "c",
+             "confidence": 0.9, "evidence": [real, "E99"]},
+            {"component": "cart", "fault_class": "service_error", "cause": "made up",
+             "confidence": 0.9, "evidence": ["E42"]},
+        ],
+        "affected_services": [], "confidence": 0.95,
+        "proposed_action": {"action": "restart_service", "target": "payment", "reason": "r"},
+        "escalation_reason": "", "next_checks": [],
+    })
+    assert [rc["component"] for rc in diag["root_causes"]] == ["payment"]
+    assert diag["root_causes"][0]["evidence"] == [real]
+    assert diag["validation"]["dropped_evidence_ids"] == ["E42", "E99"]
+    assert diag["status"] == "diagnosed" and diag["confidence"] == 0.9
+
+    weak = validate({**diag, "root_causes": [], "status": "diagnosed", "confidence": 0.9})
+    assert weak["status"] == "escalate" and weak["confidence"] <= 0.3

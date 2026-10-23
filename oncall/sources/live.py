@@ -1,0 +1,110 @@
+"""Live data source: Prometheus, Jaeger and the docker CLI. Read-only."""
+import json
+import subprocess
+import time
+
+import requests
+
+from oncall import config
+from oncall.sources.guard import check
+
+
+class SourceError(RuntimeError):
+    pass
+
+
+def _get(url, params=None):
+    check(url)
+    try:
+        resp = requests.get(url, params=params, timeout=config.HTTP_TIMEOUT)
+        resp.raise_for_status()
+        return resp.json()
+    except requests.RequestException as e:
+        raise SourceError(f"GET {url} failed: {e}") from e
+
+
+def _docker(*args, timeout=30):
+    cmd = ["docker", *args]
+    check(" ".join(cmd))
+    try:
+        out = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout,
+                             encoding="utf-8", errors="replace")
+    except (OSError, subprocess.TimeoutExpired) as e:
+        raise SourceError(f"{' '.join(cmd)} failed: {e}") from e
+    if out.returncode != 0:
+        raise SourceError(f"{' '.join(cmd)} failed: {out.stderr.strip()[:300]}")
+    return out.stdout, out.stderr
+
+
+class LiveSource:
+    name = "live"
+
+    def __init__(self):
+        self._jaeger_base = None
+
+    def now(self):
+        return time.time()
+
+    # --- Prometheus ----------------------------------------------------------
+    def prom_names(self):
+        return _get(f"{config.PROMETHEUS_URL}/api/v1/label/__name__/values")["data"]
+
+    def prom_query(self, query):
+        return _get(f"{config.PROMETHEUS_URL}/api/v1/query", {"query": query})["data"]["result"]
+
+    def prom_range(self, query, window_s, step_s):
+        end = self.now()
+        params = {"query": query, "start": end - window_s, "end": end, "step": step_s}
+        return _get(f"{config.PROMETHEUS_URL}/api/v1/query_range", params)["data"]["result"]
+
+    # --- Jaeger --------------------------------------------------------------
+    def jaeger_base(self):
+        if self._jaeger_base:
+            return self._jaeger_base
+        errors = []
+        for base in config.JAEGER_CANDIDATES:
+            try:
+                _get(f"{base}/services")
+                self._jaeger_base = base
+                return base
+            except SourceError as e:
+                errors.append(str(e))
+        raise SourceError("no Jaeger API reachable; set JAEGER_URL. " + " | ".join(errors))
+
+    def jaeger_services(self):
+        return _get(f"{self.jaeger_base()}/services").get("data") or []
+
+    def jaeger_traces(self, service, lookback_s, limit, error_only=True):
+        end_us = int(self.now() * 1e6)
+        params = {
+            "service": service, "limit": limit,
+            "start": end_us - int(lookback_s * 1e6), "end": end_us,
+        }
+        if error_only:
+            params["tags"] = json.dumps({"error": "true"})
+        return _get(f"{self.jaeger_base()}/traces", params).get("data") or []
+
+    # --- Docker --------------------------------------------------------------
+    def container_names(self):
+        args = ["ps", "-a", "--format", "{{.Names}}"]
+        if config.COMPOSE_PROJECT:
+            args[2:2] = ["--filter", f"label=com.docker.compose.project={config.COMPOSE_PROJECT}"]
+        stdout, _ = _docker(*args)
+        return [n for n in stdout.split() if n]
+
+    def docker_inspect(self, names=None):
+        names = names or self.container_names()
+        if not names:
+            return []
+        stdout, _ = _docker("inspect", *names)
+        return json.loads(stdout)
+
+    def docker_stats(self):
+        stdout, _ = _docker("stats", "--no-stream", "--format", "{{json .}}", timeout=60)
+        return [json.loads(line) for line in stdout.splitlines() if line.strip()]
+
+    def docker_logs(self, name, since_s, tail=2000):
+        # Services write to stdout and stderr; both matter.
+        stdout, stderr = _docker("logs", "--timestamps", "--since", f"{int(since_s)}s",
+                                 "--tail", str(tail), name)
+        return stdout + stderr
