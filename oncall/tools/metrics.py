@@ -17,7 +17,7 @@ import math
 from oncall import config
 from oncall.evidence import registry
 from oncall.sources import get_source, source_info
-from oncall.sources.guard import check
+from oncall.sources.guard import allowed, check
 from oncall.tools._common import cap, fmt_num, metric_names, parse_window, prom_window, run_cli
 
 # Investigation flags (looser than alert thresholds: we want to see weak signals too).
@@ -36,7 +36,7 @@ def _by_service(query):
     out = {}
     for series in get_source().prom_query(query):
         svc = series["metric"].get(config.SERVICE_LABEL)
-        if not svc:
+        if not svc or not allowed(svc):  # flag services stay out of view (HARD RULE 2)
             continue
         val = float(series["value"][1])
         out[svc] = None if math.isnan(val) or math.isinf(val) else val

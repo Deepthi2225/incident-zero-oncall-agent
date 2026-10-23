@@ -42,7 +42,8 @@ HERE = Path(__file__).resolve().parent
 BASELINE_FILE = Path(os.getenv("BASELINE_FILE", HERE / "baseline.json"))
 INCIDENTS_FILE = Path(os.getenv("INCIDENTS_FILE", HERE / "incidents.jsonl"))
 # Traffic generator and browser-side spans are not part of the system being diagnosed.
-EXCLUDE = {s for s in os.getenv("EXCLUDE", "load-generator,frontend-web").split(",") if s}
+# flagd/flagd-ui are excluded so flag services stay out of the incident picture (HARD RULE 2).
+EXCLUDE = {s for s in os.getenv("EXCLUDE", "load-generator,frontend-web,flagd,flagd-ui").split(",") if s}
 
 # Metric names produced by the demo's spanmetrics connector (verified working).
 CALLS = os.getenv("CALLS_METRIC", "traces_span_metrics_calls_total")

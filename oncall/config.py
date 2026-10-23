@@ -51,8 +51,9 @@ JAEGER_CANDIDATES = [u for u in [
 OPENSEARCH_URL = os.getenv("OPENSEARCH_URL", "")  # optional; docker logs is the baseline
 ACTION_API_URL = os.getenv("ACTION_API_URL", "")  # Day 2; unknown until organisers publish it
 DEMO_DIR = os.getenv("OTEL_DEMO_DIR", "")         # folder with compose.yaml, for `docker compose`
-# Limit container listing to the demo's compose project (empty = all containers on this laptop).
-COMPOSE_PROJECT = os.getenv("COMPOSE_PROJECT", "")
+# Limit container listing to the demo's compose project (verified label: opentelemetry-demo), so
+# other projects' stopped containers on this laptop are not reported. Set to "" to list all.
+COMPOSE_PROJECT = os.getenv("COMPOSE_PROJECT", "opentelemetry-demo")
 HTTP_TIMEOUT = float(os.getenv("ONCALL_HTTP_TIMEOUT", "10"))
 
 # HARD RULE 2: never read feature-flag state. Every outbound URL and file path is checked
