@@ -242,8 +242,9 @@ def loop_pids():
     """PIDs of any `faultctl _loop` processes, found by command line (orphans included)."""
     if os.name == "nt":
         cmd = ["powershell", "-NoProfile", "-Command",
-               "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match 'faultctl _loop' } "
-               "| ForEach-Object { $_.ProcessId }"]
+               # Python processes only: this PowerShell's own command line contains the pattern too.
+               "Get-CimInstance Win32_Process | Where-Object { $_.Name -like 'python*' -and "
+               "$_.CommandLine -match '-m faultctl _loop' } | ForEach-Object { $_.ProcessId }"]
     else:
         cmd = ["pgrep", "-f", "faultctl _loop"]
     out = subprocess.run(cmd, capture_output=True, text=True).stdout
