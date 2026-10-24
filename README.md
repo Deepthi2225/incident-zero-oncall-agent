@@ -123,15 +123,20 @@ recorded", so partial, interrupted and Day 1 records all render.
 Based on our teammate's notification work, shared as `ocAgent-main.zip`. Only the email part is
 ported, rebuilt on this repo's incident record and scrubber (`oncall/notify.py`).
 
-When a run ends in an escalation, the agent tells a human. It notifies once per incident per event
-type, and a restart that re-investigates the same incident does not repeat it:
+When a run ends in an escalation, the agent tells a human. It notifies once per incident, event
+type and channel, and a restart that re-investigates the same incident does not repeat it. A
+failed send (or an event that was only logged while email was off) is sent by the next run of
+that incident. This applies to every way of running the agent: `oncall.agent.run` (also with
+`--test` and `--non-interactive`), `oncall investigate`, `oncall watch`, and `oncall verify`
+after a manual fix:
 
 | Event | When |
 |---|---|
 | `low_confidence` | No root cause reached confidence 0.6, or the investigation ended without a diagnosis |
 | `no_allowlisted_fix` | A confident root cause, but no Action API action fixes its fault class |
 | `reviewer_objection` | The reviewer agent lowered confidence or removed steps |
-| `verification_failed` | An executed step did not verify (after its rollback, if it had one) |
+| `approval_needed` | A step was not run because nobody approved it (`--non-interactive`, or watch mode without a terminal) |
+| `verification_failed` | An executed step did not verify (after its rollback, if it had one), or `oncall verify` after a manual fix did not |
 | `kill_switch` | The kill switch stopped the agent or refused a step |
 | `human_rejected` | The on-call engineer said no at the approval prompt |
 | `recovered` | Optional short info email (`EMAIL_ON_RECOVERED=on`; off by default) |
@@ -143,11 +148,20 @@ incident record: no feature-flag data, no keys or passwords.
 
 `runs/notifications.jsonl` always gets a line per event, even with email off. Every notification
 is also stored in the incident record under `notifications` (time, event, channel, recipients,
-status). Sending runs on a background thread with a timeout (`EMAIL_TIMEOUT_S`, default 10 s): a
-slow or broken mail server never blocks or crashes the agent; the record says
-`email failed: <reason>` and the run continues.
+status). The whole SMTP conversation has one deadline (`EMAIL_TIMEOUT_S`, default 10 s) and the run
+waits for it before it ends, so an email is never lost when the command exits, and a slow or
+broken mail server never blocks or crashes the agent. Every attempt prints one line:
 
-Configure it in `.env` only (never commit real values):
+```
+[notify] no_allowlisted_fix: email sent to alice@example.com
+[notify] low_confidence: email failed: ConnectionRefusedError: ... (nothing is listening on 127.0.0.1:1025)
+[notify] low_confidence: logged to runs/notifications.jsonl (email off: EMAIL_ENABLED is not on)
+```
+
+Configure it in `.env` only (never commit real values). On/off settings accept on/off, true/false,
+1/0 or yes/no; anything else prints a warning. A trailing ` # comment` after a value is ignored.
+`SMTP_HOST` is used exactly as given. With `SMTP_STARTTLS=off` no STARTTLS is attempted, and
+without `SMTP_USER` no login is attempted.
 
 ```
 EMAIL_ENABLED=on
@@ -165,12 +179,24 @@ real email, run a fake server that prints each message:
 
 ```
 pip install aiosmtpd
-python -m aiosmtpd -n -l localhost:1025
+python -m aiosmtpd -n -l 127.0.0.1:1025
 ```
 
-and set `EMAIL_ENABLED=on`, `SMTP_HOST=localhost`, `SMTP_PORT=1025`, `SMTP_STARTTLS=off` (leave
-`SMTP_USER` and `SMTP_PASSWORD` empty), and any `EMAIL_TO`. The tests (`tests/test_notify.py`) use
-their own fake SMTP server and never send real email, even if your `.env` turns email on.
+and set `EMAIL_ENABLED=on`, `SMTP_HOST=127.0.0.1`, `SMTP_PORT=1025`, `SMTP_STARTTLS=off` (leave
+`SMTP_USER` and `SMTP_PASSWORD` empty), and any `EMAIL_TO`. Use `127.0.0.1`, not `localhost`: on
+Windows `localhost` resolves to IPv6 `::1` first, which costs about 2 s per email before falling
+back to IPv4, and fails outright if `EMAIL_TIMEOUT_S` is short.
+
+Check the settings without running the agent:
+
+```
+python -m oncall emailtest
+```
+
+It prints the settings it loaded (the password only as present or absent), sends one email labelled
+`[on-call TEST]` with no incident data, and prints `sent to ...` or the exact error. The tests
+(`tests/test_notify.py`, `tests/test_notify_fixes.py`) use their own fake SMTP server and never
+send real email, even if your `.env` turns email on.
 
 ## Action API (our own)
 

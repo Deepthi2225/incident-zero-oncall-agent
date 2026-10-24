@@ -4,9 +4,18 @@ This service is separate from the agent (oncall/): it never imports it, and the 
 only over HTTP.
 """
 import os
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+
+
+def _value(raw):
+    """Same rule as oncall.config.dotenv_value: quotes removed, an inline " # comment" dropped."""
+    raw = raw.strip()
+    if raw[:1] in ("'", '"') and raw[0] in raw[1:]:
+        return raw[1:raw.index(raw[0], 1)]
+    return re.split(r"\s+#", raw, maxsplit=1)[0].strip()
 
 
 def _load_dotenv(path):
@@ -18,7 +27,7 @@ def _load_dotenv(path):
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, _, value = line.partition("=")
-        key, value = key.strip().removeprefix("export ").strip(), value.strip().strip("'\"")
+        key, value = key.strip().removeprefix("export ").strip(), _value(value)
         if key and value and key not in os.environ:
             os.environ[key] = value
 

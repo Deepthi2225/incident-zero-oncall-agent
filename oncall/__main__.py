@@ -8,6 +8,7 @@
   python -m oncall watch                         detector.py -> investigation
   python -m oncall verify <run_id>               verify-only, after a human fixed it by hand
   python -m oncall stop | resume                 kill switch on / off
+  python -m oncall emailtest                     send one test email with the .env settings
 
 Source flags (before the command). Default is live. --source bundle --bundle DIR replays a recording;
 --record DIR saves one while live; --test [--fixtures DIR] uses fixtures under tests/fixtures/ and
@@ -125,6 +126,18 @@ def cmd_stop(_args):
     print(f"kill switch ON ({config.KILL_SWITCH_FILE})")
 
 
+def cmd_emailtest(_args):
+    """One clearly labelled test email with the app's own settings. Does not run the agent."""
+    from oncall import notify
+    print("email settings: " + " | ".join(notify.settings_lines()))
+    entry = notify.send_test()
+    if entry["status"] == "sent":
+        print(f"sent to {', '.join(entry['recipients'])}")
+        return
+    print(entry.get("error") or "email failed: unknown reason")
+    sys.exit(1)
+
+
 def cmd_resume(_args):
     config.KILL_SWITCH_FILE.unlink(missing_ok=True)
     print("kill switch OFF")
@@ -154,11 +167,13 @@ def main():
     v.add_argument("--timeout", type=float, help="seconds to keep checking (default VERIFY_TIMEOUT_S)")
     sub.add_parser("stop")
     sub.add_parser("resume")
+    sub.add_parser("emailtest", help="send one test email with the email settings in .env")
     args = p.parse_args()
-    if args.cmd not in ("stop", "resume"):
+    if args.cmd not in ("stop", "resume", "emailtest"):
         apply_source_args(p, args)
     {"check": cmd_check, "baseline": cmd_baseline, "investigate": cmd_investigate,
-     "watch": cmd_watch, "verify": cmd_verify, "stop": cmd_stop, "resume": cmd_resume}[args.cmd](args)
+     "watch": cmd_watch, "verify": cmd_verify, "stop": cmd_stop, "resume": cmd_resume,
+     "emailtest": cmd_emailtest}[args.cmd](args)
 
 
 if __name__ == "__main__":

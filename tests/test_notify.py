@@ -24,11 +24,12 @@ SMTP_SECRET = "SMTPPASS-987654"
 
 
 class FakeSMTP(socketserver.ThreadingTCPServer):
-    """Just enough SMTP for smtplib: EHLO, MAIL, RCPT, DATA, QUIT. mode: ok | reject | hang."""
+    """Just enough SMTP for smtplib: EHLO, MAIL, RCPT, DATA, QUIT; it offers no STARTTLS and no AUTH.
+    mode: ok | reject | hang | slow (1 s before accepting a message). commands: every verb seen."""
     daemon_threads = allow_reuse_address = True
 
     def __init__(self, mode="ok"):
-        self.mode, self.messages = mode, []
+        self.mode, self.messages, self.commands = mode, [], []
         super().__init__(("127.0.0.1", 0), SMTPHandler)
         threading.Thread(target=self.serve_forever, daemon=True).start()
 
@@ -49,7 +50,8 @@ class SMTPHandler(socketserver.StreamRequestHandler):
         rcpts = []
         while True:
             line = self.rfile.readline().decode(errors="replace").strip()
-            cmd = line[:4].upper()
+            cmd = line.split(" ")[0].upper()
+            self.server.commands.append(cmd)
             if not line or cmd == "QUIT":
                 self.reply("221 bye")
                 return
@@ -60,11 +62,15 @@ class SMTPHandler(socketserver.StreamRequestHandler):
             elif cmd == "RCPT":
                 rcpts.append(line.split(":", 1)[1].strip(" <>"))
                 self.reply("250 ok")
+            elif cmd in ("STARTTLS", "AUTH"):
+                self.reply("502 not implemented")
             elif cmd == "DATA":
                 self.reply("354 go ahead")
                 data = []
                 while (chunk := self.rfile.readline()) not in (b".\r\n", b""):
                     data.append(chunk)
+                if self.server.mode == "slow":
+                    time.sleep(1.0)
                 self.server.messages.append({"rcpts": rcpts, "msg": email.message_from_bytes(b"".join(data))})
                 rcpts = []
                 self.reply("250 queued")

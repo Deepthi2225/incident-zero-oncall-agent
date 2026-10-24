@@ -451,7 +451,7 @@ def load(path):
     return upgrade(json.loads(Path(path).read_text(encoding="utf-8")))
 
 
-def save_existing(record, path):
+def save_existing(record, path, log=print):
     """Rewrite an existing record (e.g. after verify-only) atomically, with outcome and report."""
     from oncall.evidence import registry
     record["evidence"] = evidence_view(registry.dump(), cited_ids(record.get("diagnosis")))
@@ -462,4 +462,9 @@ def save_existing(record, path):
     clean = scrub(json.loads(json.dumps(record, default=str)))
     atomic_write(path, json.dumps(clean, indent=2))
     write_report(clean, Path(path).with_suffix(".report.md"))
+    from oncall import notify  # a manual fix that did not verify is an escalation too
+    entries = notify.dispatch(clean, log=log)
+    if entries:
+        clean["notifications"] = (clean.get("notifications") or []) + entries
+        atomic_write(path, json.dumps(clean, indent=2))
     return clean

@@ -3,9 +3,20 @@
 Only endpoints and generic facts about the demo live here. No incident-specific answers.
 """
 import os
+import re
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+
+
+def dotenv_value(raw):
+    """The value of a .env line: surrounding quotes removed; for an unquoted value an inline
+    " # comment" is dropped, so EMAIL_ENABLED=on  # comment reads as "on"."""
+    raw = raw.strip()
+    if raw[:1] in ("'", '"') and raw[0] in raw[1:]:
+        return raw[1:raw.index(raw[0], 1)]
+    return re.split(r"\s+#", raw, maxsplit=1)[0].strip()
 
 
 def load_dotenv(path):
@@ -17,9 +28,26 @@ def load_dotenv(path):
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, _, value = line.partition("=")
-        key, value = key.strip().removeprefix("export ").strip(), value.strip().strip("'\"")
+        key, value = key.strip().removeprefix("export ").strip(), dotenv_value(value)
         if key and value and key not in os.environ:
             os.environ[key] = value
+
+
+_TRUE, _FALSE = ("on", "1", "true", "yes"), ("off", "0", "false", "no")
+
+
+def env_flag(name, default):
+    """An on/off setting: on/off, true/false, 1/0 or yes/no, any case. Anything else keeps the
+    default and says so on stderr, instead of silently switching the feature off."""
+    raw = os.getenv(name)
+    if raw is None or not raw.strip():
+        return default
+    value = raw.strip().lower()
+    if value in _TRUE or value in _FALSE:
+        return value in _TRUE
+    print(f"warning: {name}={raw!r} is not on/off, true/false or 1/0; using {'on' if default else 'off'}",
+          file=sys.stderr)
+    return default
 
 
 load_dotenv(ROOT / ".env")
@@ -132,21 +160,22 @@ MAX_STEPS = int(os.getenv("ONCALL_MAX_STEPS", "10"))
 UI_PORT = int(os.getenv("ONCALL_UI_PORT", "8090"))  # read-only live dashboard (python -m oncall.ui)
 # Optional reviewer agent (stretch goal 2): one skeptical second opinion on the diagnosis before
 # approval. It can only lower confidence. Off unless ONCALL_REVIEWER=on.
-REVIEWER = os.getenv("ONCALL_REVIEWER", "off").strip().lower() in ("on", "1", "true", "yes")
+REVIEWER = env_flag("ONCALL_REVIEWER", False)
 REVIEWER_TIMEOUT_S = float(os.getenv("ONCALL_REVIEWER_TIMEOUT_S", "30"))
 # Email escalation (oncall/notify.py): off unless EMAIL_ENABLED=on. .env only; a real SMTP server
-# sends incident data off this laptop. runs/notifications.jsonl is always written.
-_ON = ("on", "1", "true", "yes")
-EMAIL_ENABLED = os.getenv("EMAIL_ENABLED", "off").strip().lower() in _ON
-SMTP_HOST = os.getenv("SMTP_HOST", "")
+# sends incident data off this laptop. For a local fake server use SMTP_HOST=127.0.0.1, not
+# localhost (on Windows localhost tries IPv6 ::1 first). runs/notifications.jsonl is always
+# written. Check the settings with: python -m oncall emailtest
+EMAIL_ENABLED = env_flag("EMAIL_ENABLED", False)
+SMTP_HOST = os.getenv("SMTP_HOST", "").strip()
 SMTP_PORT = int(os.getenv("SMTP_PORT") or 587)
-SMTP_USER = os.getenv("SMTP_USER", "")
+SMTP_USER = os.getenv("SMTP_USER", "").strip()
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
-SMTP_STARTTLS = os.getenv("SMTP_STARTTLS", "on").strip().lower() in _ON
+SMTP_STARTTLS = env_flag("SMTP_STARTTLS", True)
 EMAIL_FROM = os.getenv("EMAIL_FROM", "")
 EMAIL_TO = [a.strip() for a in os.getenv("EMAIL_TO", "").split(",") if a.strip()]
 EMAIL_TIMEOUT_S = float(os.getenv("EMAIL_TIMEOUT_S", "10"))
-EMAIL_ON_RECOVERED = os.getenv("EMAIL_ON_RECOVERED", "off").strip().lower() in _ON
+EMAIL_ON_RECOVERED = env_flag("EMAIL_ON_RECOVERED", False)
 # Server-side refusal fallback. Disable if the organisers' key/proxy rejects the beta.
 USE_FALLBACKS = os.getenv("ONCALL_FALLBACKS", "1") == "1"
 TOOL_RESULT_MAX_BYTES = 2000
