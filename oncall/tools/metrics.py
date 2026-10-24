@@ -13,6 +13,7 @@ CLI: python -m oncall.tools.metrics health --window 5m [--save-baseline]
 import argparse
 import json
 import math
+import re
 
 from oncall import config
 from oncall.evidence import registry
@@ -248,8 +249,31 @@ def _trend(first, latest, lo, hi):
     return "flat"
 
 
+MIN_RATE_WINDOW_S = 180
+NO_DATA_HINT = ("metrics arrive about every 60 s (OTLP push), so rate()/increase() need windows of at "
+                "least 3m and a query window of several minutes; check the name with list_metrics")
+_RATE_WINDOW = re.compile(r"\b(rate|irate|increase|delta|idelta|deriv)\s*\(([^()\[\]]*)\[(\d+)([smh])\]")
+
+
+def widen_rate_windows(promql):
+    """(promql, notes): rate/increase-style windows shorter than 3m become [3m]. Shorter windows
+    hold fewer than two samples and return nothing."""
+    notes = []
+
+    def widen(m):
+        seconds = int(m.group(3)) * {"s": 1, "m": 60, "h": 3600}[m.group(4)]
+        if seconds >= MIN_RATE_WINDOW_S:
+            return m.group(0)
+        notes.append(f"{m.group(1)} window [{m.group(3)}{m.group(4)}] widened to [3m]: metrics arrive about every 60 s")
+        return f"{m.group(1)}({m.group(2)}[3m]"
+
+    return _RATE_WINDOW.sub(widen, promql), notes
+
+
 def get_metric(promql, window="15m"):
     check(promql)
+    asked = promql
+    promql, adjusted = widen_rate_windows(promql)
     window_s = parse_window(window, default=900)
     step = max(window_s // 30, 15)
     series = get_source().prom_range(promql, window_s, step)
@@ -275,10 +299,13 @@ def get_metric(promql, window="15m"):
             f"min {r['min']}, max {r['max']} ({r['trend']})",
             {"promql": promql, "window_s": window_s, "step_s": step, **r})
     result = {"promql": promql, "window_s": window_s, "series_total": len(series), "series": rows}
+    if adjusted:
+        result.update(asked_promql=asked, adjusted=adjusted)
     if not rows:
+        result["hint"] = NO_DATA_HINT
         result["evidence"] = registry.add("get_metric", "metric",
-                                          f"{promql} returned no data over {window_s}s",
-                                          {"promql": promql, "window_s": window_s})
+                                          f"{promql} returned no data over {window_s}s ({NO_DATA_HINT})",
+                                          {"promql": promql, "window_s": window_s, "adjusted": adjusted})
     return cap(result)
 
 
