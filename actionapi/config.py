@@ -31,6 +31,8 @@ TOKEN = os.getenv("ACTION_API_TOKEN", "")
 COOLDOWN_S = float(os.getenv("ACTION_API_COOLDOWN_S", "60"))
 IDEMPOTENCY_TTL_S = float(os.getenv("ACTION_API_IDEMPOTENCY_TTL_S", "3600"))
 AUDIT_LOG = Path(os.getenv("ACTION_API_LOG", ROOT / "runs" / "action_api.jsonl"))
+# throttle to undo, cooldowns and idempotency results; survives an API restart
+STATE_FILE = Path(os.getenv("ACTION_API_STATE", ROOT / "runs" / "action_api_state.json"))
 COMPOSE_PROJECT = os.getenv("COMPOSE_PROJECT", "opentelemetry-demo")
 # The same STOP file as the agent's kill switch (python -m oncall stop), read without importing
 # oncall. While it exists every action request is refused with 423. (Based on Padma's checkpoint3

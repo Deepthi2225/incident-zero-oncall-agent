@@ -10,8 +10,10 @@ container or load-generator state: never flag values, tokens or other secrets.
 import hashlib
 import hmac
 import json
+import os
 import re
 import subprocess
+import tempfile
 import threading
 import time
 import urllib.error
@@ -97,7 +99,7 @@ NAME = re.compile(r"^[a-z0-9][a-z0-9_.-]{0,62}$")
 
 class ActionService:
     def __init__(self, token=None, docker=None, locust=None, clock=time.time, audit_log=None,
-                 cooldown_s=None, kill_switch=None):
+                 cooldown_s=None, kill_switch=None, state_file=None):
         self.token = config.TOKEN if token is None else token
         if not self.token:
             raise ValueError("ACTION_API_TOKEN is not set; refusing to start without a shared token")
@@ -111,6 +113,44 @@ class ActionService:
         self.idempotency = {}      # key -> (request fingerprint, status, response, time)
         self.previous_users = None  # load-generator users before the first throttle
         self.lock = threading.Lock()
+        # Saved after every applied action, so a restart of the API keeps the throttle to undo, the
+        # cooldowns and the idempotency results. (Based on Padma's checkpoint3 branch.)
+        self.state_file = Path(state_file or (Path(audit_log).with_name("action_api_state.json")
+                                              if audit_log else config.STATE_FILE))
+        self._load_state()
+
+    # --- state on disk ---------------------------------------------------------------------------------
+    def _load_state(self):
+        try:
+            data = json.loads(self.state_file.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            return
+        except (OSError, ValueError):  # unreadable or half-written: start clean rather than guess
+            return
+        self.previous_users = data.get("previous_users")
+        self.last_action = {k: float(v) for k, v in (data.get("last_action") or {}).items()}
+        self.idempotency = {k: tuple(v) for k, v in (data.get("idempotency") or {}).items() if len(v) == 4}
+
+    def _save_state(self):
+        """Temp file in the same folder, then rename (atomic on Windows and POSIX)."""
+        self.state_file.parent.mkdir(parents=True, exist_ok=True)
+        data = {"previous_users": self.previous_users, "last_action": self.last_action,
+                "idempotency": {k: list(v) for k, v in self.idempotency.items()}}
+        fd, tmp = tempfile.mkstemp(dir=self.state_file.parent, prefix=".action_api_state.", suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(data, f)
+            for attempt in range(10):
+                try:
+                    os.replace(tmp, self.state_file)
+                    break
+                except PermissionError:  # Windows: target briefly busy
+                    if attempt == 9:
+                        raise
+                    time.sleep(0.05 * (attempt + 1))
+        finally:
+            if os.path.exists(tmp):
+                os.remove(tmp)
 
     # --- entry point ------------------------------------------------------------------------------
     def handle(self, method, path, headers, body, caller="unknown"):
@@ -193,6 +233,8 @@ class ActionService:
         status, response = getattr(self, f"_{action}")(params, dry_run)
         if key and not dry_run:
             self.idempotency[key] = (fingerprint, status, response, self.clock())
+        if not dry_run:
+            self._save_state()
         return status, response
 
     def _expire(self):

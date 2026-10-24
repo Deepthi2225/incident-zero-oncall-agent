@@ -102,6 +102,14 @@ route, 409 idempotency conflict or nothing to restore, 423 kill switch is on, 42
 The service never edits any demo file. Locust is changed only through Locust's own HTTP
 control API.
 
+### State across restarts
+
+After every applied action the service saves its state to `runs/action_api_state.json`
+(`ACTION_API_STATE`): the user count to restore after a throttle, the cooldowns and the idempotency
+results. It writes a temp file, then renames it. An unthrottle (rollback) therefore still works
+after the API is restarted, and a retried request is still not applied twice. An unreadable file is
+ignored, so the API starts clean rather than guessing. **Based on Padma's checkpoint3 branch.**
+
 ### Audit log
 
 Every request is appended to `runs/action_api.jsonl` (`ACTION_API_LOG`), whether it was
