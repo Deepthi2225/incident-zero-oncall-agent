@@ -75,7 +75,9 @@ def test_validate_drops_invented_evidence():
     # Origin-only input: a root cause is synthesised from it (fault class unknown) and diagnosed.
     assert s["suspected_origin"]["confidence"] == 1.0 and s["status"] == "diagnosed"
     assert s["suspected_origin"]["evidence_detail"][real].startswith("checkout's Charge")
-    assert s["root_causes"][0]["component"] == "payment" and s["proposed_action"]["dry_run"] is True
+    # Fault class unknown has no allowlisted fix: escalate, never a guessed restart.
+    assert s["root_causes"][0]["component"] == "payment"
+    assert s["proposed_action"]["action"] == "escalate_to_human"
 
 
 def test_load_dotenv(tmp_path, monkeypatch):

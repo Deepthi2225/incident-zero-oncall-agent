@@ -2,6 +2,7 @@
 import json
 
 from oncall import config
+from oncall.agent.actions import remedy_rules
 
 SYSTEM_PROMPT = """You are the on-call engineer for an online shop built from the OpenTelemetry demo \
 (microservices in Docker Compose). An alert has fired. Investigate it with the read-only tools and \
@@ -19,6 +20,7 @@ unreachable (stopped, crashed, or cut off by the network).
 - Compare with the baseline numbers the tools return and quote before/after values.
 - Missing telemetry from a service is itself evidence, not a gap in your data.
 - More than one origin is possible. Report each with its own evidence.
+- List the suspects you checked and cleared in ruled_out, each with the evidence that clears it.
 - You have at most {max_steps} model turns. Stop investigating once the evidence is consistent.
 
 ## What telemetry looks like for common fault classes (a method, not a list of answers)
@@ -42,9 +44,10 @@ symptom to origin earns high confidence; conflicting or thin evidence earns low 
 - If you are not sure, say so: give the origin/root cause as "unknown" or with low confidence (< 0.6) and list what a \
 human should check. Escalating to human when uncertain is a correct outcome and scores higher than a confident wrong answer.
 
-## Proposed Remediation (Day 1: dry-run only)
-- Pick a remedy from the allowlisted runbook actions: restart_service, toggle_feature_flag, throttle_load_generator, scale_service, escalate_to_human, none.
-- State the target, reason, expected outcome, and risk assessment clearly.
+## Proposed remedy (chosen by the root cause's fault class, never by the service name)
+{remedies}
+- State the target, reason, expected outcome and risk. The validator enforces these rules.
+- Also give prevention: what would stop this from happening again, specific to the root cause.
 
 ## Hard limits
 - Never read feature-flag configuration (flagd, the flag UI or its API). Diagnose from telemetry only.
@@ -64,7 +67,8 @@ Finish by calling submit_diagnosis exactly once. Do not write the diagnosis as p
 def build_system_prompt(max_steps=None):
     deps = "\n".join(f"{k} -> {', '.join(v)}" for k, v in config.DEPENDENCIES.items())
     crit = json.dumps(config.CRITICALITY)
-    return SYSTEM_PROMPT.format(max_steps=max_steps or config.MAX_STEPS, deps=deps, crit=crit)
+    return SYSTEM_PROMPT.format(max_steps=max_steps or config.MAX_STEPS, deps=deps, crit=crit,
+                                remedies=remedy_rules())
 
 
 def alert_message(alert):
