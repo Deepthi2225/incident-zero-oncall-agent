@@ -38,10 +38,20 @@ def log_action(event, run_id, step, **fields):
 
 # --- approval ---------------------------------------------------------------------------------
 
+def risk_of(step):
+    """The step's risk assessment for the approval box and record.
+    (Based on Shivakumar's Day 1 approval gate, which showed the risk to the approver.)"""
+    return (step.get("risk_assessment") or "").strip() or "not assessed"
+
+
 def make_approver(auto_approve=False, interactive=True):
     """approve(step, diag) -> approval record for that one step."""
 
     def approve(step, diag):
+        record = approval_for(step, diag)
+        return {**record, "risk": risk_of(step)}  # the risk the decision was made on
+
+    def approval_for(step, diag):
         if auto_approve:
             return {"status": "approved", "approved_by": "auto", "decision_at": _now(),
                     "notes": "auto-approved via flag: dry run only, never executed"}
@@ -57,6 +67,7 @@ def make_approver(auto_approve=False, interactive=True):
         print(f"Reason     : {step.get('reason')}")
         if step.get("expected_outcome"):
             print(f"Expected   : {step['expected_outcome']}")
+        print(f"Risk       : {risk_of(step)}")
         rb = step.get("rollback")
         print(f"Rollback   : {rb['action']} ({rb['note']})" if rb else "Rollback   : none (cannot be undone)")
         print("-" * 64)

@@ -178,6 +178,7 @@ def _step_section(step, evidence):
            f"- Reason: {step.get('reason', '')}",
            f"- Approval: {approval.get('status', 'not asked')}"
            + (f" by {approval['approved_by']}" if approval.get("approved_by") else ""),
+           f"- Risk (as shown to the approver): {approval.get('risk') or step.get('risk_assessment') or 'not assessed'}",
            f"- Kill switch: {step.get('kill_switch') or 'not checked'}",
            f"- Result: {ex.get('status', 'not run')}" + (f" ({why})" if why else ""),
            f"- Step outcome: **{step.get('outcome', 'not run')}**"]
