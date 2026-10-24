@@ -121,10 +121,9 @@ class LiveSource:
 
     # --- Docker --------------------------------------------------------------
     def container_names(self):
-        args = ["ps", "-a", "--format", "{{.Names}}"]
-        if config.COMPOSE_PROJECT:
-            args[2:2] = ["--filter", f"label=com.docker.compose.project={config.COMPOSE_PROJECT}"]
-        stdout, _ = _docker(*args)
+        project = (["--filter", f"label=com.docker.compose.project={config.COMPOSE_PROJECT}"]
+                   if config.COMPOSE_PROJECT else [])
+        stdout, _ = _docker("ps", "-a", *project, "--format", "{{.Names}}")
         # Flag containers (flagd, flagd-ui) are never inspected: HARD RULE 2.
         return [n for n in stdout.split() if n and allowed(n)]
 
