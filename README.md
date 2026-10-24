@@ -38,6 +38,28 @@ human is needed. `--execute` combined with `--auto-approve`/`--yes` is refused a
 `python -m oncall.agent.run` and `scripts/demo.py`. Both are **based on Aniruddha's aj_ck_3
 branch**.
 
+## Reviewer agent (stretch goal 2, off by default)
+
+With `ONCALL_REVIEWER=on`, one extra model call reviews the validated diagnosis before anything is
+shown for approval ([oncall/agent/reviewer.py](oncall/agent/reviewer.py)). It uses the same
+provider, with no investigation tools. It gets the alert, the diagnosis and the text of every
+registered evidence item, and acts as a skeptical senior SRE trying to disprove the diagnosis:
+victim versus origin, contradicting evidence, alternatives not ruled out, and claims their cited
+evidence does not support.
+
+**It can** return `agree`, `doubt` or `disagree` with objections, suggest an alternative root cause,
+and lower confidence by up to 0.3. If confidence then falls below 0.6, the affected steps are
+removed and escalated to a human, with the objections attached. The approval box shows a
+`Reviewer` line, and the report and incident JSON have a Review section (verdict, objections,
+confidence before and after, tokens, duration). Its tokens count towards the run's cost.
+
+**It cannot** (enforced in code): raise confidence (the adjustment is clamped to [-0.3, 0]); add,
+change or retarget a step; approve anything; or act on its suggested alternative, which is only
+shown to the human. Objections citing evidence IDs that are not in the registry are dropped. The
+kill switch is checked before the call. On any error or a timeout (`ONCALL_REVIEWER_TIMEOUT_S`,
+default 30 s), the run continues exactly as without a reviewer and records "review skipped:
+<reason>".
+
 ## Action API (our own)
 
 > **Confirmed by mentor `<name>` at `<time>`:** teams build their own Action API. Ours is a

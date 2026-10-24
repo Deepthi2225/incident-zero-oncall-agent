@@ -17,6 +17,7 @@ from datetime import datetime, timezone
 from oncall import config
 from oncall.action_api import ActionApiError, KillSwitchRefused
 from oncall.agent.actions import depends_on, execution_allowed, involved_services
+from oncall.agent.reviewer import reviewer_line
 from oncall.record import append_line
 from oncall.verify import INCONCLUSIVE, NOT_RECOVERED, PARTIAL, RECOVERED
 
@@ -64,6 +65,8 @@ def make_approver(auto_approve=False, interactive=True):
         print("=" * 64)
         print(f"Diagnosis  : {diag.get('status', '?').upper()} (confidence {diag.get('confidence', 0.0):.2f})")
         print(f"Root cause : {step.get('component')} [{step.get('fault_class')}]")
+        if reviewer_line(diag):  # only when the optional reviewer ran
+            print(f"Reviewer   : {reviewer_line(diag)}")
         print(f"Action     : {step['action']} on {step['target']}" + (f" (flag {step['flag']})" if step.get("flag") else ""))
         print(f"Reason     : {step.get('reason')}")
         if step.get("expected_outcome"):

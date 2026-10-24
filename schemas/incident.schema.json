@@ -57,6 +57,7 @@
         "tokens_out": {"type": "integer", "minimum": 0},
         "estimated_cost_usd": {"type": ["number", "null"], "minimum": 0},
         "price_basis": {"type": "string"},
+        "reviewer_tokens": {"type": "object", "properties": {"in": {"type": "integer"}, "out": {"type": "integer"}}},
         "phases": {
           "type": "object",
           "required": ["investigation_s", "remediation_s", "verify_s", "total_s"],
@@ -71,6 +72,7 @@
         "step_budget": {"type": ["integer", "null"]}
       }
     },
+    "review": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/review"}]},
     "report_paths": {
       "type": "object",
       "required": ["report", "actions_log", "action_log_lines"],
@@ -82,6 +84,27 @@
     }
   },
   "$defs": {
+    "review": {
+      "type": "object",
+      "required": ["status", "verdict", "objections", "adjustment", "confidence_before", "confidence_after",
+                   "escalated", "tokens_in", "tokens_out", "seconds"],
+      "properties": {
+        "status": {"enum": ["done", "skipped"]},
+        "reason": {"type": ["string", "null"]},
+        "verdict": {"enum": ["agree", "doubt", "disagree", null]},
+        "objections": {"type": "array", "items": {"type": "object", "required": ["text", "evidence"],
+                       "properties": {"text": {"type": "string"}, "evidence": {"$ref": "#/$defs/evidence_ids"}}}},
+        "dropped_objections": {"type": "integer", "minimum": 0},
+        "alternative_root_cause": {"type": ["object", "null"]},
+        "adjustment": {"type": "number", "minimum": -0.3},
+        "confidence_before": {"type": "number", "minimum": 0},
+        "confidence_after": {"type": "number", "minimum": 0},
+        "escalated": {"type": "boolean"},
+        "tokens_in": {"type": "integer", "minimum": 0},
+        "tokens_out": {"type": "integer", "minimum": 0},
+        "seconds": {"type": "number", "minimum": 0}
+      }
+    },
     "evidence_ids": {"type": "array", "items": {"type": "string"}},
     "tool_call": {
       "type": "object",

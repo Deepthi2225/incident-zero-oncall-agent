@@ -280,8 +280,9 @@ class RunRecord:
             "alert": alert,
             "investigation": {"steps": [], "outcome": None, "error": None, "model_turns": 0},
             "evidence": [], "diagnosis": None, "remediation_plan": None, "escalations": [],
-            "manual_verifications": [], "outcome": None,
+            "manual_verifications": [], "outcome": None, "review": None,
             "accounting": {"tokens_in": 0, "tokens_out": 0, "estimated_cost_usd": 0.0,
+                           "reviewer_tokens": {"in": 0, "out": 0},
                            "price_basis": "USD per 1M tokens, Anthropic first-party rates",
                            "phases": {"investigation_s": None, "remediation_s": None, "verify_s": None,
                                       "total_s": None},
@@ -298,6 +299,14 @@ class RunRecord:
         acc["steps_used"] = inv["model_turns"]
         acc["tokens_in"] += tokens_in
         acc["tokens_out"] += tokens_out
+
+    def review_tokens(self, tokens_in, tokens_out):
+        """The reviewer's call: counted in the run's tokens and cost, but not as an investigation turn."""
+        acc = self.data["accounting"]
+        acc["tokens_in"] += tokens_in
+        acc["tokens_out"] += tokens_out
+        acc["reviewer_tokens"] = {"in": acc["reviewer_tokens"]["in"] + tokens_in,
+                                  "out": acc["reviewer_tokens"]["out"] + tokens_out}
 
     def tool_call(self, **step):
         self.data["investigation"]["steps"].append(step)
@@ -346,6 +355,7 @@ class RunRecord:
             d["status"] = status
         d["metadata"]["updated_at"] = now_iso()
         d["diagnosis"] = diagnosis_view(self.diag)
+        d["review"] = (self.diag or {}).get("review")
         plan = (self.diag or {}).get("remediation_plan")
         d["remediation_plan"] = plan_view(plan)
         d["escalations"] = escalations_view(plan)

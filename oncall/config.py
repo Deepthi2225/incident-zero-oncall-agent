@@ -129,6 +129,10 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")  # .env only
 EFFORT = os.getenv("ONCALL_EFFORT", "high")
 MAX_STEPS = int(os.getenv("ONCALL_MAX_STEPS", "10"))
+# Optional reviewer agent (stretch goal 2): one skeptical second opinion on the diagnosis before
+# approval. It can only lower confidence. Off unless ONCALL_REVIEWER=on.
+REVIEWER = os.getenv("ONCALL_REVIEWER", "off").strip().lower() in ("on", "1", "true", "yes")
+REVIEWER_TIMEOUT_S = float(os.getenv("ONCALL_REVIEWER_TIMEOUT_S", "30"))
 # Server-side refusal fallback. Disable if the organisers' key/proxy rejects the beta.
 USE_FALLBACKS = os.getenv("ONCALL_FALLBACKS", "1") == "1"
 TOOL_RESULT_MAX_BYTES = 2000

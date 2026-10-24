@@ -18,7 +18,8 @@ import anthropic
 
 from oncall import config
 from oncall.agent.prompt import alert_message, build_system_prompt
-from oncall.agent.diagnosis import SUBMIT_TOOL, empty_summary, validate
+from oncall.agent.diagnosis import CONFIDENT, SUBMIT_TOOL, empty_summary, validate
+from oncall.agent.reviewer import review_diagnosis
 from oncall.agent.providers import AnthropicProvider, GeminiProvider, LLMError, NoCredentials
 from oncall.action_api import DryRunClient
 from oncall.record import RunRecord, unique_run_id
@@ -196,6 +197,10 @@ class Agent:
         rec.investigation_done(outcome, error)
         if summary is None:
             summary = empty_summary(f"agent outcome: {outcome}")
+        elif outcome == "submitted" and config.REVIEWER:
+            # optional second opinion before anything is shown for approval; it can only lower
+            # confidence and remove steps (stretch goal 2, oncall/agent/reviewer.py)
+            review_diagnosis(summary, alert, self.llm, CONFIDENT, on_tokens=rec.review_tokens, log=self.log)
         rec.set_diagnosis(summary)  # phase: diagnosis
         self.log(render_diagnosis(rec.saved))
 

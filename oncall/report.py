@@ -70,6 +70,12 @@ def render_diagnosis(record):
         lines += ["\nPrevention:"] + [f"  - {p}" for p in d["prevention"]]
     if d.get("open_questions"):
         lines += ["\nOpen Questions / Next Checks:"] + [f"  - {q}" for q in d["open_questions"]]
+    review = record.get("review")
+    if review:
+        lines.append(f"\nReviewer: {review['reason']}" if review["status"] == "skipped" else
+                     f"\nReviewer: {review['verdict']} (confidence {review['confidence_before']} -> "
+                     f"{review['confidence_after']})" + ("; ESCALATED" if review["escalated"] else ""))
+        lines += [f"  objection: {o['text']} [{', '.join(o['evidence'])}]" for o in review.get("objections", [])[:3]]
     lines += [f"(validator) {n}" for n in (d.get("validation") or {}).get("notes", [])]
     return "\n".join(lines)
 
@@ -195,6 +201,27 @@ def _step_section(step, evidence):
     return out
 
 
+def _review_section(review):
+    """The optional reviewer's second opinion (stretch goal 2)."""
+    if not review:
+        return []
+    out = ["", "## Review", ""]
+    if review["status"] == "skipped":
+        return out + [f"- {review['reason']}"]
+    out += [f"- Verdict: **{review['verdict']}**; confidence {review['confidence_before']} -> "
+            f"{review['confidence_after']} (adjustment {review['adjustment']})"
+            + ("; the incident was escalated instead of acted on" if review["escalated"] else ""),
+            f"- Tokens in/out: {review['tokens_in']}/{review['tokens_out']}; {review['seconds']}s"]
+    out += [f"- Objection: {o['text']} ({', '.join(o['evidence'])})" for o in review["objections"]]
+    if review.get("dropped_objections"):
+        out.append(f"- {review['dropped_objections']} objection(s) dropped: no valid evidence IDs")
+    alt = review.get("alternative_root_cause")
+    if alt:
+        out.append(f"- Suggested alternative (for the human only, never acted on): {alt['component']} "
+                   f"[{alt.get('fault_class')}]: {alt.get('reason', '')}")
+    return out
+
+
 def build_report(record):
     record = upgrade(record)
     meta, d = record["metadata"], record.get("diagnosis") or {}
@@ -233,6 +260,8 @@ def build_report(record):
                 for o in validation.get("overrides", [])]
         if validation.get("dropped_evidence_ids"):
             out.append(f"- dropped evidence IDs not in the registry: {', '.join(validation['dropped_evidence_ids'])}")
+
+    out += _review_section(record.get("review"))
 
     out += ["", "## Evidence", "", "| ID | Tool | Observation |", "|---|---|---|"]
     for e in record.get("evidence", []):
