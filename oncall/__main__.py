@@ -6,6 +6,7 @@
   python -m oncall investigate --alert-file alert.json
   python -m oncall --test investigate --alert-file tests/fixtures/payment_down/alert.json
   python -m oncall watch                         detector.py -> investigation
+  python -m oncall verify <run_id>               verify-only, after a human fixed it by hand
   python -m oncall stop | resume                 kill switch on / off
 
 Source flags (before the command). Default is live. --source bundle --bundle DIR replays a recording;
@@ -77,7 +78,7 @@ def cmd_investigate(args):
     from oncall.agent.run import run_agent
     record = run_agent(_alert_from_args(args), model=args.model, max_steps=args.max_steps)
     if args.json:
-        print(json.dumps(record["summary"], indent=2, default=str))
+        print(json.dumps({k: v for k, v in record.items() if k != "path"}, indent=2, default=str))
 
 
 def cmd_watch(args):
@@ -87,6 +88,36 @@ def cmd_watch(args):
     from oncall.agent.run import run_agent
     detector.POLL_SECS = args.interval
     detector.run(on_incident=run_agent, once=args.once)
+
+
+def find_run(run):
+    """A run id (20261023-175355), its -test/-bundle variant, or a path to the run record."""
+    path = Path(run)
+    if path.suffix == ".json" and path.exists():
+        return path
+    for candidate in sorted(config.RUNS_DIR.glob(f"{run}*.json")):
+        if candidate.name != "index.json":
+            return candidate
+    sys.exit(f"no run record for {run!r} in {config.RUNS_DIR}")
+
+
+def cmd_verify(args):
+    """Verify-only: after a human fixed the issue by hand. Reads telemetry, never calls the Action API."""
+    from oncall.evidence import registry
+    from oncall.record import load, save_existing
+    from oncall.remediate import verify_manual
+    from oncall.verify import Verifier
+    path = find_run(args.run)
+    record = load(path)  # upgrades a Day 1 record to the current format
+    registry.load(record.get("evidence", []))  # new checks continue the run's evidence IDs
+    verifier = Verifier(timeout_s=args.timeout) if args.timeout else Verifier()
+    diag = {"root_causes": (record.get("diagnosis") or {}).get("root_causes") or [],
+            "remediation_plan": record.get("remediation_plan") or {}}
+    result = verify_manual(diag, verifier, record["metadata"]["run_id"])
+    record.setdefault("manual_verifications", []).append(result)
+    saved = save_existing(record, path)
+    print(f"manual verification: {result['outcome'].upper()} | outcome {saved['outcome']['status']} | "
+          f"run updated {path} | report {path.with_suffix('.report.md')}")
 
 
 def cmd_stop(_args):
@@ -118,13 +149,16 @@ def main():
     w = sub.add_parser("watch")
     w.add_argument("--interval", type=int, default=30, help="seconds between polls")
     w.add_argument("--once", action="store_true", help="exit after the first investigation")
+    v = sub.add_parser("verify", help="verify an existing run after a human fixed it by hand")
+    v.add_argument("run", help="run id (e.g. 20261024-101500) or path to runs/<id>.json")
+    v.add_argument("--timeout", type=float, help="seconds to keep checking (default VERIFY_TIMEOUT_S)")
     sub.add_parser("stop")
     sub.add_parser("resume")
     args = p.parse_args()
     if args.cmd not in ("stop", "resume"):
         apply_source_args(p, args)
     {"check": cmd_check, "baseline": cmd_baseline, "investigate": cmd_investigate,
-     "watch": cmd_watch, "stop": cmd_stop, "resume": cmd_resume}[args.cmd](args)
+     "watch": cmd_watch, "verify": cmd_verify, "stop": cmd_stop, "resume": cmd_resume}[args.cmd](args)
 
 
 if __name__ == "__main__":

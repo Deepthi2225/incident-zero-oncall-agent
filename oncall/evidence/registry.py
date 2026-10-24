@@ -56,6 +56,15 @@ class Registry:
             self._items.clear()
             self._counter = itertools.count(1)
 
+    def load(self, items):
+        """Restore a saved run's evidence; new IDs continue after the highest one (E12 -> E13)."""
+        with self._lock:
+            # records store the text as "observation"; the registry calls it "summary"
+            self._items = {e["id"]: {**e, "summary": e.get("summary", e.get("observation", ""))}
+                           for e in items}
+            top = max((int(e["id"][1:]) for e in items if e["id"][1:].isdigit()), default=0)
+            self._counter = itertools.count(top + 1)
+
     def dump(self):
         return json.loads(json.dumps(self.all(), default=str))
 

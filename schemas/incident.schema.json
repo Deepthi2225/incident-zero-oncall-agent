@@ -1,0 +1,268 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "incident.schema.json",
+  "title": "Incident Zero incident record (runs/<run_id>.json)",
+  "description": "One file per agent run: everything shown or decided. Written incrementally; status 'running' or 'interrupted' marks a partial file. Produced by oncall/record.py.",
+  "type": "object",
+  "required": ["schema_version", "status", "metadata", "alert", "investigation", "evidence", "diagnosis",
+               "remediation_plan", "escalations", "manual_verifications", "outcome", "accounting", "report_paths"],
+  "properties": {
+    "schema_version": {"enum": [2]},
+    "status": {"enum": ["running", "interrupted", "complete"]},
+    "interrupted_reason": {"type": "string"},
+    "upgraded_from": {"type": "integer"},
+    "metadata": {
+      "type": "object",
+      "required": ["run_id", "incident_id", "started_at", "ended_at", "mode", "source_detail", "provider", "model", "git"],
+      "properties": {
+        "run_id": {"type": "string"},
+        "incident_id": {"type": "string"},
+        "started_at": {"type": ["string", "null"]},
+        "ended_at": {"type": ["string", "null"]},
+        "updated_at": {"type": ["string", "null"]},
+        "mode": {"enum": ["live", "bundle", "test", "fake", "mem"]},
+        "source_detail": {"type": ["string", "null"]},
+        "provider": {"type": "string"},
+        "model": {"type": ["string", "null"]},
+        "git": {
+          "type": "object",
+          "required": ["commit", "dirty"],
+          "properties": {"commit": {"type": ["string", "null"]}, "dirty": {"type": ["boolean", "null"]}}
+        }
+      }
+    },
+    "alert": {"type": "object"},
+    "investigation": {
+      "type": "object",
+      "required": ["steps", "outcome", "error"],
+      "properties": {
+        "steps": {"type": "array", "items": {"$ref": "#/$defs/tool_call"}},
+        "outcome": {"enum": [null, "submitted", "incomplete", "refused", "killed", "llm_error"]},
+        "error": {"type": ["string", "null"]},
+        "model_turns": {"type": ["integer", "null"]},
+        "submitted_at_s": {"type": ["number", "null"]}
+      }
+    },
+    "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+    "diagnosis": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/diagnosis"}]},
+    "remediation_plan": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/plan"}]},
+    "escalations": {"type": "array", "items": {"$ref": "#/$defs/escalation"}},
+    "manual_verifications": {"type": "array", "items": {"$ref": "#/$defs/manual_verification"}},
+    "outcome": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/outcome"}]},
+    "accounting": {
+      "type": "object",
+      "required": ["tokens_in", "tokens_out", "estimated_cost_usd", "phases", "steps_used", "step_budget"],
+      "properties": {
+        "tokens_in": {"type": "integer", "minimum": 0},
+        "tokens_out": {"type": "integer", "minimum": 0},
+        "estimated_cost_usd": {"type": ["number", "null"], "minimum": 0},
+        "price_basis": {"type": "string"},
+        "phases": {
+          "type": "object",
+          "required": ["investigation_s", "remediation_s", "verify_s", "total_s"],
+          "properties": {
+            "investigation_s": {"type": ["number", "null"]},
+            "remediation_s": {"type": ["number", "null"]},
+            "verify_s": {"type": ["number", "null"]},
+            "total_s": {"type": ["number", "null"]}
+          }
+        },
+        "steps_used": {"type": ["integer", "null"]},
+        "step_budget": {"type": ["integer", "null"]}
+      }
+    },
+    "report_paths": {
+      "type": "object",
+      "required": ["report", "actions_log", "action_log_lines"],
+      "properties": {
+        "report": {"type": ["string", "null"]},
+        "actions_log": {"type": ["string", "null"]},
+        "action_log_lines": {"type": "array", "items": {"type": "integer", "minimum": 1}}
+      }
+    }
+  },
+  "$defs": {
+    "evidence_ids": {"type": "array", "items": {"type": "string"}},
+    "tool_call": {
+      "type": "object",
+      "required": ["step", "tool", "arguments", "result", "evidence_ids", "seconds", "error"],
+      "properties": {
+        "step": {"type": ["integer", "null"]},
+        "tool": {"type": "string"},
+        "arguments": {"type": ["object", "null"]},
+        "result": {"type": ["object", "null"]},
+        "evidence_ids": {"$ref": "#/$defs/evidence_ids"},
+        "seconds": {"type": ["number", "null"]},
+        "at_s": {"type": ["number", "null"]},
+        "error": {"type": ["string", "null"]}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["id", "tool", "observation", "ts", "cited"],
+      "properties": {
+        "id": {"type": "string"},
+        "tool": {"type": ["string", "null"]},
+        "kind": {"type": ["string", "null"]},
+        "observation": {"type": "string"},
+        "ts": {"type": ["string", "null"]},
+        "cited": {"type": "boolean"},
+        "data": {}
+      }
+    },
+    "root_cause": {
+      "type": "object",
+      "required": ["component", "fault_class", "cause", "confidence", "evidence"],
+      "properties": {
+        "component": {"type": "string"},
+        "fault_class": {"enum": ["container_stopped_or_restarting", "dependency_down", "resource_starvation",
+                                 "memory_leak", "cpu_or_gc_pressure", "service_error", "service_unreachable",
+                                 "input_specific_error", "traffic_flood", "network_degradation", "unknown"]},
+        "cause": {"type": "string"},
+        "confidence": {"type": "number", "minimum": 0},
+        "evidence": {"$ref": "#/$defs/evidence_ids"},
+        "evidence_detail": {"type": "object"}
+      }
+    },
+    "diagnosis": {
+      "type": "object",
+      "required": ["status", "confidence", "root_causes", "ruled_out", "open_questions", "validation"],
+      "properties": {
+        "status": {"enum": ["diagnosed", "escalate"]},
+        "headline": {"type": ["string", "null"]},
+        "confidence": {"type": "number", "minimum": 0},
+        "root_causes": {"type": "array", "items": {"$ref": "#/$defs/root_cause"}},
+        "suspected_origin": {"type": ["object", "null"]},
+        "affected_services": {"type": ["array", "null"]},
+        "anomalies": {"type": ["array", "null"]},
+        "ruled_out": {
+          "type": "array",
+          "items": {"type": "object", "required": ["service", "reason", "evidence"],
+                    "properties": {"service": {"type": "string"}, "reason": {"type": "string"},
+                                   "evidence": {"$ref": "#/$defs/evidence_ids"}}}
+        },
+        "open_questions": {"type": "array", "items": {"type": "string"}},
+        "prevention": {"type": ["array", "null"], "items": {"type": "string"}},
+        "proposed_action": {"type": ["object", "null"]},
+        "validation": {
+          "type": "object",
+          "required": ["dropped_evidence_ids", "notes", "overrides"],
+          "properties": {
+            "dropped_evidence_ids": {"$ref": "#/$defs/evidence_ids"},
+            "notes": {"type": "array", "items": {"type": "string"}},
+            "overrides": {
+              "type": "array",
+              "items": {"type": "object", "required": ["field", "proposed", "applied", "reason"],
+                        "properties": {"field": {"type": "string"}, "proposed": {"type": "object"},
+                                       "applied": {"type": "object"}, "reason": {"type": "string"}}}
+            }
+          }
+        }
+      }
+    },
+    "approval": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["approved", "rejected", "pending"]},
+        "approved_by": {"enum": ["human", "auto", null]},
+        "decision_at": {"type": ["string", "null"]},
+        "notes": {"type": ["string", "null"]}
+      }
+    },
+    "verify": {
+      "type": "object",
+      "required": ["outcome"],
+      "properties": {
+        "outcome": {"enum": ["recovered", "partial", "not_recovered", "inconclusive", "skipped"]},
+        "reason": {"type": ["string", "null"]},
+        "seconds": {"type": ["number", "null"]},
+        "serving": {"type": ["object", "null"]},
+        "recovering": {"type": ["object", "null"]},
+        "checks": {
+          "type": "array",
+          "items": {"type": "object", "required": ["poll", "ok"],
+                    "properties": {"poll": {"type": "integer"}, "at": {"type": ["string", "null"]},
+                                   "ok": {"type": ["boolean", "null"]}, "serving_seen": {"type": ["boolean", "null"]},
+                                   "signals": {"type": "object"}, "evidence": {"type": ["string", "null"]}}}
+        },
+        "services": {"type": "object"},
+        "unhealthy": {"type": "array", "items": {"type": "string"}},
+        "evidence": {"$ref": "#/$defs/evidence_ids"}
+      }
+    },
+    "step": {
+      "type": "object",
+      "required": ["step", "action", "target", "params", "reason"],
+      "properties": {
+        "step": {"type": "integer", "minimum": 1},
+        "action": {"enum": ["restart_service", "toggle_feature_flag", "throttle_load_generator", "scale_service"]},
+        "target": {"type": "string"},
+        "component": {"type": ["string", "null"]},
+        "fault_class": {"type": ["string", "null"]},
+        "params": {"type": "object"},
+        "reason": {"type": "string"},
+        "dry_run": {"type": "boolean"},
+        "rollback": {"type": ["object", "null"]},
+        "approval": {"$ref": "#/$defs/approval"},
+        "kill_switch": {"type": "object"},
+        "execution": {
+          "type": "object", "required": ["status"],
+          "properties": {"status": {"enum": ["executed", "dry_run", "refused", "failed"]},
+                         "at": {"type": ["string", "null"]}, "request": {"type": ["object", "null"]},
+                         "reason": {"type": ["string", "null"]}, "error": {"type": ["string", "null"]}}
+        },
+        "verify": {"$ref": "#/$defs/verify"},
+        "rollback_result": {"type": "object", "required": ["status"],
+                            "properties": {"status": {"enum": ["done", "dry_run", "refused", "failed", "none"]}}},
+        "outcome": {"enum": ["recovered", "partial", "not_recovered", "inconclusive", "refused", "failed",
+                             "dry_run", "not_run"]}
+      }
+    },
+    "plan": {
+      "type": "object",
+      "required": ["steps"],
+      "properties": {
+        "steps": {"type": "array", "items": {"$ref": "#/$defs/step"}},
+        "not_run": {"type": "array"},
+        "outcome": {"enum": ["recovered", "partial", "stopped", "dry_run", "escalated", null]},
+        "client": {"type": ["string", "null"]},
+        "live": {"type": ["boolean", "null"]},
+        "stopped_reason": {"type": ["string", "null"]},
+        "escalate": {"type": ["boolean", "null"]},
+        "error": {"type": ["string", "null"]}
+      }
+    },
+    "escalation": {
+      "type": "object",
+      "required": ["target", "reason", "next_steps"],
+      "properties": {
+        "target": {"type": ["string", "null"]},
+        "fault_class": {"type": ["string", "null"]},
+        "reason": {"type": ["string", "null"]},
+        "next_steps": {"type": "array", "items": {"type": "string"}},
+        "source": {"type": "string"}
+      }
+    },
+    "manual_verification": {
+      "type": "object",
+      "required": ["at", "outcome", "targets"],
+      "properties": {
+        "at": {"type": "string"},
+        "outcome": {"enum": ["recovered", "partial", "not_recovered", "inconclusive"]},
+        "targets": {"type": "array"}
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "required": ["status", "summary", "prevention"],
+      "properties": {
+        "status": {"enum": ["recovered", "partial", "not_recovered", "inconclusive", "escalated"]},
+        "summary": {"type": "string"},
+        "prevention": {"type": "array", "items": {"type": "string"}},
+        "investigation_outcome": {"type": ["string", "null"]},
+        "plan_outcome": {"type": ["string", "null"]}
+      }
+    }
+  }
+}
