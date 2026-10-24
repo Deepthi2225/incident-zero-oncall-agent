@@ -17,7 +17,9 @@ from oncall.tools import _common
 # thresholds... Every setting these modules read from the environment is reset to its built-in
 # default before each test; tests that need a feature switch it on explicitly with monkeypatch.
 ENV_MODULES = [config, api_config, detector]
-_ENV_NAME = re.compile(r"""(?:os\.getenv|os\.environ\.get|env_flag)\(\s*["']([A-Z0-9_]+)["']""")
+# Every quoted ALL_CAPS name in these modules counts as a possible setting, whichever helper reads
+# it (os.getenv, env_flag, _env with aliases...); resetting a name that is not one is harmless.
+_ENV_NAME = re.compile(r"""["']([A-Z][A-Z0-9_]{2,})["']""")
 _SECRET_NAME = re.compile(r"(KEY|TOKEN|PASSWORD)$")
 
 

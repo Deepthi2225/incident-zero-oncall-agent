@@ -166,15 +166,33 @@ REVIEWER_TIMEOUT_S = float(os.getenv("ONCALL_REVIEWER_TIMEOUT_S", "30"))
 # sends incident data off this laptop. For a local fake server use SMTP_HOST=127.0.0.1, not
 # localhost (on Windows localhost tries IPv6 ::1 first). runs/notifications.jsonl is always
 # written. Check the settings with: python -m oncall emailtest
+# EMAIL_TRANSPORT=resend sends through Resend's HTTPS API instead (RESEND_API_KEY). Our teammate's
+# .env names are accepted too: NOTIFICATION_FROM_EMAIL (= EMAIL_FROM), ONCALL_PRIMARY_EMAIL (added
+# to EMAIL_TO), SMTP_PASS (= SMTP_PASSWORD), ONCALL_PRIMARY_NAME (greeting). No calls or SMS.
+
+
+def _env(*names):
+    """The first of names that is set and not blank, whitespace stripped."""
+    return next((v.strip() for v in (os.getenv(n) for n in names) if v and v.strip()), "")
+
+
 EMAIL_ENABLED = env_flag("EMAIL_ENABLED", False)
-SMTP_HOST = os.getenv("SMTP_HOST", "").strip()
-SMTP_PORT = int(os.getenv("SMTP_PORT") or 587)
-SMTP_USER = os.getenv("SMTP_USER", "").strip()
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+EMAIL_TRANSPORT = _env("EMAIL_TRANSPORT").lower() or "smtp"
+SMTP_HOST = _env("SMTP_HOST")
+SMTP_PORT = int(_env("SMTP_PORT") or 587)
+SMTP_USER = _env("SMTP_USER")
+SMTP_PASSWORD = _env("SMTP_PASSWORD", "SMTP_PASS")
 SMTP_STARTTLS = env_flag("SMTP_STARTTLS", True)
-EMAIL_FROM = os.getenv("EMAIL_FROM", "")
-EMAIL_TO = [a.strip() for a in os.getenv("EMAIL_TO", "").split(",") if a.strip()]
-EMAIL_TIMEOUT_S = float(os.getenv("EMAIL_TIMEOUT_S", "10"))
+RESEND_API_KEY = _env("RESEND_API_KEY")
+RESEND_URL = "https://api.resend.com/emails"
+# Resend's shared test sender; it only delivers to the Resend account owner's own address
+# until a domain is verified in Resend.
+RESEND_DEFAULT_FROM = "AI On-Call Agent <onboarding@resend.dev>"
+EMAIL_FROM = _env("EMAIL_FROM", "NOTIFICATION_FROM_EMAIL")
+EMAIL_TO = list(dict.fromkeys(a.strip() for a in f"{_env('EMAIL_TO')},{_env('ONCALL_PRIMARY_EMAIL')}".split(",")
+                              if a.strip()))
+ONCALL_PRIMARY_NAME = _env("ONCALL_PRIMARY_NAME")
+EMAIL_TIMEOUT_S = float(_env("EMAIL_TIMEOUT_S") or 10)
 EMAIL_ON_RECOVERED = env_flag("EMAIL_ON_RECOVERED", False)
 # Server-side refusal fallback. Disable if the organisers' key/proxy rejects the beta.
 USE_FALLBACKS = os.getenv("ONCALL_FALLBACKS", "1") == "1"

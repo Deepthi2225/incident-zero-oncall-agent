@@ -174,6 +174,35 @@ EMAIL_FROM=oncall-agent@example.com
 EMAIL_TO=alice@example.com,bob@example.com
 ```
 
+### Resend instead of SMTP
+
+`EMAIL_TRANSPORT=resend` sends each email with one HTTPS POST to Resend's API
+(`https://api.resend.com/emails`, `Authorization: Bearer <RESEND_API_KEY>`, JSON with `from`, `to`,
+`subject`, `text`). It uses the same deadline as SMTP (`EMAIL_TIMEOUT_S`, default 10 s) and prints
+`email sent (resend id ...) to ...` or `email failed: <reason>`. The API key is only ever put in that
+header: it is never printed or logged, and the scrubber redacts it anywhere it could appear.
+
+```
+EMAIL_ENABLED=on
+EMAIL_TRANSPORT=resend
+RESEND_API_KEY=re_...
+EMAIL_FROM=AI On-Call Agent <oncall@your-verified-domain.com>
+EMAIL_TO=you@example.com
+```
+
+Without `EMAIL_FROM` it sends from Resend's shared test sender `onboarding@resend.dev`. **That sender
+only delivers to the Resend account owner's own address**; to email anyone else, verify a domain in
+Resend and send from an address on it (otherwise Resend answers HTTP 403). Resend delivers through
+its own servers, so this always sends incident data off the laptop.
+
+Our teammate's `.env` names work too: `NOTIFICATION_FROM_EMAIL` (same as `EMAIL_FROM`),
+`ONCALL_PRIMARY_EMAIL` (added to the `EMAIL_TO` recipients), `SMTP_PASS` (same as `SMTP_PASSWORD`)
+and `ONCALL_PRIMARY_NAME` (used in a "Hello <name>," greeting). `ONCALL_PRIMARY_PHONE` and
+`NOTIFY_ALL_CHANNELS` are ignored: the agent makes no calls and sends no SMS. All values have
+surrounding whitespace removed. `python -m oncall emailtest` works with either transport.
+
+### Testing locally
+
 **A real SMTP server sends incident data off this laptop.** To test locally without sending any
 real email, run a fake server that prints each message:
 

@@ -61,7 +61,8 @@ def estimate_cost(model, tokens_in, tokens_out):
 # --- scrubbing --------------------------------------------------------------------------------------
 
 _SECRET_KEY = re.compile(r"^(x-)?api[_-]?key$|^authorization$|^password$|^secret$|(^|_)token$|^cookie$", re.I)
-_SECRET_VALUE = [re.compile(r"sk-ant-[A-Za-z0-9_\-]{6,}"), re.compile(r"Bearer\s+[A-Za-z0-9._~+/=\-]{6,}", re.I)]
+_SECRET_VALUE = [re.compile(r"sk-ant-[A-Za-z0-9_\-]{6,}"), re.compile(r"Bearer\s+[A-Za-z0-9._~+/=\-]{6,}", re.I),
+                 re.compile(r"(?<![A-Za-z0-9_])re_[A-Za-z0-9_]{16,}")]  # Resend API keys
 # feature_flag as its own word (not the action name toggle_feature_flag)
 FLAG_TEXT = re.compile(r"(?<![A-Za-z0-9_])feature_flag", re.I)
 REDACTED, FLAG_REMOVED = "<redacted>", "<removed: feature-flag data>"
@@ -69,7 +70,8 @@ REDACTED, FLAG_REMOVED = "<redacted>", "<removed: feature-flag data>"
 
 def _known_secrets():
     values = [os.environ.get("ANTHROPIC_API_KEY"), os.environ.get("ANTHROPIC_AUTH_TOKEN"),
-              os.environ.get("GEMINI_API_KEY"), config.ACTION_API_TOKEN, config.SMTP_PASSWORD]
+              os.environ.get("GEMINI_API_KEY"), config.ACTION_API_TOKEN, config.SMTP_PASSWORD,
+              config.RESEND_API_KEY]
     return [v for v in values if v and len(v) >= 6]
 
 

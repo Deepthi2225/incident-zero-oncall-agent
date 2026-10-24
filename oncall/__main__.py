@@ -132,7 +132,8 @@ def cmd_emailtest(_args):
     print("email settings: " + " | ".join(notify.settings_lines()))
     entry = notify.send_test()
     if entry["status"] == "sent":
-        print(f"sent to {', '.join(entry['recipients'])}")
+        via = f" (resend id {entry['message_id']})" if entry.get("message_id") else ""
+        print(f"sent{via} to {', '.join(entry['recipients'])}")
         return
     print(entry.get("error") or "email failed: unknown reason")
     sys.exit(1)

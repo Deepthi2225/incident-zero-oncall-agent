@@ -11,8 +11,10 @@ failed send is tried again by the next run of the same incident):
   human_rejected       the on-call engineer said no at the approval prompt
   recovered            optional info message (EMAIL_ON_RECOVERED, default off)
 
-Channels: JsonlNotifier always appends to runs/notifications.jsonl; EmailNotifier sends with the
-standard library (smtplib + email.message) when EMAIL_ENABLED=on, to exactly SMTP_HOST:SMTP_PORT.
+Channels: JsonlNotifier always appends to runs/notifications.jsonl. When EMAIL_ENABLED=on, email
+goes out by EMAIL_TRANSPORT: smtp (default; EmailNotifier, standard library smtplib +
+email.message, to exactly SMTP_HOST:SMTP_PORT) or resend (ResendNotifier, one HTTPS POST to
+Resend's API with RESEND_API_KEY; the key is never printed or logged). Both use the same deadline.
 The whole SMTP conversation runs under one deadline (EMAIL_TIMEOUT_S) on a worker thread that
 dispatch() waits for, so a send is never cut off by the process exiting and a hung server never
 blocks the agent for longer than the deadline. Every attempt prints one line ("email sent to ..."
@@ -226,8 +228,15 @@ def _explain(e, host, port):
     return text
 
 
+def body_text(event):
+    """The email body: an optional greeting (ONCALL_PRIMARY_NAME) and the event's lines."""
+    greeting = [f"Hello {config.ONCALL_PRIMARY_NAME},", ""] if config.ONCALL_PRIMARY_NAME else []
+    return "\n".join(greeting + list(event["lines"])) + "\n"
+
+
 class EmailNotifier(Notifier):
-    channel = "email"
+    """SMTP transport (EMAIL_TRANSPORT=smtp, the default)."""
+    channel, transport = "email", "smtp"
 
     def __init__(self):
         self.host, self.port = config.SMTP_HOST, config.SMTP_PORT  # used exactly as given
@@ -241,7 +250,7 @@ class EmailNotifier(Notifier):
         msg["Subject"] = event["subject"]
         msg["From"] = self.sender
         msg["To"] = ", ".join(self.to)
-        msg.set_content("\n".join(event["lines"]) + "\n")
+        msg.set_content(body_text(event))
         return msg
 
     def send(self, msg):
@@ -275,7 +284,7 @@ class EmailNotifier(Notifier):
             smtp.close()
 
     def notify(self, event):
-        result = {"channel": self.channel, "recipients": self.to}
+        result = {"channel": self.channel, "transport": self.transport, "recipients": self.to}
         missing = [n for n, v in (("SMTP_HOST", self.host), ("EMAIL_TO", self.to)) if not v]
         if missing:
             return {**result, "status": "failed", "error": f"email failed: {' and '.join(missing)} not set"}
@@ -286,10 +295,68 @@ class EmailNotifier(Notifier):
             return {**result, "status": "failed", "error": f"email failed: {_explain(e, self.host, self.port)}"[:300]}
 
 
+class ResendNotifier(Notifier):
+    """Resend transport (EMAIL_TRANSPORT=resend): one HTTPS POST to Resend's API
+    (https://resend.com/docs/api-reference/emails/send-email). The API key goes only into the
+    Authorization header; it is never printed, logged or stored, and the scrubber redacts it."""
+    channel, transport = "email", "resend"
+
+    def __init__(self, http=None):
+        import requests
+        self.http = http or requests  # tests pass a fake client
+        self.url, self.key, self.timeout = config.RESEND_URL, config.RESEND_API_KEY, config.EMAIL_TIMEOUT_S
+        self.sender = config.EMAIL_FROM or config.RESEND_DEFAULT_FROM
+        self.to = list(config.EMAIL_TO)
+
+    def request(self, event):
+        """(headers, json) of the API call."""
+        return ({"Authorization": f"Bearer {self.key}", "Content-Type": "application/json"},
+                {"from": self.sender, "to": self.to, "subject": event["subject"], "text": body_text(event)})
+
+    def notify(self, event):
+        result = {"channel": self.channel, "transport": self.transport, "recipients": self.to}
+        missing = [n for n, v in (("RESEND_API_KEY", self.key), ("EMAIL_TO", self.to)) if not v]
+        if missing:
+            return {**result, "status": "failed", "error": f"email failed: {' and '.join(missing)} not set"}
+        headers, body = self.request(event)
+        try:
+            resp = self.http.post(self.url, headers=headers, json=body, timeout=self.timeout)
+        except Exception as e:  # network errors: the message never names the key
+            return {**result, "status": "failed", "error": f"email failed: Resend {type(e).__name__}: {e}"[:300]}
+        try:
+            data = resp.json()
+        except ValueError:
+            data = {}
+        data = data if isinstance(data, dict) else {}
+        if 200 <= resp.status_code < 300 and data.get("id"):
+            return {**result, "status": "sent", "message_id": str(data["id"])}
+        reason = data.get("message") or data.get("name") or (getattr(resp, "text", "") or "")[:200] or "no details"
+        hint = (" (Resend's onboarding@resend.dev sender only delivers to the Resend account owner's own "
+                "address until a domain is verified)" if resp.status_code == 403 else "")
+        return {**result, "status": "failed", "error": f"email failed: Resend HTTP {resp.status_code}: {reason}{hint}"[:300]}
+
+
+def email_notifier():
+    """The email transport chosen by EMAIL_TRANSPORT (smtp or resend)."""
+    if config.EMAIL_TRANSPORT == "resend":
+        return ResendNotifier()
+    if config.EMAIL_TRANSPORT != "smtp":
+        return _Unknown()
+    return EmailNotifier()
+
+
+class _Unknown(Notifier):
+    channel = "email"
+
+    def notify(self, event):
+        return {"channel": "email", "recipients": list(config.EMAIL_TO), "status": "failed",
+                "error": f"email failed: EMAIL_TRANSPORT={config.EMAIL_TRANSPORT!r} is not smtp or resend"}
+
+
 def notifiers():
     chans = [JsonlNotifier()]
     if config.EMAIL_ENABLED:
-        chans.append(EmailNotifier())
+        chans.append(email_notifier())
     return chans
 
 
@@ -329,7 +396,8 @@ def _line(event, entry):
     """The one terminal line for one attempt."""
     if entry["channel"] == "email":
         if entry["status"] == "sent":
-            return f"[notify] {event}: email sent to {', '.join(entry['recipients'])}"
+            via = f" (resend id {entry['message_id']})" if entry.get("message_id") else ""
+            return f"[notify] {event}: email sent{via} to {', '.join(entry['recipients'])}"
         return f"[notify] {event}: {entry.get('error') or 'email failed: unknown reason'}"
     note = "" if config.EMAIL_ENABLED else " (email off: EMAIL_ENABLED is not on)"
     return f"[notify] {event}: {entry['status']} to {notify_log()}{note}"
@@ -363,8 +431,9 @@ def dispatch(record, chans=None, log=print):
             "error": f"email failed: no answer within {config.EMAIL_TIMEOUT_S:g}s"}
         entry = {"at": now_iso(), "event": event, "channel": result.get("channel", chan.channel),
                  "recipients": list(result.get("recipients") or []), "status": result.get("status", "failed")}
-        if result.get("error"):
-            entry["error"] = result["error"]
+        for key in ("transport", "message_id", "error"):
+            if result.get(key):
+                entry[key] = result[key]
         entry = scrub(entry)
         entries.append(entry)
         if entry["channel"] != "log":  # the email outcome goes to the log file too
@@ -377,14 +446,20 @@ def dispatch(record, chans=None, log=print):
 # --- python -m oncall emailtest ---------------------------------------------------------------------
 
 def settings_lines():
-    """The email settings the app loaded; the password only as present/absent."""
-    return [f"EMAIL_ENABLED={'on' if config.EMAIL_ENABLED else 'off'}",
-            f"SMTP_HOST={config.SMTP_HOST or '(not set)'}", f"SMTP_PORT={config.SMTP_PORT}",
-            f"SMTP_USER={config.SMTP_USER or '(not set: no login)'}",
-            f"SMTP_PASSWORD={'present' if config.SMTP_PASSWORD else 'absent'}",
-            f"SMTP_STARTTLS={'on' if config.SMTP_STARTTLS else 'off'}",
-            f"EMAIL_FROM={config.EMAIL_FROM or '(not set)'}", f"EMAIL_TO={', '.join(config.EMAIL_TO) or '(not set)'}",
-            f"EMAIL_TIMEOUT_S={config.EMAIL_TIMEOUT_S:g}"]
+    """The email settings the app loaded; secrets only as present/absent."""
+    common = [f"EMAIL_ENABLED={'on' if config.EMAIL_ENABLED else 'off'}", f"EMAIL_TRANSPORT={config.EMAIL_TRANSPORT}"]
+    if config.EMAIL_TRANSPORT == "resend":
+        transport = [f"RESEND_API_KEY={'present' if config.RESEND_API_KEY else 'absent'}",
+                     f"EMAIL_FROM={config.EMAIL_FROM or f'(not set: {config.RESEND_DEFAULT_FROM})'}"]
+    else:
+        transport = [f"SMTP_HOST={config.SMTP_HOST or '(not set)'}", f"SMTP_PORT={config.SMTP_PORT}",
+                     f"SMTP_USER={config.SMTP_USER or '(not set: no login)'}",
+                     f"SMTP_PASSWORD={'present' if config.SMTP_PASSWORD else 'absent'}",
+                     f"SMTP_STARTTLS={'on' if config.SMTP_STARTTLS else 'off'}",
+                     f"EMAIL_FROM={config.EMAIL_FROM or '(not set)'}"]
+    return common + transport + [f"EMAIL_TO={', '.join(config.EMAIL_TO) or '(not set)'}",
+                                 f"ONCALL_PRIMARY_NAME={config.ONCALL_PRIMARY_NAME or '(not set)'}",
+                                 f"EMAIL_TIMEOUT_S={config.EMAIL_TIMEOUT_S:g}"]
 
 
 def send_test():
@@ -395,12 +470,13 @@ def send_test():
                  "error": "email failed: EMAIL_ENABLED is off (set EMAIL_ENABLED=on in .env)"}
     else:
         stamp = now_iso()
+        via = "Resend" if config.EMAIL_TRANSPORT == "resend" else f"{config.SMTP_HOST}:{config.SMTP_PORT}"
         message = {"subject": f"[on-call TEST] email test from the AI on-call agent ({stamp})",
                    "lines": ["This is a TEST email from `python -m oncall emailtest`.",
                              "It is not an incident. Nothing was investigated or changed.", "",
-                             f"Sent at {stamp} via {config.SMTP_HOST}:{config.SMTP_PORT}."]}
+                             f"Sent at {stamp} via {via}."]}
         box = {}
-        t = threading.Thread(target=_run, args=(EmailNotifier(), message, box), name="notify-emailtest")
+        t = threading.Thread(target=_run, args=(email_notifier(), message, box), name="notify-emailtest")
         t.start()
         t.join(config.EMAIL_TIMEOUT_S + 2)
         entry = dict(box) if not t.is_alive() else {
