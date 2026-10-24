@@ -9,6 +9,7 @@ from oncall import config, sources
 from oncall.sources import TestModeRefused, set_source, source_info
 from oncall.sources.live import LiveSource
 from oncall.tools import metrics
+from tests.childenv import isolated_env
 from tests.conftest import FIXTURES
 
 ROOT = config.ROOT
@@ -62,7 +63,8 @@ def test_baseline_is_live_only_and_never_leaks(monkeypatch, tmp_path):
 
 
 def run_cli(*args):
-    return subprocess.run([sys.executable, *args], cwd=ROOT, capture_output=True, text=True)
+    return subprocess.run([sys.executable, *args], cwd=ROOT, capture_output=True, text=True,
+                          env=isolated_env())  # no .env, no local settings or keys
 
 
 def test_cli_flags():

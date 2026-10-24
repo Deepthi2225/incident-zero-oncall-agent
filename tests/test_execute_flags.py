@@ -7,13 +7,15 @@ import pytest
 from oncall import config
 from oncall.agent.run import EXECUTE_NEEDS_HUMAN
 from oncall.remediate import make_approver
+from tests.childenv import isolated_env
 from tests.test_remediate import plan_for
 
 MESSAGE = "--execute requires a human approval; --auto-approve only works with dry runs."
 
 
 def run_cli(*args):
-    return subprocess.run([sys.executable, *args], cwd=config.ROOT, capture_output=True, text=True)
+    return subprocess.run([sys.executable, *args], cwd=config.ROOT, capture_output=True, text=True,
+                          env=isolated_env())  # no .env, no local settings or keys
 
 
 @pytest.mark.parametrize("flag", ["--auto-approve", "--yes", "-y"])

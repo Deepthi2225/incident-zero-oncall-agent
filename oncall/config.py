@@ -50,7 +50,10 @@ def env_flag(name, default):
     return default
 
 
-load_dotenv(ROOT / ".env")
+# ONCALL_DOTENV=off (set in the real environment) skips the repo's .env entirely: tests use it so
+# child processes see only the settings the test gives them.
+if env_flag("ONCALL_DOTENV", True):
+    load_dotenv(ROOT / ".env")
 
 RUNS_DIR = Path(os.getenv("ONCALL_RUNS_DIR", ROOT / "runs"))
 BASELINE_FILE = Path(os.getenv("ONCALL_BASELINE", RUNS_DIR / "baseline.json"))

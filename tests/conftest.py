@@ -4,9 +4,13 @@ import re
 import tempfile
 from pathlib import Path
 
-import pytest
+# Before anything imports oncall or actionapi: the test run never reads the repo's .env, and every
+# child process a test starts inherits this too (see tests/childenv.py).
+os.environ["ONCALL_DOTENV"] = "off"
 
-import detector
+import pytest  # noqa: E402
+
+import detector  # noqa: E402
 from actionapi import config as api_config
 from oncall import config, sources
 from oncall.evidence import registry
@@ -58,6 +62,7 @@ def builtin_settings(monkeypatch):
     for name in ENV_NAMES:  # read again at run time by some code paths
         if not _SECRET_NAME.search(name):
             monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("ONCALL_DOTENV", "off")  # removed by the loop above; children must inherit it
     # never send real email; email tests turn it on against a local fake SMTP server
     monkeypatch.setattr(config, "SMTP_PASSWORD", "")
     assert (config.EMAIL_ENABLED, config.SMTP_HOST, config.EMAIL_ON_RECOVERED) == (False, "", False)

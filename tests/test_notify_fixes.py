@@ -19,6 +19,7 @@ from oncall.remediate import make_approver
 from oncall.verify import NOT_RECOVERED, RECOVERED
 from tests.test_agent_loop import block_tool, make_agent, response
 from tests.test_incident_record import ALERT
+from tests.childenv import isolated_env
 from tests.test_notify import FakeSMTP, edited, low, run, smtp  # noqa: F401  (smtp is a fixture)
 
 TO = ["oncall@example.test", "lead@example.test"]
@@ -29,15 +30,15 @@ def emails(rec):
 
 
 def child_env(server, tmp_path, **extra):
-    """The environment of a separate `python` process: email settings as real env variables, which
-    win over any .env, so the child talks only to the fake server."""
-    env = {k: v for k, v in os.environ.items() if not k.startswith(("EMAIL_", "SMTP_", "ONCALL_"))}
-    env.update(EMAIL_ENABLED="on", SMTP_HOST="127.0.0.1", SMTP_PORT=str(server.port), SMTP_USER="",
-               SMTP_PASSWORD="", SMTP_STARTTLS="off", EMAIL_FROM="agent@example.test",
-               EMAIL_TO=",".join(TO), EMAIL_TIMEOUT_S="5", ONCALL_RUNS_DIR=str(tmp_path / "runs"),
-               PYTHONIOENCODING="utf-8")
-    env.update(extra)
-    return env
+    """The environment of a separate `python` process: no repo .env (ONCALL_DOTENV=off), no setting
+    or key from the developer's shell, SMTP to the fake server, and every other email or alias
+    setting blank, so the child can talk only to the fake server."""
+    return isolated_env(**{
+        "EMAIL_ENABLED": "on", "EMAIL_TRANSPORT": "smtp", "SMTP_HOST": "127.0.0.1", "SMTP_PORT": server.port,
+        "SMTP_USER": "", "SMTP_PASSWORD": "", "SMTP_PASS": "", "SMTP_STARTTLS": "off",
+        "EMAIL_FROM": "agent@example.test", "EMAIL_TO": ",".join(TO), "EMAIL_TIMEOUT_S": "5",
+        "RESEND_API_KEY": "", "NOTIFICATION_FROM_EMAIL": "", "ONCALL_PRIMARY_EMAIL": "", "ONCALL_PRIMARY_NAME": "",
+        "EMAIL_ON_RECOVERED": "off", "ONCALL_RUNS_DIR": tmp_path / "runs", **extra})
 
 
 # --- a. nothing is lost when the process exits right after the run --------------------------------

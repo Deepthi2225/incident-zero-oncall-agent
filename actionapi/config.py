@@ -32,7 +32,8 @@ def _load_dotenv(path):
             os.environ[key] = value
 
 
-_load_dotenv(ROOT / ".env")
+if os.getenv("ONCALL_DOTENV", "on").strip().lower() not in ("off", "0", "false", "no"):  # as oncall.config
+    _load_dotenv(ROOT / ".env")
 
 HOST = "127.0.0.1"  # localhost only, never configurable to a public interface
 PORT = int(os.getenv("ACTION_API_PORT", "8099"))
