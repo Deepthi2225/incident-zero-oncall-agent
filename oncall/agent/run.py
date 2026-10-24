@@ -211,7 +211,7 @@ class Agent:
             except Exception as e:  # never lose the diagnosis because the plan failed
                 summary["remediation_plan"]["error"] = f"{type(e).__name__}: {e}"
                 self.log(f"!!! remediation plan error: {e}")
-        final = rec.finish()  # phase: outcome (also writes the report and the index line)
+        final = rec.finish(log=self.log)  # phase: outcome (report, escalation notifications, index line)
         self.log(render_outcome(final))
         self.log(f"=== saved {rec.path}")
 

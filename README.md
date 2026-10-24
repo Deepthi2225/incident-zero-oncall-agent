@@ -98,8 +98,8 @@ default 30 s), the run continues exactly as without a reviewer and records "revi
 
 `python -m oncall.ui` serves a page at http://127.0.0.1:8090 (`ONCALL_UI_PORT`) where people can
 watch the agent. It only reads: the incident records in `runs/`, `runs/actions.jsonl`,
-`runs/action_api.jsonl`, the `STOP` file, the Action API's `GET /health`, and the detector's own
-read-only Prometheus queries. It has no buttons that act; approvals stay in the terminal.
+`runs/action_api.jsonl`, `runs/notifications.jsonl`, the `STOP` file, the Action API's
+`GET /health`, and the detector's own read-only Prometheus queries. It has no buttons that act; approvals stay in the terminal.
 
 It uses the standard library only, is a single page with no CDN (works offline), and listens on
 127.0.0.1 only. It never imports faultctl. Every response passes through the sanitiser (flag data
@@ -109,13 +109,68 @@ removed, secrets redacted), and the page inserts all text with `textContent`, ne
 |---|---|
 | Status bar | Kill switch on/off, Action API reachable, reviewer on/off, and the agent when a run is in progress |
 | Shop health | Every service's rps, error % and p95, coloured against its detector limits (green / amber / red); refreshed every 15 s |
-| Incident | A timeline of the newest (or selected) run: alert; each tool call with arguments, duration, result size and evidence IDs; diagnosis with root causes (fault class, active or resolved, confidence, cited evidence); ruled-out suspects; reviewer verdict; each plan step with reason, expected outcome, risk, rollback, approval (**WAITING FOR HUMAN APPROVAL IN TERMINAL** while pending), result and each verify check; escalations; the outcome with tokens, cost and duration |
+| Incident | A timeline of the newest (or selected) run: alert; each tool call with arguments, duration, result size and evidence IDs; diagnosis with root causes (fault class, active or resolved, confidence, cited evidence); ruled-out suspects; reviewer verdict; each plan step with reason, expected outcome, risk, rollback, approval (**WAITING FOR HUMAN APPROVAL IN TERMINAL** while pending), result and each verify check; escalations; the notifications sent for the run; the outcome with tokens, cost and duration |
 | Evidence | Every evidence ID with its tool and text; cited ones highlighted; clicking an ID in the timeline scrolls to it |
 | Action logs | The latest lines of the agent's `actions.jsonl` and the Action API's `action_api.jsonl`, side by side |
+| Notifications | The latest lines of `runs/notifications.jsonl`: incident, event, channel, status, recipients or the error |
 | History | Past runs (time, incident, root cause, fault class, confidence, outcome, cost); click one to view it; the timeline links to its markdown report as plain text |
 
 The page polls every 2.5 s and pauses while the tab is hidden. Missing fields show as "not
 recorded", so partial, interrupted and Day 1 records all render.
+
+## Email escalation (off by default)
+
+Based on our teammate's notification work, shared as `ocAgent-main.zip`. Only the email part is
+ported, rebuilt on this repo's incident record and scrubber (`oncall/notify.py`).
+
+When a run ends in an escalation, the agent tells a human. It notifies once per incident per event
+type, and a restart that re-investigates the same incident does not repeat it:
+
+| Event | When |
+|---|---|
+| `low_confidence` | No root cause reached confidence 0.6, or the investigation ended without a diagnosis |
+| `no_allowlisted_fix` | A confident root cause, but no Action API action fixes its fault class |
+| `reviewer_objection` | The reviewer agent lowered confidence or removed steps |
+| `verification_failed` | An executed step did not verify (after its rollback, if it had one) |
+| `kill_switch` | The kill switch stopped the agent or refused a step |
+| `human_rejected` | The on-call engineer said no at the approval prompt |
+| `recovered` | Optional short info email (`EMAIL_ON_RECOVERED=on`; off by default) |
+
+The email gives the incident ID, the severity (from the service's criticality: SEV1 critical to
+SEV4 low), affected services, root cause and confidence, why it escalated, the top evidence lines,
+open questions, next steps and the report path. It passes through the same scrubber as the
+incident record: no feature-flag data, no keys or passwords.
+
+`runs/notifications.jsonl` always gets a line per event, even with email off. Every notification
+is also stored in the incident record under `notifications` (time, event, channel, recipients,
+status). Sending runs on a background thread with a timeout (`EMAIL_TIMEOUT_S`, default 10 s): a
+slow or broken mail server never blocks or crashes the agent; the record says
+`email failed: <reason>` and the run continues.
+
+Configure it in `.env` only (never commit real values):
+
+```
+EMAIL_ENABLED=on
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=...
+SMTP_PASSWORD=...
+SMTP_STARTTLS=on
+EMAIL_FROM=oncall-agent@example.com
+EMAIL_TO=alice@example.com,bob@example.com
+```
+
+**A real SMTP server sends incident data off this laptop.** To test locally without sending any
+real email, run a fake server that prints each message:
+
+```
+pip install aiosmtpd
+python -m aiosmtpd -n -l localhost:1025
+```
+
+and set `EMAIL_ENABLED=on`, `SMTP_HOST=localhost`, `SMTP_PORT=1025`, `SMTP_STARTTLS=off` (leave
+`SMTP_USER` and `SMTP_PASSWORD` empty), and any `EMAIL_TO`. The tests (`tests/test_notify.py`) use
+their own fake SMTP server and never send real email, even if your `.env` turns email on.
 
 ## Action API (our own)
 

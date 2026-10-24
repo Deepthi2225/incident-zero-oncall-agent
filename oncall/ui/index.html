@@ -58,6 +58,7 @@
     <div><div class="muted small">agent: runs/actions.jsonl</div><div id="agentLog" class="log"></div></div>
     <div><div class="muted small">Action API: runs/action_api.jsonl</div><div id="apiLog" class="log"></div></div>
   </div></section>
+  <section class="wide"><h2>Notifications <span class="muted small">runs/notifications.jsonl</span></h2><div id="notifyLog" class="log"></div></section>
   <section class="wide"><h2>History</h2><div id="history" class="scroll"></div></section>
 </main>
 <script>
@@ -150,6 +151,10 @@ function renderIncident(r) {
   }
   for (const e of r.escalations || []) t.append(phase("Escalated to a human: " + v(e.target) + " [" + v(e.fault_class) + "]", "warn",
     el("div", { class: "small" }, v(e.reason)), (e.next_steps || []).map((n) => el("div", { class: "small muted" }, "• " + n))));
+  const notes = r.notifications || [];
+  if (notes.length) t.append(phase("Notifications (" + notes.length + ")", notes.some((n) => n.status === "failed") ? "warn" : "done",
+    notes.map((n) => el("div", { class: "small" }, v(n.at) + "  " + v(n.event) + " via " + v(n.channel) + ": " + v(n.status) +
+      ((n.recipients || []).length && n.channel === "email" ? " to " + n.recipients.join(", ") : "") + (n.error ? " (" + n.error + ")" : "")))));
   finish(t, r);
 }
 function stepView(s, ui) {
@@ -206,6 +211,13 @@ async function refreshActions() {
     for (const row of rows.slice().reverse()) box.append(el("div", {}, [row.ts, row.event || row.status, row.action, row.target || (row.params || {}).service, row.outcome || row.result || row.reason || row.error].filter((x) => x !== undefined && x !== null).join("  ")));
   }
 }
+async function refreshNotifications() {
+  const rows = (await get("/api/notifications")).notifications || [];
+  const box = $("notifyLog"); box.replaceChildren();
+  if (!rows.length) box.append(el("div", { class: "muted" }, "no notifications yet"));
+  for (const row of rows.slice().reverse()) box.append(el("div", {}, [row.ts, row.incident_id, row.event, row.channel, row.status,
+    row.channel === "email" ? (row.recipients || []).join(", ") : row.subject, row.error].filter((x) => x !== undefined && x !== null && x !== "").join("  ")));
+}
 async function refreshHistory() {
   const h = await get("/api/incidents");
   const rows = (h.incidents || []).map((x) => el("tr", { class: "click" + (state.selected === x.run_id ? " sel" : ""), onclick: () => { state.selected = x.run_id; state.lastIncident = ""; tick(); } },
@@ -219,7 +231,7 @@ async function refreshHistory() {
 let n = 0;
 async function tick() {
   if (document.hidden) return;
-  await Promise.allSettled([refreshStatus(), refreshIncident(), refreshActions()]);
+  await Promise.allSettled([refreshStatus(), refreshIncident(), refreshActions(), refreshNotifications()]);
   if (n % 4 === 0) refreshHistory().catch(() => {});
   n += 1;
 }

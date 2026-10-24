@@ -134,6 +134,19 @@ UI_PORT = int(os.getenv("ONCALL_UI_PORT", "8090"))  # read-only live dashboard (
 # approval. It can only lower confidence. Off unless ONCALL_REVIEWER=on.
 REVIEWER = os.getenv("ONCALL_REVIEWER", "off").strip().lower() in ("on", "1", "true", "yes")
 REVIEWER_TIMEOUT_S = float(os.getenv("ONCALL_REVIEWER_TIMEOUT_S", "30"))
+# Email escalation (oncall/notify.py): off unless EMAIL_ENABLED=on. .env only; a real SMTP server
+# sends incident data off this laptop. runs/notifications.jsonl is always written.
+_ON = ("on", "1", "true", "yes")
+EMAIL_ENABLED = os.getenv("EMAIL_ENABLED", "off").strip().lower() in _ON
+SMTP_HOST = os.getenv("SMTP_HOST", "")
+SMTP_PORT = int(os.getenv("SMTP_PORT") or 587)
+SMTP_USER = os.getenv("SMTP_USER", "")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+SMTP_STARTTLS = os.getenv("SMTP_STARTTLS", "on").strip().lower() in _ON
+EMAIL_FROM = os.getenv("EMAIL_FROM", "")
+EMAIL_TO = [a.strip() for a in os.getenv("EMAIL_TO", "").split(",") if a.strip()]
+EMAIL_TIMEOUT_S = float(os.getenv("EMAIL_TIMEOUT_S", "10"))
+EMAIL_ON_RECOVERED = os.getenv("EMAIL_ON_RECOVERED", "off").strip().lower() in _ON
 # Server-side refusal fallback. Disable if the organisers' key/proxy rejects the beta.
 USE_FALLBACKS = os.getenv("ONCALL_FALLBACKS", "1") == "1"
 TOOL_RESULT_MAX_BYTES = 2000

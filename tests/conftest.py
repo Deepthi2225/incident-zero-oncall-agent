@@ -55,6 +55,17 @@ class MemorySource:
         return self.logs.get(name, "")
 
 
+@pytest.fixture(autouse=True)
+def no_real_email(monkeypatch):
+    """A teammate's .env may say EMAIL_ENABLED=on: tests never send real email. Email tests turn it
+    back on against a local fake SMTP server."""
+    monkeypatch.setattr(config, "EMAIL_ENABLED", False)
+    monkeypatch.setattr(config, "SMTP_HOST", "")
+    monkeypatch.setattr(config, "SMTP_PASSWORD", "")
+    monkeypatch.setattr(config, "EMAIL_ON_RECOVERED", False)
+    monkeypatch.delenv("ONCALL_NOTIFY_LOG", raising=False)
+
+
 @pytest.fixture
 def mem(monkeypatch, tmp_path):
     src = MemorySource()

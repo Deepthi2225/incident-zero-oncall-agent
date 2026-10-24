@@ -24,6 +24,8 @@ def route(path):
         return _json(data.incidents())
     if path == "/api/actions":
         return _json(data.actions())
+    if path == "/api/notifications":
+        return _json(data.notifications())
     if path in ("/api/incident", "/api/incident/"):
         record = data.incident()
         return _json(record) if record else _json({"error": "no runs yet"}, 404)

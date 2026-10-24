@@ -69,7 +69,7 @@ REDACTED, FLAG_REMOVED = "<redacted>", "<removed: feature-flag data>"
 
 def _known_secrets():
     values = [os.environ.get("ANTHROPIC_API_KEY"), os.environ.get("ANTHROPIC_AUTH_TOKEN"),
-              os.environ.get("GEMINI_API_KEY"), config.ACTION_API_TOKEN]
+              os.environ.get("GEMINI_API_KEY"), config.ACTION_API_TOKEN, config.SMTP_PASSWORD]
     return [v for v in values if v and len(v) >= 6]
 
 
@@ -280,7 +280,7 @@ class RunRecord:
             "alert": alert,
             "investigation": {"steps": [], "outcome": None, "error": None, "model_turns": 0},
             "evidence": [], "diagnosis": None, "remediation_plan": None, "escalations": [],
-            "manual_verifications": [], "outcome": None, "review": None,
+            "manual_verifications": [], "outcome": None, "review": None, "notifications": [],
             "accounting": {"tokens_in": 0, "tokens_out": 0, "estimated_cost_usd": 0.0,
                            "reviewer_tokens": {"in": 0, "out": 0},
                            "price_basis": "USD per 1M tokens, Anthropic first-party rates",
@@ -324,7 +324,7 @@ class RunRecord:
     def plan_updated(self):
         self.save()
 
-    def finish(self):
+    def finish(self, log=print):
         self.timers["remediation_s"] = round(time.time() - self.t0 - (self.timers["investigation_s"] or 0), 1)
         self.save(status="complete")
         status, summary = compute_outcome(self.saved)
@@ -335,8 +335,22 @@ class RunRecord:
         self.data["metadata"]["ended_at"] = now_iso()
         self.save(status="complete")
         write_report(self.saved, self.report_path)
+        self.notify(log)
         append_line(config.RUNS_DIR / "index.jsonl", index_entry(self.saved))
         return self.saved
+
+    def notify(self, log=print):
+        """Escalation notifications for the finished run (oncall/notify.py). Bounded in time and never
+        raises: a failure is kept in the record as "<channel> failed: <reason>"."""
+        from oncall import notify
+        try:
+            entries = notify.dispatch(self.saved, log=log)
+        except Exception as e:
+            entries = [{"at": now_iso(), "event": "unknown", "channel": "none", "recipients": [],
+                        "status": "failed", "error": f"notify failed: {type(e).__name__}: {e}"[:300]}]
+        if entries:
+            self.data["notifications"] = self.data.get("notifications", []) + entries
+            self.save(status="complete")
 
     def interrupt(self, reason="interrupted"):
         self.data["investigation"].setdefault("error", None)

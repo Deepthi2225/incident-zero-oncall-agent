@@ -1,8 +1,9 @@
 """Read-only data for the live dashboard. Nothing here changes anything.
 
 Sources: runs/<run_id>.json (incident records), runs/actions.jsonl (the agent's action log),
-runs/action_api.jsonl (the Action API's audit log), the STOP file, the Action API's GET /health,
-and the detector's own read-only Prometheus probe. Every value returned is passed through
+runs/action_api.jsonl (the Action API's audit log), runs/notifications.jsonl (escalation
+notifications), the STOP file, the Action API's GET /health, and the detector's own read-only
+Prometheus probe. Every value returned is passed through
 record.scrub(): feature-flag data removed, secrets redacted.
 """
 import json
@@ -110,6 +111,11 @@ def _tail(path, limit):
 def actions(limit=30):
     api_log = Path(os.getenv("ACTION_API_LOG", config.RUNS_DIR / "action_api.jsonl"))
     return clean({"agent": _tail(config.ACTION_LOG, limit), "action_api": _tail(api_log, limit)})
+
+
+def notifications(limit=30):
+    from oncall.notify import notify_log
+    return clean({"notifications": _tail(notify_log(), limit)})
 
 
 def _action_api_health():
