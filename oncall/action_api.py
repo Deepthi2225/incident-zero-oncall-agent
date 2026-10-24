@@ -36,6 +36,10 @@ class ActionApiError(RuntimeError):
     pass
 
 
+class KillSwitchRefused(ActionApiError):
+    """HTTP 423: the Action API's own kill switch is on. A refusal, never retried.
+    (The API-side kill switch is based on Padma's checkpoint3 branch.)"""
+
 
 def build_request(action, target=None, flag=None, params=None, base_url=None):
     """The request for one action: {method, url, json}. Refuses actions outside the allowlist."""
@@ -82,6 +86,8 @@ class HttpActionClient:
             body = resp.json()
         except ValueError:
             body = resp.text[:500]
+        if resp.status_code == 423:
+            raise KillSwitchRefused("refused: kill switch is on (Action API)")
         if not resp.ok:
             raise ActionApiError(f"{req['method']} {req['url']} -> HTTP {resp.status_code}: {str(body)[:300]}")
         return {"request": req, "status": resp.status_code, "response": body}

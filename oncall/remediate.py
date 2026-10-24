@@ -15,7 +15,7 @@ import sys
 from datetime import datetime, timezone
 
 from oncall import config
-from oncall.action_api import ActionApiError
+from oncall.action_api import ActionApiError, KillSwitchRefused
 from oncall.agent.actions import depends_on, execution_allowed, involved_services
 from oncall.record import append_line
 from oncall.verify import INCONCLUSIVE, NOT_RECOVERED, PARTIAL, RECOVERED
@@ -112,6 +112,11 @@ def _rollback(step, client, run_id, log):
     try:
         res = client.call(inverse["action"], step["target"], step.get("flag"), inverse.get("params"),
                           idempotency_key=f"{run_id}:step{step['step']}:rollback")
+    except KillSwitchRefused as e:
+        step["rollback_result"] = {"status": "refused", "reason": str(e)}
+        log_action("rollback_refused", run_id, step, reason=str(e))
+        log(f"[plan] step {step['step']}: rollback REFUSED ({e})")
+        return
     except ActionApiError as e:
         step["rollback_result"] = {"status": "failed", "error": str(e)}
         log_action("rollback_failed", run_id, step, error=str(e))
@@ -231,6 +236,13 @@ def run_plan(diag, client, approve, verifier, run_id="", log=print, on_update=No
             # one key per run and step: a retried request is never applied twice by the Action API
             res = client.call(step["action"], step["target"], step.get("flag"), step.get("params") or None,
                               idempotency_key=f"{run_id}:step{step['step']}:{step['action']}")
+        except KillSwitchRefused as e:  # the Action API's own kill switch (HTTP 423): a refusal
+            step["execution"] = {"status": "refused", "reason": str(e), "at": _now()}
+            log_action("refused", run_id, step, reason=str(e), approval=step["approval"])
+            log(f"{label}: REFUSED ({e})")
+            stop(step, rest, "refused", str(e))
+            stopped = True
+            break
         except ActionApiError as e:
             step["execution"] = {"status": "failed", "error": str(e), "at": _now()}
             log_action("failed", run_id, step, error=str(e), approval=step["approval"])

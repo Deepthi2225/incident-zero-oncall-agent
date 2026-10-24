@@ -18,6 +18,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
+from pathlib import Path
 
 from actionapi import config
 
@@ -96,7 +97,7 @@ NAME = re.compile(r"^[a-z0-9][a-z0-9_.-]{0,62}$")
 
 class ActionService:
     def __init__(self, token=None, docker=None, locust=None, clock=time.time, audit_log=None,
-                 cooldown_s=None):
+                 cooldown_s=None, kill_switch=None):
         self.token = config.TOKEN if token is None else token
         if not self.token:
             raise ValueError("ACTION_API_TOKEN is not set; refusing to start without a shared token")
@@ -105,6 +106,7 @@ class ActionService:
         self.clock = clock
         self.audit_log = audit_log or config.AUDIT_LOG
         self.cooldown_s = config.COOLDOWN_S if cooldown_s is None else cooldown_s
+        self.kill_switch = Path(kill_switch or config.KILL_SWITCH_FILE)
         self.last_action = {}      # cooldown key -> time of the last applied action
         self.idempotency = {}      # key -> (request fingerprint, status, response, time)
         self.previous_users = None  # load-generator users before the first throttle
@@ -126,6 +128,10 @@ class ActionService:
             params = self._parse(body) if method == "POST" else {}
             dry_run = bool(params.pop("dry_run", False)) or "dry_run=1" in path
             key = headers.get("idempotency-key") or params.pop("idempotency_key", None)
+            if action != "health" and self.kill_switch.exists():
+                # Refuses everything, dry runs and idempotent replays included (based on Padma's
+                # checkpoint3 branch: the API itself enforces the kill switch).
+                raise ActionError(423, "kill switch is on")
             with self.lock:
                 status, response = self._dispatch(action, params, dry_run, key)
         except ActionError as e:

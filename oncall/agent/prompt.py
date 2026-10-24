@@ -21,6 +21,12 @@ unreachable (stopped, crashed, or cut off by the network).
 - Missing telemetry from a service is itself evidence, not a gap in your data.
 - More than one origin is possible. Report each with its own evidence.
 - List the suspects you checked and cleared in ruled_out, each with the evidence that clears it.
+- Keep service identities exact: evidence about a stopped container is evidence about THAT service, \
+not about its callers. (Rule based on Padma's checkpoint3 branch.)
+- Never claim OOM from an exit code alone: 137 can be a SIGKILL from docker stop and 143 is SIGTERM. \
+Claim OOM only when oom_killed=true or memory evidence supports it. (Based on Padma's checkpoint3 branch.)
+- Query the alert's time window, or slightly wider; do not use arbitrary long windows that mix in \
+earlier, unrelated incidents. (Based on Padma's checkpoint3 branch.)
 - You have at most {max_steps} model turns. Stop investigating once the evidence is consistent.
 
 ## What telemetry looks like for common fault classes (a method, not a list of answers)

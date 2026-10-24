@@ -32,6 +32,10 @@ COOLDOWN_S = float(os.getenv("ACTION_API_COOLDOWN_S", "60"))
 IDEMPOTENCY_TTL_S = float(os.getenv("ACTION_API_IDEMPOTENCY_TTL_S", "3600"))
 AUDIT_LOG = Path(os.getenv("ACTION_API_LOG", ROOT / "runs" / "action_api.jsonl"))
 COMPOSE_PROJECT = os.getenv("COMPOSE_PROJECT", "opentelemetry-demo")
+# The same STOP file as the agent's kill switch (python -m oncall stop), read without importing
+# oncall. While it exists every action request is refused with 423. (Based on Padma's checkpoint3
+# branch, where the Action API checks the kill switch itself.)
+KILL_SWITCH_FILE = Path(os.getenv("ONCALL_KILL_SWITCH", ROOT / "STOP"))
 DOCKER_TIMEOUT_S = float(os.getenv("ACTION_API_DOCKER_TIMEOUT_S", "60"))
 
 # The demo's APPLICATION services (container name == service name), including the cache and the
