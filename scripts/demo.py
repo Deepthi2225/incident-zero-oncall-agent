@@ -23,7 +23,7 @@ import faultctl  # noqa: E402
 # The organisers' tool is also called faultctl: never drive theirs by accident.
 if Path(faultctl.__file__).resolve().parent != HERE.parent / "faultctl":
     sys.exit(f"refusing to run: 'faultctl' resolved to {faultctl.__file__}, not this repo's harness")
-from oncall.agent.run import action_client_for, run_agent  # noqa: E402
+from oncall.agent.run import action_client_for, check_execute_flags, run_agent  # noqa: E402
 from oncall.sources import set_source, source_info  # noqa: E402
 from oncall.tools.metrics import load_baseline, save_baseline  # noqa: E402
 
@@ -74,6 +74,7 @@ def main():
         p.error("--fixtures needs --test")
     if args.test and (args.save_baseline or args.execute):
         p.error("--save-baseline and --execute are live only")
+    check_execute_flags(p, args)  # --execute needs a human (based on Aniruddha's aj_ck_3 branch)
     client = action_client_for(args.execute, p)
 
     if args.test:

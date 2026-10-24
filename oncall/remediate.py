@@ -58,6 +58,7 @@ def make_approver(auto_approve=False, interactive=True):
         if not interactive or not hasattr(sys.stdin, "isatty") or not sys.stdin.isatty():
             return {"status": "pending", "decision_at": _now(), "notes": "no terminal: nobody to approve"}
         steps = (diag.get("remediation_plan") or {}).get("steps", [])
+        print("\a", end="", flush=True)  # terminal bell: a human is needed (based on Aniruddha's aj_ck_3 branch)
         print("\n" + "=" * 64)
         print(f"   APPROVAL NEEDED: step {step['step']} of {len(steps)}")
         print("=" * 64)

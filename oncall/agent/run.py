@@ -221,6 +221,16 @@ def run_agent(alert, **kwargs):
     return Agent(**kwargs).run(alert)
 
 
+EXECUTE_NEEDS_HUMAN = "--execute requires a human approval; --auto-approve only works with dry runs."
+
+
+def check_execute_flags(parser, args):
+    """Refuse --execute with --auto-approve/--yes at startup instead of refusing every step later.
+    (Based on Aniruddha's aj_ck_3 branch.)"""
+    if getattr(args, "execute", False) and getattr(args, "auto_approve", False):
+        parser.error(EXECUTE_NEEDS_HUMAN)
+
+
 def action_client_for(execute, parser=None):
     """DryRunClient by default; the HTTP client only with --execute and ACTION_API_URL set."""
     if not execute:
@@ -248,6 +258,7 @@ def main():
     p.add_argument("--non-interactive", action="store_true",
                    help="leave approval pending without prompting interactive human confirmation")
     args = p.parse_args()
+    check_execute_flags(p, args)
     apply_source_args(p, args)
     alert = json.loads(Path(args.alert).read_text())
     interactive = False if (args.auto_approve or args.non_interactive) else None
