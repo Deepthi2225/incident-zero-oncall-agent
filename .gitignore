@@ -1,13 +1,26 @@
 __pycache__/
 *.pyc
 .pytest_cache/
-.env
 .venv/
+.DS_Store
+
+# secrets and local tool state
+.env
+.claude/
+
+# runtime state and output (never committed)
 STOP
-runs/*.json
+runs/*
 !runs/.gitkeep
 bundles/
 incidents.jsonl
 faultctl/state.json
-/baseline.json
 faultctl/originals.json
+/baseline.json
+
+# local notes, guides and their generators
+repo_report.md
+COMPLETE_PROJECT_GUIDE.md
+*.pdf
+scripts/generate_guide_pdf.py
+scripts/generate_complete_project_pdf.py
