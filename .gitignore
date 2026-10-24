@@ -24,3 +24,7 @@ COMPLETE_PROJECT_GUIDE.md
 *.pdf
 scripts/generate_guide_pdf.py
 scripts/generate_complete_project_pdf.py
+
+# teammates' code drops (read-only reference, kept outside the repo)
+ocAgent-main*/
+ocAgent-main*.zip
