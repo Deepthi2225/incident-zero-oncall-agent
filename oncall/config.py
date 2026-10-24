@@ -121,7 +121,12 @@ SILENT_RATIO = float(os.getenv("SILENT_RATIO", "0.2"))                 # rps bel
 SILENT_MIN_BASE_RPS = float(os.getenv("SILENT_MIN_BASE_RPS", "0.005"))  # idle services never silent
 
 # --- agent -------------------------------------------------------------------
+# LLM provider: chosen explicitly, never from which API keys happen to be set.
+# gemini is the optional second provider (based on Shivakumar's Day 1 Gemini adapter).
+PROVIDER = os.getenv("ONCALL_PROVIDER", "anthropic")
 MODEL = os.getenv("ONCALL_MODEL", "claude-opus-5-5")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")  # .env only
 EFFORT = os.getenv("ONCALL_EFFORT", "high")
 MAX_STEPS = int(os.getenv("ONCALL_MAX_STEPS", "10"))
 # Server-side refusal fallback. Disable if the organisers' key/proxy rejects the beta.

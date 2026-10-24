@@ -19,6 +19,7 @@ import anthropic
 from oncall import config
 from oncall.agent.prompt import alert_message, build_system_prompt
 from oncall.agent.diagnosis import SUBMIT_TOOL, empty_summary, validate
+from oncall.agent.providers import AnthropicProvider, GeminiProvider, LLMError, NoCredentials
 from oncall.action_api import DryRunClient
 from oncall.record import RunRecord, unique_run_id
 from oncall.remediate import make_approver, run_plan
@@ -27,14 +28,7 @@ from oncall.evidence import registry
 from oncall.sources import add_source_args, apply_source_args, source_info
 from oncall.tools.catalog import TOOL_SPECS, dispatch
 
-FALLBACK_BETA = "server-side-fallback-2026-07-01"
-
-
 class KillSwitch(RuntimeError):
-    pass
-
-
-class NoCredentials(RuntimeError):
     pass
 
 
@@ -78,18 +72,27 @@ def _add_user_text(messages, text):
 
 class Agent:
     def __init__(self, model=None, max_steps=None, verbose=True, auto_approve=False, interactive=None,
-                 action_client=None, verifier=None):
-        self.client = anthropic.Anthropic()
-        self.model = model or config.MODEL
+                 action_client=None, verifier=None, provider=None):
         self.max_steps = max_steps or config.MAX_STEPS
         self.verbose = verbose
+        # The provider is chosen explicitly (ONCALL_PROVIDER), never from which keys happen to be set.
+        name = (provider or config.PROVIDER).strip().lower()
+        if name == "anthropic":
+            self.client = anthropic.Anthropic()  # created here so tests can replace run.anthropic.Anthropic
+            self.model = model or config.MODEL
+            self.llm = AnthropicProvider(self.client, self.model, log=self.log,
+                                         use_fallbacks=config.USE_FALLBACKS)
+        elif name == "gemini":  # optional second provider (based on Shivakumar's Day 1 Gemini adapter)
+            self.model = model or config.GEMINI_MODEL
+            self.llm = GeminiProvider(self.model, config.GEMINI_API_KEY)
+        else:
+            raise ValueError(f"unknown ONCALL_PROVIDER {name!r}; use anthropic or gemini")
         self.auto_approve = auto_approve
         self.interactive = (not auto_approve) if interactive is None else interactive
         # Dry run unless a live Action API client is passed in (--execute).
         self.action_client = action_client or DryRunClient()
         self.approve = make_approver(auto_approve, self.interactive)
         self.verifier = verifier
-        self.use_fallbacks = config.USE_FALLBACKS
         self.tools = TOOL_SPECS + [SUBMIT_TOOL]
         self.system = build_system_prompt(self.max_steps)
 
@@ -97,31 +100,17 @@ class Agent:
         if self.verbose:
             print(text, flush=True)
 
-    def _call_model(self, messages):
-        try:
-            return self._create(messages)
-        except TypeError as e:  # the SDK raises TypeError when no API key or token is configured
-            if "authentication" not in str(e):
-                raise
-            raise NoCredentials("no LLM credentials: set ANTHROPIC_API_KEY") from e
+    @property
+    def use_fallbacks(self):  # Anthropic refusal fallbacks; kept on the agent for callers and tests
+        return getattr(self.llm, "use_fallbacks", False)
 
-    def _create(self, messages):
-        kwargs = dict(
-            model=self.model, max_tokens=16000, system=self.system, tools=self.tools,
-            messages=messages,
-            thinking={"type": "adaptive", "display": "summarized"},
-            output_config={"effort": config.EFFORT},
-        )
-        if self.use_fallbacks:
-            try:
-                return self.client.beta.messages.create(
-                    **kwargs, betas=[FALLBACK_BETA], extra_body={"fallbacks": "default"})
-            except anthropic.BadRequestError as e:
-                if "fallback" not in str(e).lower():
-                    raise
-                self.log("  (refusal fallbacks not accepted by this endpoint; continuing without)")
-                self.use_fallbacks = False
-        return self.client.beta.messages.create(**kwargs)
+    @use_fallbacks.setter
+    def use_fallbacks(self, value):
+        if hasattr(self.llm, "use_fallbacks"):
+            self.llm.use_fallbacks = value
+
+    def _call_model(self, messages):
+        return self.llm.create(self.system, self.tools, messages)
 
     def run(self, alert):
         """One incident: investigate -> diagnose -> plan step by step. Returns the incident record
@@ -129,7 +118,8 @@ class Agent:
         registry.reset()
         info = source_info()
         run_id = unique_run_id(datetime.now().strftime("%Y%m%d-%H%M%S"), info["source"])
-        rec = RunRecord(run_id, alert, info, model=self.model, max_steps=self.max_steps)
+        rec = RunRecord(run_id, alert, info, model=self.model, max_steps=self.max_steps,
+                        provider=self.llm.name)
         rec.save()  # phase: alert received
         try:
             self._investigate_and_act(rec, alert, info, run_id)
@@ -199,11 +189,8 @@ class Agent:
         except KillSwitch as e:
             outcome, error = "killed", str(e)
             self.log(f"!!! {e}")
-        except NoCredentials as e:
+        except LLMError as e:  # any provider: API failure, no credentials, missing package
             outcome, error = "llm_error", str(e)
-            self.log(f"!!! {e}")
-        except anthropic.APIError as e:
-            outcome, error = "llm_error", f"{type(e).__name__}: {e}"
             self.log(f"!!! LLM error: {error[:300]}")
 
         rec.investigation_done(outcome, error)
