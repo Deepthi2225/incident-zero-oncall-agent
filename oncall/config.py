@@ -53,6 +53,37 @@ JAEGER_CANDIDATES = [u for u in [
 OPENSEARCH_URL = os.getenv("OPENSEARCH_URL", "")
 OPENSEARCH_INDEX = os.getenv("OPENSEARCH_INDEX", "otel-logs-*")
 ACTION_API_URL = os.getenv("ACTION_API_URL", "")  # Day 2; unknown until organisers publish it
+ACTION_API_TOKEN = os.getenv("ACTION_API_TOKEN", "")  # shared with actionapi/; sent as a Bearer token
+THROTTLE_USERS = int(os.getenv("ONCALL_THROTTLE_USERS", "2"))  # load-generator users when throttling
+ACTION_API_TIMEOUT = float(os.getenv("ACTION_API_TIMEOUT", "30"))
+
+# Verify after each action, against BASELINE_FILE. Metrics are judged from counter deltas since
+# the action (a 3m rate() window would still contain the outage); each check needs a new sample,
+# and samples arrive about every 60 s. VERIFY_WINDOW is only for the "before" snapshot.
+VERIFY_WINDOW = os.getenv("VERIFY_WINDOW", "3m")
+# Fast path: container running + successful server spans in Jaeger since the action. Reports
+# "recovering" early and polls more often; "recovered" still needs the metrics checks.
+VERIFY_FAST_PATH = os.getenv("VERIFY_FAST_PATH", "1") == "1"
+VERIFY_FAST_INTERVAL_S = float(os.getenv("VERIFY_FAST_INTERVAL_S", "10"))
+VERIFY_FAST_LOOKBACK_S = float(os.getenv("VERIFY_FAST_LOOKBACK_S", "30"))
+# A metrics interval with fewer expected calls than this (baseline rps x interval) cannot show
+# "no traffic" or a traffic drop; such a service is judged on errors and latency only.
+VERIFY_MIN_EXPECTED_CALLS = float(os.getenv("VERIFY_MIN_EXPECTED_CALLS", "3"))
+# Shop traffic at the entry points below this share of its baseline means nothing can be judged.
+VERIFY_SHOP_MIN_RATIO = float(os.getenv("VERIFY_SHOP_MIN_RATIO", "0.1"))
+VERIFY_TIMEOUT_S = float(os.getenv("VERIFY_TIMEOUT_S", "420"))
+VERIFY_INTERVAL_S = float(os.getenv("VERIFY_INTERVAL_S", "30"))
+VERIFY_CONSECUTIVE = int(os.getenv("VERIFY_CONSECUTIVE", "2"))      # healthy checks in a row
+VERIFY_RPS_MIN_RATIO = float(os.getenv("VERIFY_RPS_MIN_RATIO", "0.5"))  # traffic back to >= 50%
+VERIFY_RPS_MAX_RATIO = float(os.getenv("VERIFY_RPS_MAX_RATIO", "3.0"))  # and no flood left
+VERIFY_ERR_MARGIN = float(os.getenv("VERIFY_ERR_MARGIN", "0.02"))      # errors <= baseline + 2 pts
+VERIFY_P95_MAX_RATIO = float(os.getenv("VERIFY_P95_MAX_RATIO", "2.0"))  # p95 <= 2x baseline
+VERIFY_P95_FLOOR_MS = float(os.getenv("VERIFY_P95_FLOOR_MS", "50"))    # ignore p95 below this
+# toggle_feature_flag stays OFF until mentors confirm how a flag name may be known. Names may come
+# only from allowed sources (e.g. the organisers' brief), never from flagd, flag files or the flag
+# API (HARD RULE 2). ONCALL_FLAG_NAMES is a comma-separated list of those names.
+ALLOW_FLAG_TOGGLE = os.getenv("ONCALL_ALLOW_FLAG_TOGGLE", "0") == "1"
+ALLOWED_FLAG_NAMES = [f.strip() for f in os.getenv("ONCALL_FLAG_NAMES", "").split(",") if f.strip()]
 DEMO_DIR = os.getenv("OTEL_DEMO_DIR", "")         # folder with compose.yaml, for `docker compose`
 # Limit container listing to the demo's compose project (verified label: opentelemetry-demo), so
 # other projects' stopped containers on this laptop are not reported. Set to "" to list all.
@@ -113,6 +144,9 @@ DEPENDENCIES = {
     "shipping": ["quote"],
     "kafka": ["accounting", "fraud-detection"],
 }
+
+# Where shop traffic enters (the load generator calls frontend-proxy, which calls frontend).
+ENTRY_SERVICES = ["frontend-proxy", "frontend"]
 
 CRITICALITY = {
     "frontend-proxy": "critical", "frontend": "critical", "checkout": "critical", "payment": "critical",

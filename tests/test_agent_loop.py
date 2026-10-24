@@ -90,12 +90,12 @@ def test_end_to_end_test_mode_checkout_errors_caused_by_payment(payment_down, mo
     agent, _ = make_agent(monkeypatch, script)
     rec = agent.run(alert)
 
-    assert rec["outcome"] == "submitted" and rec["source"] == "test"
-    assert rec["source_detail"] == "fixtures tests/fixtures/payment_down"
+    assert rec["investigation"]["outcome"] == "submitted" and rec["metadata"]["mode"] == "test"
+    assert rec["metadata"]["source_detail"] == "fixtures tests/fixtures/payment_down"
     assert rec["path"].endswith("-test.json")
-    assert [s["tool"] for s in rec["steps"]] == ["get_service_health", "get_deploy_history",
+    assert [s["tool"] for s in rec["investigation"]["steps"]] == ["get_service_health", "get_deploy_history",
                                                  "find_error_traces", "search_logs"]
-    s = rec["summary"]
+    s = rec["diagnosis"]
     assert s["status"] == "diagnosed"
     rc = s["root_causes"][0]
     assert rc["component"] == "payment" and rc["fault_class"] == "container_stopped_or_restarting"
@@ -105,8 +105,8 @@ def test_end_to_end_test_mode_checkout_errors_caused_by_payment(payment_down, mo
     assert [a["signal"] for a in s["anomalies"]] == ["error_rate", "log_errors"]  # made-up one dropped
     assert s["validation"]["dropped_evidence_ids"] == ["E555", "E999"]
     saved = json.loads(open(rec["path"], encoding="utf-8").read())
-    assert saved["summary"] == s and len(saved["evidence"]) >= 5
-    assert saved["source"] == s["source"] == "test"
+    assert saved["diagnosis"] == s and len(saved["evidence"]) >= 5
+    assert saved["metadata"]["mode"] == "test" and saved["status"] == "complete"
 
     out = capsys.readouterr().out
     assert "[1] -> get_service_health(window='5m')" in out          # live per-call line
@@ -118,7 +118,7 @@ def test_end_to_end_test_mode_checkout_errors_caused_by_payment(payment_down, mo
 def test_root_cause_without_valid_evidence_escalates(payment_down, monkeypatch):
     agent, _ = make_agent(monkeypatch, lambda n, kw: response(submit("s", "payment", ["E1"])))
     rec = agent.run({"service": "checkout"})  # no tool ran, so E1 does not exist
-    s = rec["summary"]
+    s = rec["diagnosis"]
     assert s["root_causes"] == [] and s["suspected_origin"]["service"] == "unknown"
     assert s["status"] == "escalate" and s["proposed_action"]["action"] == "escalate_to_human"
 
@@ -134,7 +134,7 @@ def test_low_confidence_escalates(mem, monkeypatch):
 
     agent, client = make_agent(monkeypatch, script)
     rec = agent.run({"service": "frontend"})
-    assert rec["summary"]["status"] == "escalate"
+    assert rec["diagnosis"]["status"] == "escalate"
     assert "thinking" in client.calls[0] and client.calls[0]["model"] == "claude-opus-5-5"
 
 
@@ -143,7 +143,8 @@ def test_default_step_cap_is_10(mem, monkeypatch):
         block_tool(f"u{n}", "list_trace_services", {})))
     rec = agent.run({"service": "cart"})
     assert len(client.calls) == 10
-    assert rec["outcome"] == "incomplete" and rec["summary"]["suspected_origin"]["service"] == "unknown"
+    assert rec["investigation"]["outcome"] == "incomplete"
+    assert rec["diagnosis"]["suspected_origin"]["service"] == "unknown"
     last = client.calls[-1]["messages"][-1]
     assert last["role"] == "user" and last["content"][0]["type"] == "tool_result"
     assert "Step budget exhausted" in last["content"][-1]["text"]
@@ -153,7 +154,7 @@ def test_kill_switch_stops_run(mem, monkeypatch):
     run.config.KILL_SWITCH_FILE.write_text("stop")
     agent, client = make_agent(monkeypatch, lambda n, kw: response())
     rec = agent.run({"service": "cart"})
-    assert rec["outcome"] == "killed" and not client.calls
+    assert rec["investigation"]["outcome"] == "killed" and not client.calls
 
 
 def test_checkpoint2_diagnosis_with_root_cause_and_approval(mem, monkeypatch):
@@ -187,16 +188,18 @@ def test_checkpoint2_diagnosis_with_root_cause_and_approval(mem, monkeypatch):
 
     agent, _ = make_agent(monkeypatch, script, auto_approve=True)
     rec = agent.run({"service": "frontend"})
-    assert rec["outcome"] == "submitted"
-    s = rec["summary"]
+    assert rec["investigation"]["outcome"] == "submitted"
+    s = {**rec["diagnosis"], "remediation_plan": rec["remediation_plan"]}
     assert s["status"] == "diagnosed"
     assert s["confidence"] == 0.92
     assert s["root_causes"][0]["component"] == "payment"
     assert s["root_causes"][0]["fault_class"] == "container_stopped_or_restarting"
     assert len(s["root_causes"][0]["evidence"]) == 1 and s["root_causes"][0]["evidence"][0] in s["root_causes"][0]["evidence_detail"]
     assert s["proposed_action"]["action"] == "restart_service"
-    assert s["proposed_action"]["dry_run"] is True
-    assert s["approval"]["status"] == "approved"
+    step = s["remediation_plan"]["steps"][0]
+    assert step["approval"]["status"] == "approved" and step["approval"]["approved_by"] == "auto"
+    assert step["execution"]["status"] == "dry_run" and step["dry_run"] is True  # auto = dry run only
+    assert s["remediation_plan"]["outcome"] == "dry_run"
 
 
 def test_checkpoint2_diagnosis_escalation_when_confidence_low(mem, monkeypatch):
@@ -223,10 +226,10 @@ def test_checkpoint2_diagnosis_escalation_when_confidence_low(mem, monkeypatch):
 
     agent, _ = make_agent(monkeypatch, script, auto_approve=False)
     rec = agent.run({"service": "frontend"})
-    s = rec["summary"]
+    s = {**rec["diagnosis"], "remediation_plan": rec["remediation_plan"]}
     assert s["status"] == "escalate"
     assert s["proposed_action"]["action"] == "escalate_to_human"
-    assert s["approval"]["status"] == "pending"
+    assert s["remediation_plan"]["steps"] == [] and s["remediation_plan"]["outcome"] == "escalated"
 
 
 def test_checkpoint2_invented_evidence_in_root_cause_dropped(mem, monkeypatch):
@@ -248,7 +251,7 @@ def test_checkpoint2_invented_evidence_in_root_cause_dropped(mem, monkeypatch):
 
     agent, _ = make_agent(monkeypatch, script)
     rec = agent.run({"service": "cart"})
-    s = rec["summary"]
+    s = rec["diagnosis"]
     assert s["status"] == "escalate"
     assert len(s["root_causes"]) == 0
     assert "E999" in s["validation"]["dropped_evidence_ids"]

@@ -19,7 +19,11 @@ sys.path.insert(0, str(HERE.parent))
 
 import detector  # noqa: E402
 import faultctl  # noqa: E402
-from oncall.agent.run import run_agent  # noqa: E402
+
+# The organisers' tool is also called faultctl: never drive theirs by accident.
+if Path(faultctl.__file__).resolve().parent != HERE.parent / "faultctl":
+    sys.exit(f"refusing to run: 'faultctl' resolved to {faultctl.__file__}, not this repo's harness")
+from oncall.agent.run import action_client_for, run_agent  # noqa: E402
 from oncall.sources import set_source, source_info  # noqa: E402
 from oncall.tools.metrics import load_baseline, save_baseline  # noqa: E402
 
@@ -59,15 +63,18 @@ def main():
                    help="capture the healthy baseline before injecting")
     p.add_argument("--max-steps", type=int)
     p.add_argument("--auto-approve", "--yes", "-y", action="store_true",
-                   help="automatically approve the remediation plan (no interactive prompt)")
+                   help="approve every step automatically: DRY RUN ONLY, never executes")
+    p.add_argument("--execute", action="store_true",
+                   help="send approved steps to the Action API (ACTION_API_URL); default is a dry run")
     p.add_argument("--test", action="store_true",
                    help="rehearse on fixtures under tests/fixtures/ (no docker, nothing injected)")
     p.add_argument("--fixtures", help="fixture directory under tests/fixtures/ (needs --test)")
     args = p.parse_args()
     if args.fixtures and not args.test:
         p.error("--fixtures needs --test")
-    if args.test and args.save_baseline:
-        p.error("--save-baseline is live only")
+    if args.test and (args.save_baseline or args.execute):
+        p.error("--save-baseline and --execute are live only")
+    client = action_client_for(args.execute, p)
 
     if args.test:
         set_source("test", fixture_dir=args.fixtures, allow_test=True)
@@ -76,7 +83,8 @@ def main():
         # detector.py reads live Prometheus, so test mode uses the scenario's own alert.
         fixture_dir = Path(source_info()["source_detail"].removeprefix("fixtures "))
         alert = json.loads((HERE.parent / fixture_dir / "alert.json").read_text())
-        record = run_agent(alert, max_steps=args.max_steps, auto_approve=args.auto_approve)
+        record = run_agent(alert, max_steps=args.max_steps, auto_approve=args.auto_approve,
+                               action_client=client)
     else:
         set_source("live")
         if args.save_baseline:
@@ -90,16 +98,17 @@ def main():
             wait(args.wait)
             alert = build_alert()
             print(f"== alert: {json.dumps(alert)}")
-            record = run_agent(alert, max_steps=args.max_steps, auto_approve=args.auto_approve)
+            record = run_agent(alert, max_steps=args.max_steps, auto_approve=args.auto_approve,
+                               action_client=client)
         finally:
             print("== reset")
-            print("\n".join(faultctl.reset()))
+            print("\n".join(faultctl.reset(everything=False)))  # only what this demo injected
 
-    print("\n== summary JSON")
-    print(json.dumps(record["summary"], indent=2, default=str))
-    print(f"run saved to {record['path']} (outcome: {record['outcome']}, "
-          f"source: {record['source']} - {record['source_detail']})")
-    return 0 if record["outcome"] == "submitted" else 1
+    meta, outcome = record["metadata"], record.get("outcome") or {}
+    print(f"run saved to {record['path']} (outcome: {outcome.get('status')}, "
+          f"source: {meta['mode']} - {meta['source_detail']})")
+    print(f"report: {record['report_paths']['report']}")
+    return 0 if record["investigation"]["outcome"] == "submitted" else 1
 
 
 if __name__ == "__main__":
