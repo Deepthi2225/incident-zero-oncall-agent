@@ -3,6 +3,40 @@
 See [CLAUDE.md](CLAUDE.md) for the problem, the hard rules and the plan, and
 [ARCHITECTURE.md](ARCHITECTURE.md) for the design.
 
+## For teammates
+
+### Get started
+
+1. Clone and install (Python 3.11 or newer):
+   ```
+   git clone https://github.com/aniruddhajoshi100/ocAgent.git
+   cd ocAgent
+   pip install -r requirements.txt
+   ```
+2. Copy `.env.example` to `.env` and fill in **your own** values: `ANTHROPIC_API_KEY` (or
+   `ONCALL_PROVIDER=gemini` with `GEMINI_API_KEY`), a long random `ACTION_API_TOKEN`, and
+   `ACTION_API_URL=http://127.0.0.1:8099`. `.env` is gitignored; never commit it.
+3. Start the OpenTelemetry demo in its own folder, without changing anything there:
+   `docker compose -f compose.yaml -f compose.full.yaml -f compose.observability.yaml up -d`.
+   Wait a few minutes for the load generator to produce traffic.
+4. Run the tests: `python -m pytest -q`. They need no Docker and no network.
+5. While the shop is healthy, capture the baselines: `python -m oncall baseline --window 5m` and
+   `python detector.py --calibrate 300`.
+6. Run each of these in its own terminal:
+   - `python -m actionapi`: our Action API, the only thing that changes the demo
+   - `python -m oncall.ui`: the read-only dashboard at http://127.0.0.1:8090
+   - `python -m oncall watch`: the detector, which starts an investigation when an alert fires.
+     Approve or reject each step in this terminal.
+
+### Contribute
+
+- Start from an up-to-date `main`: `git switch main && git pull`, then
+  `git switch -c <name>/<feature>`.
+- Keep every test passing (`python -m pytest -q`) and add tests for what you change.
+- Open a pull request into `main` and ask a teammate to look before merging.
+- Follow the hard rules in [CLAUDE.md](CLAUDE.md): never edit the demo, never read feature flags,
+  change the system only through the Action API, and never commit `.env`, `runs/` or `STOP`.
+
 ## LLM providers
 
 The agent loop is provider-independent ([oncall/agent/providers.py](oncall/agent/providers.py)).
