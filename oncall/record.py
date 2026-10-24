@@ -197,6 +197,10 @@ def compute_outcome(record):
     if manual:
         return manual[-1]["outcome"], f"{head}; fixed by hand, verify-only result: {manual[-1]['outcome']}"
     steps, outcome = plan.get("steps", []), plan.get("outcome")
+    resolved = plan.get("resolved") or []
+    if not steps and resolved and not record.get("escalations"):
+        return "escalated", (f"{head}; all {len(resolved)} root cause(s) resolved before action, nothing "
+                             f"executed; a human should confirm")
     acted = "; ".join(f"{s['action']} {s['target']}: {s.get('outcome', 'not run')}" for s in steps)
     others = len(record.get("escalations") or [])
     if outcome == "recovered":

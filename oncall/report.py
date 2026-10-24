@@ -50,7 +50,8 @@ def render_diagnosis(record):
     if rcs:
         lines.append(f"\nRoot Cause(s) [Overall Confidence: {_fmt_conf(d.get('confidence'))}]:")
         for rc in rcs:
-            lines.append(f"  * {rc['component']} [{rc['fault_class']}] (confidence {_fmt_conf(rc['confidence'])}): {rc['cause']}")
+            state = ", RESOLVED before action" if rc.get("status") == "resolved" else ""
+            lines.append(f"  * {rc['component']} [{rc['fault_class']}] (confidence {_fmt_conf(rc['confidence'])}{state}): {rc['cause']}")
             lines += [f"      {e}: {text[:140]}" for e, text in (rc.get("evidence_detail") or {}).items()]
     else:
         o = d.get("suspected_origin") or {}
@@ -212,10 +213,15 @@ def build_report(record):
 
     out += ["", "## Root cause", ""]
     for rc in d.get("root_causes") or []:
-        out.append(f"- **{rc['component']}** [{rc['fault_class']}], confidence {_fmt_conf(rc['confidence'])}: "
+        state = " (resolved before action)" if rc.get("status") == "resolved" else ""
+        out.append(f"- **{rc['component']}** [{rc['fault_class']}]{state}, confidence {_fmt_conf(rc['confidence'])}: "
                    f"{rc['cause']} (evidence {', '.join(rc['evidence'])})")
     if not d.get("root_causes"):
         out.append("- Not determined with valid evidence; escalated to a human.")
+    if plan.get("resolved"):
+        out += ["", "Resolved before action (no step created):"]
+        out += [f"- {r['component']} [{r['fault_class']}]: {r.get('cause', '')} (evidence {', '.join(r.get('evidence', []))})"
+                for r in plan["resolved"]]
     if d.get("affected_services"):
         out += ["", "Affected services:"] + [f"- {a['service']}: {a['impact']}" for a in d["affected_services"]]
     if d.get("ruled_out"):

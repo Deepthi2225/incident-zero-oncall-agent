@@ -119,6 +119,7 @@
                                  "memory_leak", "cpu_or_gc_pressure", "service_error", "service_unreachable",
                                  "input_specific_error", "traffic_flood", "network_degradation", "unknown"]},
         "cause": {"type": "string"},
+        "status": {"enum": ["active", "resolved"]},
         "confidence": {"type": "number", "minimum": 0},
         "evidence": {"$ref": "#/$defs/evidence_ids"},
         "evidence_detail": {"type": "object"}

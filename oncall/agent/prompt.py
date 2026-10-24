@@ -21,6 +21,9 @@ unreachable (stopped, crashed, or cut off by the network).
 - Missing telemetry from a service is itself evidence, not a gap in your data.
 - More than one origin is possible. Report each with its own evidence.
 - List the suspects you checked and cleared in ruled_out, each with the evidence that clears it.
+- Give every root cause a status: "active" if it is still failing now, "resolved" if the evidence \
+shows it already recovered (e.g. the container is running again and serving). Only active root \
+causes get remediation steps.
 - Keep service identities exact: evidence about a stopped container is evidence about THAT service, \
 not about its callers. (Rule based on Padma's checkpoint3 branch.)
 - Never claim OOM from an exit code alone: 137 can be a SIGKILL from docker stop and 143 is SIGTERM. \

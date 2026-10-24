@@ -210,8 +210,17 @@ def _fix_for(rc, proposed):
     return action, None
 
 
+def _step_reason(rc, action, target):
+    """Why this step: this root cause's own cause text (or its first cited evidence), never boilerplate."""
+    why = (rc.get("cause") or "").strip() or next(iter((rc.get("evidence_detail") or {}).values()), "")
+    return f"{rc['component']} [{rc['fault_class']}]: {why} -> {action} on {target}."
+
+
 def build_plan(root_causes, proposed, confident, threshold, notes, overrides=None):
-    """Ordered remediation plan: {"steps": [...], "escalations": [...]}.
+    """Ordered remediation plan: {"steps": [...], "escalations": [...], "resolved": [...]}.
+
+    Only ACTIVE root causes get steps. A root cause whose evidence shows it already recovered
+    (status "resolved") is listed under "resolved" and never acted on.
 
     root_causes: validated, each with component / fault_class / confidence / cause.
     proposed:    the model's proposed_action; its wording is kept where it agrees with the plan.
@@ -229,9 +238,13 @@ def build_plan(root_causes, proposed, confident, threshold, notes, overrides=Non
             primary.get("component"), primary.get("fault_class", "unknown"),
             "Confidence below threshold or no root cause with valid evidence; a human must decide.")]}
 
-    steps, escalations = [], []
+    steps, escalations, resolved = [], [], []
     for rc in ranked:
         component, fault_class = rc["component"], rc["fault_class"]
+        if rc.get("status") == "resolved":
+            resolved.append({"component": component, "fault_class": fault_class, "cause": rc.get("cause", ""),
+                             "evidence": rc.get("evidence", []), "note": "resolved before action"})
+            continue
         if rc["confidence"] < threshold:
             escalations.append(_escalation(component, fault_class,
                                            f"{component} [{fault_class}]: confidence {rc['confidence']} "
@@ -246,7 +259,7 @@ def build_plan(root_causes, proposed, confident, threshold, notes, overrides=Non
         if any(s["action"] == action and s["target"] == target for s in steps):
             continue
         step = {"action": action, "target": target, "component": component, "fault_class": fault_class,
-                "params": {}, "reason": f"{fault_class} on {component} is fixed by {action}.",
+                "params": {}, "reason": _step_reason(rc, action, target),
                 "rollback": rollback_for(action), "dry_run": True}
         if action == "toggle_feature_flag":
             step["flag"] = proposed["flag"]
@@ -258,13 +271,27 @@ def build_plan(root_causes, proposed, confident, threshold, notes, overrides=Non
     dependents = {s["target"]: sum(depends_on(svc, s["target"]) for svc in config.DEPENDENCIES)
                   for s in steps}
     steps.sort(key=lambda s: (_height(s["target"]), -dependents[s["target"]]))
-    worded = next((s for s in steps if s["action"] == proposed.get("action")), None)
-    if worded:  # keep the model's own wording for the step it proposed
+    same_action = [s for s in steps if s["action"] == proposed.get("action")]
+    # The model's wording belongs to the step it proposed: the same target if there is one, else the
+    # step its proposal was retargeted to (first of that action). Every other step keeps the reason
+    # built from its own root cause, so no step gets boilerplate or another step's text.
+    worded = next((s for s in same_action if proposed.get("target") in (s["target"], s.get("component"))),
+                  same_action[0] if same_action else None)
+    if worded:
         for key in ("reason", "risk_assessment", "expected_outcome"):
             if proposed.get(key):
                 worded[key] = proposed[key]
     for i, s in enumerate(steps, 1):
         s["step"] = i
+
+    if not steps and not escalations:  # every root cause already resolved: nothing to do
+        if proposed.get("action") and proposed["action"] != ESCALATE:
+            notes.append(f"proposed action {proposed['action']} dropped: all root causes resolved before action")
+            overrides.append({"field": "proposed_action.action",
+                              "proposed": {"action": proposed["action"], "target": proposed.get("target")},
+                              "applied": {"action": "none", "target": None},
+                              "reason": "all root causes were resolved before any action"})
+        return {"steps": [], "escalations": [], "resolved": resolved}
 
     first = (steps or escalations)[0]
     if proposed.get("action") and proposed["action"] not in {s["action"] for s in steps} \
@@ -281,7 +308,7 @@ def build_plan(root_causes, proposed, confident, threshold, notes, overrides=Non
                           "proposed": {"action": proposed["action"], "target": proposed["target"]},
                           "applied": {"action": worded["action"], "target": worded["target"]},
                           "reason": "the action targets the root-cause component, not a victim"})
-    return {"steps": steps, "escalations": escalations}
+    return {"steps": steps, "escalations": escalations, "resolved": resolved}
 
 
 def prevention_for(root_causes):

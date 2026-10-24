@@ -11,6 +11,7 @@ from oncall.agent.actions import AVAILABLE_ACTIONS, ESCALATE, build_plan, preven
 from oncall.evidence import registry
 
 CONFIDENT = 0.6
+ROOT_CAUSE_STATUS = ("active", "resolved")
 
 FAULT_CLASSES = [
     "container_stopped_or_restarting",
@@ -80,9 +81,13 @@ SUBMIT_TOOL = {
                 "items": {
                     "type": "object",
                     "additionalProperties": False,
-                    "required": ["component", "fault_class", "cause", "confidence", "evidence"],
+                    "required": ["component", "fault_class", "cause", "confidence", "status", "evidence"],
                     "properties": {
                         "component": {"type": "string", "description": "Failing service or container name."},
+                        "status": {"type": "string", "enum": ["active", "resolved"],
+                                   "description": "active: still failing now. resolved: the evidence shows it "
+                                                  "already recovered (e.g. running and serving again); no "
+                                                  "action is taken for it."},
                         "fault_class": {"type": "string", "enum": FAULT_CLASSES, "description": "Standard fault classification."},
                         "cause": {"type": "string", "description": "Specific explanation of what broke and why."},
                         "confidence": {"type": "number", "description": "Confidence score 0.0 to 1.0 based strictly on evidence."},
@@ -190,6 +195,11 @@ def validate(diag):
         rc_clean["evidence_detail"] = {e: registry.get(e)["summary"] for e in valid_ev if registry.get(e)}
         if rc_clean.get("fault_class") not in FAULT_CLASSES:
             rc_clean["fault_class"] = "unknown"
+        if rc_clean.get("status") not in ROOT_CAUSE_STATUS:
+            if rc_clean.get("status") is not None:
+                notes.append(f"root cause {rc_clean.get('component')}: status {rc_clean['status']!r} "
+                             f"is not active/resolved; treated as active")
+            rc_clean["status"] = "active"
         valid_rcs.append(rc_clean)
 
     # Validate or synthesize suspected_origin
@@ -250,7 +260,9 @@ def validate(diag):
     plan = build_plan(valid_rcs, diag.get("proposed_action"), diag["status"] == "diagnosed",
                       CONFIDENT, notes, overrides)
     diag["remediation_plan"] = plan
-    diag["proposed_action"] = dict((plan["steps"] or plan["escalations"])[0])
+    first = (plan["steps"] or plan["escalations"] or [None])[0]
+    diag["proposed_action"] = dict(first) if first else {
+        "action": "none", "target": None, "reason": "all root causes were resolved before any action"}
 
     prevention = [p for p in diag.get("prevention") or [] if isinstance(p, str) and p.strip()]
     diag["prevention"] = prevention or prevention_for(valid_rcs)
