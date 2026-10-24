@@ -102,6 +102,13 @@ route, 409 idempotency conflict or nothing to restore, 423 kill switch is on, 42
 The service never edits any demo file. Locust is changed only through Locust's own HTTP
 control API.
 
+**How Locust is reached (verified 24 Oct 11:34 on the running demo).** The demo's Envoy proxy routes
+`/loadgen/` to the load generator's web port and rewrites the prefix to `/` (see
+`src/frontend-proxy/envoy.tmpl.yaml` in the demo, read only). Compose publishes Locust's own port
+(`LOCUST_WEB_PORT`, 8089) only to a random host port, so `127.0.0.1:8089` is not reachable.
+`GET http://localhost:8080/loadgen/stats/requests` returned 200 with `user_count` 5 and state
+`running`, so the default `LOCUST_URL` is `http://localhost:8080/loadgen`.
+
 ### State across restarts
 
 After every applied action the service saves its state to `runs/action_api_state.json`
