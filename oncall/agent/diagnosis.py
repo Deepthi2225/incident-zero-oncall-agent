@@ -157,18 +157,55 @@ def _clamp(x):
         return 0.0
 
 
+def _as_dict(value, label, notes, string_key=None):
+    """The model's value as a dict: a dict as is, a string as {string_key: value}, else {} (noted)."""
+    if isinstance(value, dict):
+        return dict(value)
+    if value is None:
+        return {}
+    if isinstance(value, str) and string_key:
+        notes.append(f"{label} was a string; read as {{{string_key!r}: {value[:60]!r}}}")
+        return {string_key: value}
+    notes.append(f"{label} had an unexpected type ({type(value).__name__}); ignored")
+    return {}
+
+
+def _as_list(value, label, notes):
+    """The model's value as a list: a list as is, a single item wrapped, None as []."""
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return value
+    notes.append(f"{label} was not a list ({type(value).__name__}); wrapped")
+    return [value]
+
+
+def _ids(value):
+    """Evidence IDs as a list of strings (a single ID string is accepted)."""
+    if isinstance(value, str):
+        return [value]
+    return [v for v in value if isinstance(v, str)] if isinstance(value, list) else []
+
+
 def validate(diag):
     """Drop claims without valid evidence; synthesizes root_causes and suspected_origin,
 
     validates proposed remediation, and calculates status (diagnosed vs escalate).
+    Every field from the model is type-checked: a wrong type is coerced or dropped, never a crash.
     """
-    diag = dict(diag)
     notes, dropped_ids = [], []
+    diag = _as_dict(diag, "diagnosis", notes)
+    diag["proposed_action"] = _as_dict(diag.get("proposed_action"), "proposed_action", notes, "action")
+    for key in ("prevention", "open_questions"):
+        diag[key] = [x for x in _as_list(diag.get(key), key, notes) if isinstance(x, str)]
 
     def keep_valid(items, label):
         kept = []
-        for item in items or []:
-            valid, dropped = registry.validate(item.get("evidence"))
+        for item in _as_list(items, label, notes):
+            if not isinstance(item, dict):
+                notes.append(f"dropped {label} that is not an object: {str(item)[:60]}")
+                continue
+            valid, dropped = registry.validate(_ids(item.get("evidence")))
             dropped_ids.extend(dropped)
             if not valid:
                 notes.append(f"dropped {label} without valid evidence: {item.get('service') or item.get('component')}")
@@ -181,10 +218,13 @@ def validate(diag):
     diag["ruled_out"] = keep_valid(diag.get("ruled_out"), "ruled-out suspect")
 
     # Validate root_causes
-    raw_rcs = diag.get("root_causes") or []
+    raw_rcs = _as_list(diag.get("root_causes"), "root_causes", notes)
     valid_rcs = []
     for rc in raw_rcs:
-        valid_ev, dropped = registry.validate(rc.get("evidence"))
+        if not isinstance(rc, dict):
+            notes.append(f"dropped root cause that is not an object: {str(rc)[:60]}")
+            continue
+        valid_ev, dropped = registry.validate(_ids(rc.get("evidence")))
         dropped_ids.extend(dropped)
         if not valid_ev:
             notes.append(f"dropped root cause without valid evidence: {rc.get('component')}")
@@ -203,8 +243,8 @@ def validate(diag):
         valid_rcs.append(rc_clean)
 
     # Validate or synthesize suspected_origin
-    origin = dict(diag.get("suspected_origin") or {})
-    origin_ev, dropped = registry.validate(origin.get("evidence"))
+    origin = _as_dict(diag.get("suspected_origin"), "suspected_origin", notes, "service")
+    origin_ev, dropped = registry.validate(_ids(origin.get("evidence")))
     dropped_ids.extend(dropped)
 
     if origin_ev:
