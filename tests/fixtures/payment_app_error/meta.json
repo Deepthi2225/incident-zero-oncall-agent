@@ -1,0 +1,5 @@
+{
+ "now": 1792740000,
+ "scenario": "payment's Charge handler returns errors; container healthy",
+ "synthetic": true
+}

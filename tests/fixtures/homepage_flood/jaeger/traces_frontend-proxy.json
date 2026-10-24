@@ -1,0 +1,2188 @@
+{
+ "data": [
+  {
+   "traceID": "7d3e0000000000000000000000000000",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "7d3e0000000000000000000000000000",
+     "spanID": "0000000000000001",
+     "operationName": "ingress",
+     "references": [],
+     "startTime": 1792739880000000,
+     "duration": 850000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 200
+      }
+     ],
+     "logs": [],
+     "processID": "p1",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000000",
+     "spanID": "0000000000000002",
+     "operationName": "GET /",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000000",
+       "spanID": "0000000000000001"
+      }
+     ],
+     "startTime": 1792739880000400,
+     "duration": 820000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.route",
+       "type": "string",
+       "value": "/"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000000",
+     "spanID": "0000000000000003",
+     "operationName": "oteldemo.ProductCatalogService/ListProducts",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000000",
+       "spanID": "0000000000000002"
+      }
+     ],
+     "startTime": 1792739880002000,
+     "duration": 21000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.ProductCatalogService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "product-catalog"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000000",
+     "spanID": "0000000000000004",
+     "operationName": "oteldemo.ProductCatalogService/ListProducts",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000000",
+       "spanID": "0000000000000003"
+      }
+     ],
+     "startTime": 1792739880002300,
+     "duration": 19000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p5",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "7d3e0000000000000000000000000001",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "7d3e0000000000000000000000000001",
+     "spanID": "0100000000000001",
+     "operationName": "ingress",
+     "references": [],
+     "startTime": 1792739890000000,
+     "duration": 860000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 200
+      }
+     ],
+     "logs": [],
+     "processID": "p1",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000001",
+     "spanID": "0100000000000002",
+     "operationName": "GET /",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000001",
+       "spanID": "0100000000000001"
+      }
+     ],
+     "startTime": 1792739890000400,
+     "duration": 830000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.route",
+       "type": "string",
+       "value": "/"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000001",
+     "spanID": "0100000000000003",
+     "operationName": "oteldemo.ProductCatalogService/ListProducts",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000001",
+       "spanID": "0100000000000002"
+      }
+     ],
+     "startTime": 1792739890002000,
+     "duration": 21000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.ProductCatalogService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "product-catalog"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000001",
+     "spanID": "0100000000000004",
+     "operationName": "oteldemo.ProductCatalogService/ListProducts",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000001",
+       "spanID": "0100000000000003"
+      }
+     ],
+     "startTime": 1792739890002300,
+     "duration": 19000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p5",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "7d3e0000000000000000000000000002",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "7d3e0000000000000000000000000002",
+     "spanID": "0200000000000001",
+     "operationName": "ingress",
+     "references": [],
+     "startTime": 1792739900000000,
+     "duration": 870000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 200
+      }
+     ],
+     "logs": [],
+     "processID": "p1",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000002",
+     "spanID": "0200000000000002",
+     "operationName": "GET /",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000002",
+       "spanID": "0200000000000001"
+      }
+     ],
+     "startTime": 1792739900000400,
+     "duration": 840000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.route",
+       "type": "string",
+       "value": "/"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000002",
+     "spanID": "0200000000000003",
+     "operationName": "oteldemo.ProductCatalogService/ListProducts",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000002",
+       "spanID": "0200000000000002"
+      }
+     ],
+     "startTime": 1792739900002000,
+     "duration": 21000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.ProductCatalogService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "product-catalog"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000002",
+     "spanID": "0200000000000004",
+     "operationName": "oteldemo.ProductCatalogService/ListProducts",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000002",
+       "spanID": "0200000000000003"
+      }
+     ],
+     "startTime": 1792739900002300,
+     "duration": 19000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p5",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "7d3e0000000000000000000000000003",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "7d3e0000000000000000000000000003",
+     "spanID": "0300000000000001",
+     "operationName": "ingress",
+     "references": [],
+     "startTime": 1792739910000000,
+     "duration": 880000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 200
+      }
+     ],
+     "logs": [],
+     "processID": "p1",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000003",
+     "spanID": "0300000000000002",
+     "operationName": "GET /",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000003",
+       "spanID": "0300000000000001"
+      }
+     ],
+     "startTime": 1792739910000400,
+     "duration": 850000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.route",
+       "type": "string",
+       "value": "/"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000003",
+     "spanID": "0300000000000003",
+     "operationName": "oteldemo.ProductCatalogService/ListProducts",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000003",
+       "spanID": "0300000000000002"
+      }
+     ],
+     "startTime": 1792739910002000,
+     "duration": 21000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.ProductCatalogService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "product-catalog"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000003",
+     "spanID": "0300000000000004",
+     "operationName": "oteldemo.ProductCatalogService/ListProducts",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000003",
+       "spanID": "0300000000000003"
+      }
+     ],
+     "startTime": 1792739910002300,
+     "duration": 19000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p5",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "7d3e0000000000000000000000000004",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "7d3e0000000000000000000000000004",
+     "spanID": "0400000000000001",
+     "operationName": "ingress",
+     "references": [],
+     "startTime": 1792739920000000,
+     "duration": 890000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 200
+      }
+     ],
+     "logs": [],
+     "processID": "p1",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000004",
+     "spanID": "0400000000000002",
+     "operationName": "GET /",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000004",
+       "spanID": "0400000000000001"
+      }
+     ],
+     "startTime": 1792739920000400,
+     "duration": 860000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.route",
+       "type": "string",
+       "value": "/"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000004",
+     "spanID": "0400000000000003",
+     "operationName": "oteldemo.ProductCatalogService/ListProducts",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000004",
+       "spanID": "0400000000000002"
+      }
+     ],
+     "startTime": 1792739920002000,
+     "duration": 21000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.ProductCatalogService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "product-catalog"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000004",
+     "spanID": "0400000000000004",
+     "operationName": "oteldemo.ProductCatalogService/ListProducts",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000004",
+       "spanID": "0400000000000003"
+      }
+     ],
+     "startTime": 1792739920002300,
+     "duration": 19000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p5",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "7d3e0000000000000000000000000005",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "7d3e0000000000000000000000000005",
+     "spanID": "0500000000000001",
+     "operationName": "ingress",
+     "references": [],
+     "startTime": 1792739930000000,
+     "duration": 900000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 200
+      }
+     ],
+     "logs": [],
+     "processID": "p1",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000005",
+     "spanID": "0500000000000002",
+     "operationName": "GET /",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000005",
+       "spanID": "0500000000000001"
+      }
+     ],
+     "startTime": 1792739930000400,
+     "duration": 870000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.route",
+       "type": "string",
+       "value": "/"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000005",
+     "spanID": "0500000000000003",
+     "operationName": "oteldemo.ProductCatalogService/ListProducts",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000005",
+       "spanID": "0500000000000002"
+      }
+     ],
+     "startTime": 1792739930002000,
+     "duration": 21000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.ProductCatalogService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "product-catalog"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000005",
+     "spanID": "0500000000000004",
+     "operationName": "oteldemo.ProductCatalogService/ListProducts",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000005",
+       "spanID": "0500000000000003"
+      }
+     ],
+     "startTime": 1792739930002300,
+     "duration": 19000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p5",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "7d3e0000000000000000000000000006",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "7d3e0000000000000000000000000006",
+     "spanID": "0600000000000001",
+     "operationName": "ingress",
+     "references": [],
+     "startTime": 1792739940000000,
+     "duration": 910000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 200
+      }
+     ],
+     "logs": [],
+     "processID": "p1",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000006",
+     "spanID": "0600000000000002",
+     "operationName": "GET /",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000006",
+       "spanID": "0600000000000001"
+      }
+     ],
+     "startTime": 1792739940000400,
+     "duration": 880000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.route",
+       "type": "string",
+       "value": "/"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000006",
+     "spanID": "0600000000000003",
+     "operationName": "oteldemo.ProductCatalogService/ListProducts",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000006",
+       "spanID": "0600000000000002"
+      }
+     ],
+     "startTime": 1792739940002000,
+     "duration": 21000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.ProductCatalogService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "product-catalog"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000006",
+     "spanID": "0600000000000004",
+     "operationName": "oteldemo.ProductCatalogService/ListProducts",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000006",
+       "spanID": "0600000000000003"
+      }
+     ],
+     "startTime": 1792739940002300,
+     "duration": 19000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p5",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "7d3e0000000000000000000000000007",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "7d3e0000000000000000000000000007",
+     "spanID": "0700000000000001",
+     "operationName": "ingress",
+     "references": [],
+     "startTime": 1792739950000000,
+     "duration": 920000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 200
+      }
+     ],
+     "logs": [],
+     "processID": "p1",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000007",
+     "spanID": "0700000000000002",
+     "operationName": "GET /",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000007",
+       "spanID": "0700000000000001"
+      }
+     ],
+     "startTime": 1792739950000400,
+     "duration": 890000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.route",
+       "type": "string",
+       "value": "/"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000007",
+     "spanID": "0700000000000003",
+     "operationName": "oteldemo.ProductCatalogService/ListProducts",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000007",
+       "spanID": "0700000000000002"
+      }
+     ],
+     "startTime": 1792739950002000,
+     "duration": 21000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.ProductCatalogService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "product-catalog"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000007",
+     "spanID": "0700000000000004",
+     "operationName": "oteldemo.ProductCatalogService/ListProducts",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000007",
+       "spanID": "0700000000000003"
+      }
+     ],
+     "startTime": 1792739950002300,
+     "duration": 19000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p5",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "7d3e0000000000000000000000000008",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "7d3e0000000000000000000000000008",
+     "spanID": "0800000000000001",
+     "operationName": "ingress",
+     "references": [],
+     "startTime": 1792739960000000,
+     "duration": 930000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 200
+      }
+     ],
+     "logs": [],
+     "processID": "p1",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000008",
+     "spanID": "0800000000000002",
+     "operationName": "GET /",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000008",
+       "spanID": "0800000000000001"
+      }
+     ],
+     "startTime": 1792739960000400,
+     "duration": 900000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.route",
+       "type": "string",
+       "value": "/"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000008",
+     "spanID": "0800000000000003",
+     "operationName": "oteldemo.ProductCatalogService/ListProducts",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000008",
+       "spanID": "0800000000000002"
+      }
+     ],
+     "startTime": 1792739960002000,
+     "duration": 21000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.ProductCatalogService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "product-catalog"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000008",
+     "spanID": "0800000000000004",
+     "operationName": "oteldemo.ProductCatalogService/ListProducts",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000008",
+       "spanID": "0800000000000003"
+      }
+     ],
+     "startTime": 1792739960002300,
+     "duration": 19000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p5",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "7d3e0000000000000000000000000009",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "7d3e0000000000000000000000000009",
+     "spanID": "0900000000000001",
+     "operationName": "ingress",
+     "references": [],
+     "startTime": 1792739970000000,
+     "duration": 940000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 200
+      }
+     ],
+     "logs": [],
+     "processID": "p1",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000009",
+     "spanID": "0900000000000002",
+     "operationName": "GET /",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000009",
+       "spanID": "0900000000000001"
+      }
+     ],
+     "startTime": 1792739970000400,
+     "duration": 910000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.route",
+       "type": "string",
+       "value": "/"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000009",
+     "spanID": "0900000000000003",
+     "operationName": "oteldemo.ProductCatalogService/ListProducts",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000009",
+       "spanID": "0900000000000002"
+      }
+     ],
+     "startTime": 1792739970002000,
+     "duration": 21000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.ProductCatalogService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "product-catalog"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "7d3e0000000000000000000000000009",
+     "spanID": "0900000000000004",
+     "operationName": "oteldemo.ProductCatalogService/ListProducts",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "7d3e0000000000000000000000000009",
+       "spanID": "0900000000000003"
+      }
+     ],
+     "startTime": 1792739970002300,
+     "duration": 19000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      }
+     ],
+     "logs": [],
+     "processID": "p5",
+     "warnings": null
+    }
+   ]
+  }
+ ],
+ "total": 10,
+ "limit": 0,
+ "offset": 0,
+ "errors": null
+}

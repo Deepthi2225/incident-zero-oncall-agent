@@ -1,0 +1,2510 @@
+{
+ "data": [
+  {
+   "traceID": "5a1b0000000000000000000000000000",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "5a1b0000000000000000000000000000",
+     "spanID": "0000000000000001",
+     "operationName": "POST /api/checkout",
+     "references": [],
+     "startTime": 1792739880000000,
+     "duration": 61000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unknown desc = Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000000",
+     "spanID": "0000000000000002",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000000",
+       "spanID": "0000000000000001"
+      }
+     ],
+     "startTime": 1792739880000900,
+     "duration": 58000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "app.user.id",
+       "type": "string",
+       "value": "user-0"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unknown desc = Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000000",
+     "spanID": "0000000000000003",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000000",
+       "spanID": "0000000000000002"
+      }
+     ],
+     "startTime": 1792739880030000,
+     "duration": 9000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.PaymentService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "payment"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "rpc error: code = Unknown desc = Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000000",
+     "spanID": "0000000000000004",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000000",
+       "spanID": "0000000000000003"
+      }
+     ],
+     "startTime": 1792739880030500,
+     "duration": 7600,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "app.payment.card_type",
+       "type": "string",
+       "value": "visa"
+      },
+      {
+       "key": "app.payment.charged",
+       "type": "bool",
+       "value": false
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p8",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "5a1b0000000000000000000000000001",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "5a1b0000000000000000000000000001",
+     "spanID": "0100000000000001",
+     "operationName": "POST /api/checkout",
+     "references": [],
+     "startTime": 1792739895000000,
+     "duration": 61000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unknown desc = Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000001",
+     "spanID": "0100000000000002",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000001",
+       "spanID": "0100000000000001"
+      }
+     ],
+     "startTime": 1792739895000900,
+     "duration": 58000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "app.user.id",
+       "type": "string",
+       "value": "user-1"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unknown desc = Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000001",
+     "spanID": "0100000000000003",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000001",
+       "spanID": "0100000000000002"
+      }
+     ],
+     "startTime": 1792739895030000,
+     "duration": 9000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.PaymentService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "payment"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "rpc error: code = Unknown desc = Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000001",
+     "spanID": "0100000000000004",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000001",
+       "spanID": "0100000000000003"
+      }
+     ],
+     "startTime": 1792739895030500,
+     "duration": 7600,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "app.payment.card_type",
+       "type": "string",
+       "value": "visa"
+      },
+      {
+       "key": "app.payment.charged",
+       "type": "bool",
+       "value": false
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p8",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "5a1b0000000000000000000000000002",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "5a1b0000000000000000000000000002",
+     "spanID": "0200000000000001",
+     "operationName": "POST /api/checkout",
+     "references": [],
+     "startTime": 1792739910000000,
+     "duration": 61000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unknown desc = Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000002",
+     "spanID": "0200000000000002",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000002",
+       "spanID": "0200000000000001"
+      }
+     ],
+     "startTime": 1792739910000900,
+     "duration": 58000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "app.user.id",
+       "type": "string",
+       "value": "user-2"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unknown desc = Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000002",
+     "spanID": "0200000000000003",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000002",
+       "spanID": "0200000000000002"
+      }
+     ],
+     "startTime": 1792739910030000,
+     "duration": 9000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.PaymentService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "payment"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "rpc error: code = Unknown desc = Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000002",
+     "spanID": "0200000000000004",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000002",
+       "spanID": "0200000000000003"
+      }
+     ],
+     "startTime": 1792739910030500,
+     "duration": 7600,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "app.payment.card_type",
+       "type": "string",
+       "value": "visa"
+      },
+      {
+       "key": "app.payment.charged",
+       "type": "bool",
+       "value": false
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p8",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "5a1b0000000000000000000000000003",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "5a1b0000000000000000000000000003",
+     "spanID": "0300000000000001",
+     "operationName": "POST /api/checkout",
+     "references": [],
+     "startTime": 1792739925000000,
+     "duration": 61000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unknown desc = Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000003",
+     "spanID": "0300000000000002",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000003",
+       "spanID": "0300000000000001"
+      }
+     ],
+     "startTime": 1792739925000900,
+     "duration": 58000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "app.user.id",
+       "type": "string",
+       "value": "user-3"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unknown desc = Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000003",
+     "spanID": "0300000000000003",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000003",
+       "spanID": "0300000000000002"
+      }
+     ],
+     "startTime": 1792739925030000,
+     "duration": 9000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.PaymentService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "payment"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "rpc error: code = Unknown desc = Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000003",
+     "spanID": "0300000000000004",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000003",
+       "spanID": "0300000000000003"
+      }
+     ],
+     "startTime": 1792739925030500,
+     "duration": 7600,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "app.payment.card_type",
+       "type": "string",
+       "value": "visa"
+      },
+      {
+       "key": "app.payment.charged",
+       "type": "bool",
+       "value": false
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p8",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "5a1b0000000000000000000000000004",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "5a1b0000000000000000000000000004",
+     "spanID": "0400000000000001",
+     "operationName": "POST /api/checkout",
+     "references": [],
+     "startTime": 1792739940000000,
+     "duration": 61000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unknown desc = Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000004",
+     "spanID": "0400000000000002",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000004",
+       "spanID": "0400000000000001"
+      }
+     ],
+     "startTime": 1792739940000900,
+     "duration": 58000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "app.user.id",
+       "type": "string",
+       "value": "user-4"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unknown desc = Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000004",
+     "spanID": "0400000000000003",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000004",
+       "spanID": "0400000000000002"
+      }
+     ],
+     "startTime": 1792739940030000,
+     "duration": 9000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.PaymentService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "payment"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "rpc error: code = Unknown desc = Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000004",
+     "spanID": "0400000000000004",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000004",
+       "spanID": "0400000000000003"
+      }
+     ],
+     "startTime": 1792739940030500,
+     "duration": 7600,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "app.payment.card_type",
+       "type": "string",
+       "value": "visa"
+      },
+      {
+       "key": "app.payment.charged",
+       "type": "bool",
+       "value": false
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p8",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "5a1b0000000000000000000000000005",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "5a1b0000000000000000000000000005",
+     "spanID": "0500000000000001",
+     "operationName": "POST /api/checkout",
+     "references": [],
+     "startTime": 1792739955000000,
+     "duration": 61000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unknown desc = Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000005",
+     "spanID": "0500000000000002",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000005",
+       "spanID": "0500000000000001"
+      }
+     ],
+     "startTime": 1792739955000900,
+     "duration": 58000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "app.user.id",
+       "type": "string",
+       "value": "user-5"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to charge card: could not charge the card: rpc error: code = Unknown desc = Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000005",
+     "spanID": "0500000000000003",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000005",
+       "spanID": "0500000000000002"
+      }
+     ],
+     "startTime": 1792739955030000,
+     "duration": 9000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.PaymentService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "payment"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "rpc error: code = Unknown desc = Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000005",
+     "spanID": "0500000000000004",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000005",
+       "spanID": "0500000000000003"
+      }
+     ],
+     "startTime": 1792739955030500,
+     "duration": 7600,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "app.payment.card_type",
+       "type": "string",
+       "value": "visa"
+      },
+      {
+       "key": "app.payment.charged",
+       "type": "bool",
+       "value": false
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "Payment request failed. Invalid token. app.loyalty.level=gold"
+      }
+     ],
+     "logs": [],
+     "processID": "p8",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "5a1b0000000000000000000000000028",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "5a1b0000000000000000000000000028",
+     "spanID": "2800000000000001",
+     "operationName": "POST /api/checkout",
+     "references": [],
+     "startTime": 1792739100000000,
+     "duration": 61000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 200
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000028",
+     "spanID": "2800000000000002",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000028",
+       "spanID": "2800000000000001"
+      }
+     ],
+     "startTime": 1792739100000900,
+     "duration": 58000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "app.user.id",
+       "type": "string",
+       "value": "user-40"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000028",
+     "spanID": "2800000000000003",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000028",
+       "spanID": "2800000000000002"
+      }
+     ],
+     "startTime": 1792739100030000,
+     "duration": 9000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.PaymentService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "payment"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000028",
+     "spanID": "2800000000000004",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000028",
+       "spanID": "2800000000000003"
+      }
+     ],
+     "startTime": 1792739100030500,
+     "duration": 7600,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "app.payment.card_type",
+       "type": "string",
+       "value": "visa"
+      },
+      {
+       "key": "app.payment.charged",
+       "type": "bool",
+       "value": true
+      }
+     ],
+     "logs": [],
+     "processID": "p8",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "5a1b0000000000000000000000000029",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "5a1b0000000000000000000000000029",
+     "spanID": "2900000000000001",
+     "operationName": "POST /api/checkout",
+     "references": [],
+     "startTime": 1792739160000000,
+     "duration": 61000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 200
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000029",
+     "spanID": "2900000000000002",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000029",
+       "spanID": "2900000000000001"
+      }
+     ],
+     "startTime": 1792739160000900,
+     "duration": 58000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "app.user.id",
+       "type": "string",
+       "value": "user-41"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000029",
+     "spanID": "2900000000000003",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000029",
+       "spanID": "2900000000000002"
+      }
+     ],
+     "startTime": 1792739160030000,
+     "duration": 9000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.PaymentService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "payment"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b0000000000000000000000000029",
+     "spanID": "2900000000000004",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b0000000000000000000000000029",
+       "spanID": "2900000000000003"
+      }
+     ],
+     "startTime": 1792739160030500,
+     "duration": 7600,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "app.payment.card_type",
+       "type": "string",
+       "value": "visa"
+      },
+      {
+       "key": "app.payment.charged",
+       "type": "bool",
+       "value": true
+      }
+     ],
+     "logs": [],
+     "processID": "p8",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "5a1b000000000000000000000000002a",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "5a1b000000000000000000000000002a",
+     "spanID": "2a00000000000001",
+     "operationName": "POST /api/checkout",
+     "references": [],
+     "startTime": 1792739220000000,
+     "duration": 61000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 200
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b000000000000000000000000002a",
+     "spanID": "2a00000000000002",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b000000000000000000000000002a",
+       "spanID": "2a00000000000001"
+      }
+     ],
+     "startTime": 1792739220000900,
+     "duration": 58000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "app.user.id",
+       "type": "string",
+       "value": "user-42"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b000000000000000000000000002a",
+     "spanID": "2a00000000000003",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b000000000000000000000000002a",
+       "spanID": "2a00000000000002"
+      }
+     ],
+     "startTime": 1792739220030000,
+     "duration": 9000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.PaymentService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "payment"
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "5a1b000000000000000000000000002a",
+     "spanID": "2a00000000000004",
+     "operationName": "oteldemo.PaymentService/Charge",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "5a1b000000000000000000000000002a",
+       "spanID": "2a00000000000003"
+      }
+     ],
+     "startTime": 1792739220030500,
+     "duration": 7600,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "app.payment.card_type",
+       "type": "string",
+       "value": "visa"
+      },
+      {
+       "key": "app.payment.charged",
+       "type": "bool",
+       "value": true
+      }
+     ],
+     "logs": [],
+     "processID": "p8",
+     "warnings": null
+    }
+   ]
+  }
+ ],
+ "total": 9,
+ "limit": 0,
+ "offset": 0,
+ "errors": null
+}

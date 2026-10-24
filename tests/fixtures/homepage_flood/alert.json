@@ -1,0 +1,25 @@
+{
+ "incident_id": "INC-APP-FLOOD",
+ "detected_at": "2026-10-23T07:20:00Z",
+ "alerting_services": [
+  "frontend",
+  "frontend-proxy"
+ ],
+ "trigger": [
+  {
+   "service": "frontend-proxy",
+   "signal": "p95_ms",
+   "value": 920.0,
+   "threshold": 500.0,
+   "window": "3m"
+  },
+  {
+   "service": "frontend",
+   "signal": "p95_ms",
+   "value": 880.0,
+   "threshold": 500.0,
+   "window": "3m"
+  }
+ ],
+ "note": "alerting service is a symptom, not necessarily the root cause"
+}

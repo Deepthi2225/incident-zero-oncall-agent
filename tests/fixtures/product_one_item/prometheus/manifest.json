@@ -1,0 +1,45 @@
+[
+ {
+  "type": "query",
+  "match": [
+   "histogram_quantile"
+  ],
+  "file": "p95.json"
+ },
+ {
+  "type": "query",
+  "match": [
+   "SPAN_KIND_CLIENT",
+   "STATUS_CODE_ERROR"
+  ],
+  "file": "client_errors.json"
+ },
+ {
+  "type": "query",
+  "match": [
+   "SPAN_KIND_CLIENT"
+  ],
+  "file": "client_calls.json"
+ },
+ {
+  "type": "query",
+  "match": [
+   "STATUS_CODE_ERROR"
+  ],
+  "file": "server_errors.json"
+ },
+ {
+  "type": "query",
+  "match": [
+   "traces_span_metrics_calls_total"
+  ],
+  "file": "server_calls.json"
+ },
+ {
+  "type": "range",
+  "match": [
+   "container_memory"
+  ],
+  "file": "range_container_memory.json"
+ }
+]

@@ -1,0 +1,17 @@
+{
+ "incident_id": "INC-APP-PRODUCT",
+ "detected_at": "2026-10-23T07:20:00Z",
+ "alerting_services": [
+  "product-catalog"
+ ],
+ "trigger": [
+  {
+   "service": "product-catalog",
+   "signal": "error_rate",
+   "value": 0.097,
+   "threshold": 0.05,
+   "window": "3m"
+  }
+ ],
+ "note": "alerting service is a symptom, not necessarily the root cause"
+}

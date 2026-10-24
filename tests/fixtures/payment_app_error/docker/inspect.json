@@ -1,0 +1,745 @@
+[
+ {
+  "Id": "bbee76fb31a958f6b6914e05b487db72f2f47c3173c981fc1fbf9fa6c7cc9101",
+  "Created": "2026-10-23T06:29:55.250000000Z",
+  "Path": "/app/start",
+  "Args": [],
+  "State": {
+   "Status": "running",
+   "Running": true,
+   "Paused": false,
+   "Restarting": false,
+   "OOMKilled": false,
+   "Dead": false,
+   "Pid": 4100,
+   "ExitCode": 0,
+   "Error": "",
+   "StartedAt": "2026-10-23T06:30:00.123456717Z",
+   "FinishedAt": "0001-01-01T00:00:00Z"
+  },
+  "Name": "/frontend-proxy",
+  "RestartCount": 0,
+  "HostConfig": {
+   "Memory": 94371840,
+   "NanoCpus": 0,
+   "RestartPolicy": {
+    "Name": "unless-stopped",
+    "MaximumRetryCount": 0
+   }
+  },
+  "Config": {
+   "Hostname": "frontend-proxy",
+   "Image": "ghcr.io/open-telemetry/demo:latest-frontend-proxy",
+   "Labels": {
+    "com.docker.compose.project": "opentelemetry-demo",
+    "com.docker.compose.service": "frontend-proxy"
+   }
+  }
+ },
+ {
+  "Id": "1cf387c012cd2d02f1923e589f86df4a4802427057dbc90f47b87f04d29d54bc",
+  "Created": "2026-10-23T06:29:55.250000000Z",
+  "Path": "/app/start",
+  "Args": [],
+  "State": {
+   "Status": "running",
+   "Running": true,
+   "Paused": false,
+   "Restarting": false,
+   "OOMKilled": false,
+   "Dead": false,
+   "Pid": 4100,
+   "ExitCode": 0,
+   "Error": "",
+   "StartedAt": "2026-10-23T06:30:00.123456717Z",
+   "FinishedAt": "0001-01-01T00:00:00Z",
+   "Health": {
+    "Status": "healthy",
+    "FailingStreak": 0,
+    "Log": []
+   }
+  },
+  "Name": "/frontend",
+  "RestartCount": 0,
+  "HostConfig": {
+   "Memory": 262144000,
+   "NanoCpus": 0,
+   "RestartPolicy": {
+    "Name": "unless-stopped",
+    "MaximumRetryCount": 0
+   }
+  },
+  "Config": {
+   "Hostname": "frontend",
+   "Image": "ghcr.io/open-telemetry/demo:latest-frontend",
+   "Labels": {
+    "com.docker.compose.project": "opentelemetry-demo",
+    "com.docker.compose.service": "frontend"
+   }
+  }
+ },
+ {
+  "Id": "c7761e58969f7edd498186641b2021e8477e1bcd230de4cf3435242da4a40d14",
+  "Created": "2026-10-23T06:29:55.250000000Z",
+  "Path": "/app/start",
+  "Args": [],
+  "State": {
+   "Status": "running",
+   "Running": true,
+   "Paused": false,
+   "Restarting": false,
+   "OOMKilled": false,
+   "Dead": false,
+   "Pid": 4100,
+   "ExitCode": 0,
+   "Error": "",
+   "StartedAt": "2026-10-23T06:30:00.123456717Z",
+   "FinishedAt": "0001-01-01T00:00:00Z",
+   "Health": {
+    "Status": "healthy",
+    "FailingStreak": 0,
+    "Log": []
+   }
+  },
+  "Name": "/checkout",
+  "RestartCount": 0,
+  "HostConfig": {
+   "Memory": 20971520,
+   "NanoCpus": 0,
+   "RestartPolicy": {
+    "Name": "unless-stopped",
+    "MaximumRetryCount": 0
+   }
+  },
+  "Config": {
+   "Hostname": "checkout",
+   "Image": "ghcr.io/open-telemetry/demo:latest-checkout",
+   "Labels": {
+    "com.docker.compose.project": "opentelemetry-demo",
+    "com.docker.compose.service": "checkout"
+   }
+  }
+ },
+ {
+  "Id": "040ffd5925d40e11c67b7238a7fc9957850b8b9a46e9729fab88c24d6a98aff2",
+  "Created": "2026-10-23T06:29:55.250000000Z",
+  "Path": "/app/start",
+  "Args": [],
+  "State": {
+   "Status": "running",
+   "Running": true,
+   "Paused": false,
+   "Restarting": false,
+   "OOMKilled": false,
+   "Dead": false,
+   "Pid": 4100,
+   "ExitCode": 0,
+   "Error": "",
+   "StartedAt": "2026-10-23T06:30:00.123456717Z",
+   "FinishedAt": "0001-01-01T00:00:00Z"
+  },
+  "Name": "/payment",
+  "RestartCount": 0,
+  "HostConfig": {
+   "Memory": 146800640,
+   "NanoCpus": 0,
+   "RestartPolicy": {
+    "Name": "unless-stopped",
+    "MaximumRetryCount": 0
+   }
+  },
+  "Config": {
+   "Hostname": "payment",
+   "Image": "ghcr.io/open-telemetry/demo:latest-payment",
+   "Labels": {
+    "com.docker.compose.project": "opentelemetry-demo",
+    "com.docker.compose.service": "payment"
+   }
+  }
+ },
+ {
+  "Id": "1c42ddc0285b9c25135be3bf345e6a041271b784b22a6f6cab6588dab93c5980",
+  "Created": "2026-10-23T06:29:55.250000000Z",
+  "Path": "/app/start",
+  "Args": [],
+  "State": {
+   "Status": "running",
+   "Running": true,
+   "Paused": false,
+   "Restarting": false,
+   "OOMKilled": false,
+   "Dead": false,
+   "Pid": 4100,
+   "ExitCode": 0,
+   "Error": "",
+   "StartedAt": "2026-10-23T06:30:00.123456717Z",
+   "FinishedAt": "0001-01-01T00:00:00Z",
+   "Health": {
+    "Status": "healthy",
+    "FailingStreak": 0,
+    "Log": []
+   }
+  },
+  "Name": "/cart",
+  "RestartCount": 0,
+  "HostConfig": {
+   "Memory": 167772160,
+   "NanoCpus": 0,
+   "RestartPolicy": {
+    "Name": "unless-stopped",
+    "MaximumRetryCount": 0
+   }
+  },
+  "Config": {
+   "Hostname": "cart",
+   "Image": "ghcr.io/open-telemetry/demo:latest-cart",
+   "Labels": {
+    "com.docker.compose.project": "opentelemetry-demo",
+    "com.docker.compose.service": "cart"
+   }
+  }
+ },
+ {
+  "Id": "466e5b9cd57fa444cceaa8e5b053ddd58d05cbbcf162a54d6ccd08492ef36dfd",
+  "Created": "2026-10-23T06:29:55.250000000Z",
+  "Path": "/app/start",
+  "Args": [],
+  "State": {
+   "Status": "running",
+   "Running": true,
+   "Paused": false,
+   "Restarting": false,
+   "OOMKilled": false,
+   "Dead": false,
+   "Pid": 4100,
+   "ExitCode": 0,
+   "Error": "",
+   "StartedAt": "2026-10-23T06:30:00.123456717Z",
+   "FinishedAt": "0001-01-01T00:00:00Z"
+  },
+  "Name": "/currency",
+  "RestartCount": 0,
+  "HostConfig": {
+   "Memory": 20971520,
+   "NanoCpus": 0,
+   "RestartPolicy": {
+    "Name": "unless-stopped",
+    "MaximumRetryCount": 0
+   }
+  },
+  "Config": {
+   "Hostname": "currency",
+   "Image": "ghcr.io/open-telemetry/demo:latest-currency",
+   "Labels": {
+    "com.docker.compose.project": "opentelemetry-demo",
+    "com.docker.compose.service": "currency"
+   }
+  }
+ },
+ {
+  "Id": "ab9d6a000a5b70559eca4668faadf02604d7bec0b0460771be8cca69c98f69ab",
+  "Created": "2026-10-23T06:29:55.250000000Z",
+  "Path": "/app/start",
+  "Args": [],
+  "State": {
+   "Status": "running",
+   "Running": true,
+   "Paused": false,
+   "Restarting": false,
+   "OOMKilled": false,
+   "Dead": false,
+   "Pid": 4100,
+   "ExitCode": 0,
+   "Error": "",
+   "StartedAt": "2026-10-23T06:30:00.123456717Z",
+   "FinishedAt": "0001-01-01T00:00:00Z",
+   "Health": {
+    "Status": "healthy",
+    "FailingStreak": 0,
+    "Log": []
+   }
+  },
+  "Name": "/product-catalog",
+  "RestartCount": 0,
+  "HostConfig": {
+   "Memory": 20971520,
+   "NanoCpus": 0,
+   "RestartPolicy": {
+    "Name": "unless-stopped",
+    "MaximumRetryCount": 0
+   }
+  },
+  "Config": {
+   "Hostname": "product-catalog",
+   "Image": "ghcr.io/open-telemetry/demo:latest-product-catalog",
+   "Labels": {
+    "com.docker.compose.project": "opentelemetry-demo",
+    "com.docker.compose.service": "product-catalog"
+   }
+  }
+ },
+ {
+  "Id": "740062676a3134f36f0f0fc90152e91a417d0d363bf2441ebd6a5103f562dacf",
+  "Created": "2026-10-23T06:29:55.250000000Z",
+  "Path": "/app/start",
+  "Args": [],
+  "State": {
+   "Status": "running",
+   "Running": true,
+   "Paused": false,
+   "Restarting": false,
+   "OOMKilled": false,
+   "Dead": false,
+   "Pid": 4100,
+   "ExitCode": 0,
+   "Error": "",
+   "StartedAt": "2026-10-23T06:30:00.123456717Z",
+   "FinishedAt": "0001-01-01T00:00:00Z"
+  },
+  "Name": "/shipping",
+  "RestartCount": 0,
+  "HostConfig": {
+   "Memory": 20971520,
+   "NanoCpus": 0,
+   "RestartPolicy": {
+    "Name": "unless-stopped",
+    "MaximumRetryCount": 0
+   }
+  },
+  "Config": {
+   "Hostname": "shipping",
+   "Image": "ghcr.io/open-telemetry/demo:latest-shipping",
+   "Labels": {
+    "com.docker.compose.project": "opentelemetry-demo",
+    "com.docker.compose.service": "shipping"
+   }
+  }
+ },
+ {
+  "Id": "70ba33708cbfb103f1a8e34afef333ba7dc021022b2d9aaa583aabb8058d8d67",
+  "Created": "2026-10-23T06:29:55.250000000Z",
+  "Path": "/app/start",
+  "Args": [],
+  "State": {
+   "Status": "running",
+   "Running": true,
+   "Paused": false,
+   "Restarting": false,
+   "OOMKilled": false,
+   "Dead": false,
+   "Pid": 4100,
+   "ExitCode": 0,
+   "Error": "",
+   "StartedAt": "2026-10-23T06:30:00.123456717Z",
+   "FinishedAt": "0001-01-01T00:00:00Z"
+  },
+  "Name": "/ad",
+  "RestartCount": 0,
+  "HostConfig": {
+   "Memory": 314572800,
+   "NanoCpus": 0,
+   "RestartPolicy": {
+    "Name": "unless-stopped",
+    "MaximumRetryCount": 0
+   }
+  },
+  "Config": {
+   "Hostname": "ad",
+   "Image": "ghcr.io/open-telemetry/demo:latest-ad",
+   "Labels": {
+    "com.docker.compose.project": "opentelemetry-demo",
+    "com.docker.compose.service": "ad"
+   }
+  }
+ },
+ {
+  "Id": "82244417f956ac7c599f191593f7e441a4fafa20a4158fd52e154f1dc4c8ed92",
+  "Created": "2026-10-23T06:29:55.250000000Z",
+  "Path": "/app/start",
+  "Args": [],
+  "State": {
+   "Status": "running",
+   "Running": true,
+   "Paused": false,
+   "Restarting": false,
+   "OOMKilled": false,
+   "Dead": false,
+   "Pid": 4100,
+   "ExitCode": 0,
+   "Error": "",
+   "StartedAt": "2026-10-23T06:30:00.123456717Z",
+   "FinishedAt": "0001-01-01T00:00:00Z"
+  },
+  "Name": "/email",
+  "RestartCount": 0,
+  "HostConfig": {
+   "Memory": 104857600,
+   "NanoCpus": 0,
+   "RestartPolicy": {
+    "Name": "unless-stopped",
+    "MaximumRetryCount": 0
+   }
+  },
+  "Config": {
+   "Hostname": "email",
+   "Image": "ghcr.io/open-telemetry/demo:latest-email",
+   "Labels": {
+    "com.docker.compose.project": "opentelemetry-demo",
+    "com.docker.compose.service": "email"
+   }
+  }
+ },
+ {
+  "Id": "dbfe937585b4147cb6f305277685021c22cafe00bdc241fd870c500d3e87cb2b",
+  "Created": "2026-10-23T06:29:55.250000000Z",
+  "Path": "/app/start",
+  "Args": [],
+  "State": {
+   "Status": "running",
+   "Running": true,
+   "Paused": false,
+   "Restarting": false,
+   "OOMKilled": false,
+   "Dead": false,
+   "Pid": 4100,
+   "ExitCode": 0,
+   "Error": "",
+   "StartedAt": "2026-10-23T06:30:00.123456717Z",
+   "FinishedAt": "0001-01-01T00:00:00Z"
+  },
+  "Name": "/recommendation",
+  "RestartCount": 0,
+  "HostConfig": {
+   "Memory": 524288000,
+   "NanoCpus": 0,
+   "RestartPolicy": {
+    "Name": "unless-stopped",
+    "MaximumRetryCount": 0
+   }
+  },
+  "Config": {
+   "Hostname": "recommendation",
+   "Image": "ghcr.io/open-telemetry/demo:latest-recommendation",
+   "Labels": {
+    "com.docker.compose.project": "opentelemetry-demo",
+    "com.docker.compose.service": "recommendation"
+   }
+  }
+ },
+ {
+  "Id": "6327245c3a45d3d9ea72b70fbb671926e7b80f63d311bfd73dde876d5df02b26",
+  "Created": "2026-10-23T06:29:55.250000000Z",
+  "Path": "/app/start",
+  "Args": [],
+  "State": {
+   "Status": "running",
+   "Running": true,
+   "Paused": false,
+   "Restarting": false,
+   "OOMKilled": false,
+   "Dead": false,
+   "Pid": 4100,
+   "ExitCode": 0,
+   "Error": "",
+   "StartedAt": "2026-10-23T06:30:00.123456717Z",
+   "FinishedAt": "0001-01-01T00:00:00Z"
+  },
+  "Name": "/quote",
+  "RestartCount": 0,
+  "HostConfig": {
+   "Memory": 41943040,
+   "NanoCpus": 0,
+   "RestartPolicy": {
+    "Name": "unless-stopped",
+    "MaximumRetryCount": 0
+   }
+  },
+  "Config": {
+   "Hostname": "quote",
+   "Image": "ghcr.io/open-telemetry/demo:latest-quote",
+   "Labels": {
+    "com.docker.compose.project": "opentelemetry-demo",
+    "com.docker.compose.service": "quote"
+   }
+  }
+ },
+ {
+  "Id": "21c90743a5467de8eb06bc4e37659beca47421550c4d85c88133215a0cd7c8d4",
+  "Created": "2026-10-23T06:29:55.250000000Z",
+  "Path": "/app/start",
+  "Args": [],
+  "State": {
+   "Status": "running",
+   "Running": true,
+   "Paused": false,
+   "Restarting": false,
+   "OOMKilled": false,
+   "Dead": false,
+   "Pid": 4100,
+   "ExitCode": 0,
+   "Error": "",
+   "StartedAt": "2026-10-23T06:30:00.123456717Z",
+   "FinishedAt": "0001-01-01T00:00:00Z"
+  },
+  "Name": "/image-provider",
+  "RestartCount": 0,
+  "HostConfig": {
+   "Memory": 125829120,
+   "NanoCpus": 0,
+   "RestartPolicy": {
+    "Name": "unless-stopped",
+    "MaximumRetryCount": 0
+   }
+  },
+  "Config": {
+   "Hostname": "image-provider",
+   "Image": "ghcr.io/open-telemetry/demo:latest-image-provider",
+   "Labels": {
+    "com.docker.compose.project": "opentelemetry-demo",
+    "com.docker.compose.service": "image-provider"
+   }
+  }
+ },
+ {
+  "Id": "cddceb54e86b35d8548973c8f02c5fccffe059db690ab4beefe95f9861df3a80",
+  "Created": "2026-10-23T06:29:55.250000000Z",
+  "Path": "/app/start",
+  "Args": [],
+  "State": {
+   "Status": "running",
+   "Running": true,
+   "Paused": false,
+   "Restarting": false,
+   "OOMKilled": false,
+   "Dead": false,
+   "Pid": 4100,
+   "ExitCode": 0,
+   "Error": "",
+   "StartedAt": "2026-10-23T06:30:00.123456717Z",
+   "FinishedAt": "0001-01-01T00:00:00Z"
+  },
+  "Name": "/load-generator",
+  "RestartCount": 0,
+  "HostConfig": {
+   "Memory": 1572864000,
+   "NanoCpus": 0,
+   "RestartPolicy": {
+    "Name": "unless-stopped",
+    "MaximumRetryCount": 0
+   }
+  },
+  "Config": {
+   "Hostname": "load-generator",
+   "Image": "ghcr.io/open-telemetry/demo:latest-load-generator",
+   "Labels": {
+    "com.docker.compose.project": "opentelemetry-demo",
+    "com.docker.compose.service": "load-generator"
+   }
+  }
+ },
+ {
+  "Id": "07fc5bb598e2360d5c88601d3d1904f74b2d19ebbdc0d56fe95879cbf6d14451",
+  "Created": "2026-10-23T06:29:55.250000000Z",
+  "Path": "/app/start",
+  "Args": [],
+  "State": {
+   "Status": "running",
+   "Running": true,
+   "Paused": false,
+   "Restarting": false,
+   "OOMKilled": false,
+   "Dead": false,
+   "Pid": 4100,
+   "ExitCode": 0,
+   "Error": "",
+   "StartedAt": "2026-10-23T06:30:00.123456717Z",
+   "FinishedAt": "0001-01-01T00:00:00Z",
+   "Health": {
+    "Status": "healthy",
+    "FailingStreak": 0,
+    "Log": []
+   }
+  },
+  "Name": "/valkey-cart",
+  "RestartCount": 0,
+  "HostConfig": {
+   "Memory": 20971520,
+   "NanoCpus": 0,
+   "RestartPolicy": {
+    "Name": "unless-stopped",
+    "MaximumRetryCount": 0
+   }
+  },
+  "Config": {
+   "Hostname": "valkey-cart",
+   "Image": "ghcr.io/open-telemetry/demo:latest-valkey-cart",
+   "Labels": {
+    "com.docker.compose.project": "opentelemetry-demo",
+    "com.docker.compose.service": "valkey-cart"
+   }
+  }
+ },
+ {
+  "Id": "74af4146488678eea2b54845f12bb84b1e51531ffa5aea3154d5ea1bc8a63d2f",
+  "Created": "2026-10-23T06:29:55.250000000Z",
+  "Path": "/app/start",
+  "Args": [],
+  "State": {
+   "Status": "running",
+   "Running": true,
+   "Paused": false,
+   "Restarting": false,
+   "OOMKilled": false,
+   "Dead": false,
+   "Pid": 4100,
+   "ExitCode": 0,
+   "Error": "",
+   "StartedAt": "2026-10-23T06:30:00.123456717Z",
+   "FinishedAt": "0001-01-01T00:00:00Z"
+  },
+  "Name": "/astronomy-db",
+  "RestartCount": 0,
+  "HostConfig": {
+   "Memory": 83886080,
+   "NanoCpus": 0,
+   "RestartPolicy": {
+    "Name": "unless-stopped",
+    "MaximumRetryCount": 0
+   }
+  },
+  "Config": {
+   "Hostname": "astronomy-db",
+   "Image": "ghcr.io/open-telemetry/demo:latest-astronomy-db",
+   "Labels": {
+    "com.docker.compose.project": "opentelemetry-demo",
+    "com.docker.compose.service": "astronomy-db"
+   }
+  }
+ },
+ {
+  "Id": "58a846eb564d0ba8ec00a4b5e847d772a7b105e0ec56123e558db2b9994af079",
+  "Created": "2026-10-23T06:29:55.250000000Z",
+  "Path": "/app/start",
+  "Args": [],
+  "State": {
+   "Status": "running",
+   "Running": true,
+   "Paused": false,
+   "Restarting": false,
+   "OOMKilled": false,
+   "Dead": false,
+   "Pid": 4100,
+   "ExitCode": 0,
+   "Error": "",
+   "StartedAt": "2026-10-23T06:30:00.123456717Z",
+   "FinishedAt": "0001-01-01T00:00:00Z",
+   "Health": {
+    "Status": "healthy",
+    "FailingStreak": 0,
+    "Log": []
+   }
+  },
+  "Name": "/otel-collector",
+  "RestartCount": 0,
+  "HostConfig": {
+   "Memory": 419430400,
+   "NanoCpus": 0,
+   "RestartPolicy": {
+    "Name": "unless-stopped",
+    "MaximumRetryCount": 0
+   }
+  },
+  "Config": {
+   "Hostname": "otel-collector",
+   "Image": "ghcr.io/open-telemetry/demo:latest-otel-collector",
+   "Labels": {
+    "com.docker.compose.project": "opentelemetry-demo",
+    "com.docker.compose.service": "otel-collector"
+   }
+  }
+ },
+ {
+  "Id": "c0bbec68cf418ee446ab37fd20422a8e8e0ff75ba273c84df60ee7a04c7f426b",
+  "Created": "2026-10-23T06:29:55.250000000Z",
+  "Path": "/app/start",
+  "Args": [],
+  "State": {
+   "Status": "running",
+   "Running": true,
+   "Paused": false,
+   "Restarting": false,
+   "OOMKilled": false,
+   "Dead": false,
+   "Pid": 4100,
+   "ExitCode": 0,
+   "Error": "",
+   "StartedAt": "2026-10-23T06:30:00.123456717Z",
+   "FinishedAt": "0001-01-01T00:00:00Z",
+   "Health": {
+    "Status": "healthy",
+    "FailingStreak": 0,
+    "Log": []
+   }
+  },
+  "Name": "/jaeger",
+  "RestartCount": 0,
+  "HostConfig": {
+   "Memory": 1258291200,
+   "NanoCpus": 0,
+   "RestartPolicy": {
+    "Name": "unless-stopped",
+    "MaximumRetryCount": 0
+   }
+  },
+  "Config": {
+   "Hostname": "jaeger",
+   "Image": "ghcr.io/open-telemetry/demo:latest-jaeger",
+   "Labels": {
+    "com.docker.compose.project": "opentelemetry-demo",
+    "com.docker.compose.service": "jaeger"
+   }
+  }
+ },
+ {
+  "Id": "1809f7cd0c75acf34f56d8c19782b99c6b5fcd14128a3cc79aca38a4f94af3ff",
+  "Created": "2026-10-23T06:29:55.250000000Z",
+  "Path": "/app/start",
+  "Args": [],
+  "State": {
+   "Status": "running",
+   "Running": true,
+   "Paused": false,
+   "Restarting": false,
+   "OOMKilled": false,
+   "Dead": false,
+   "Pid": 4100,
+   "ExitCode": 0,
+   "Error": "",
+   "StartedAt": "2026-10-23T06:30:00.123456717Z",
+   "FinishedAt": "0001-01-01T00:00:00Z",
+   "Health": {
+    "Status": "healthy",
+    "FailingStreak": 0,
+    "Log": []
+   }
+  },
+  "Name": "/prometheus",
+  "RestartCount": 0,
+  "HostConfig": {
+   "Memory": 314572800,
+   "NanoCpus": 0,
+   "RestartPolicy": {
+    "Name": "unless-stopped",
+    "MaximumRetryCount": 0
+   }
+  },
+  "Config": {
+   "Hostname": "prometheus",
+   "Image": "ghcr.io/open-telemetry/demo:latest-prometheus",
+   "Labels": {
+    "com.docker.compose.project": "opentelemetry-demo",
+    "com.docker.compose.service": "prometheus"
+   }
+  }
+ }
+]

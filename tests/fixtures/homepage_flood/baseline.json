@@ -1,0 +1,85 @@
+{
+ "window_s": 300,
+ "captured_at": 1792737900,
+ "queries": {},
+ "services": {
+  "frontend-proxy": {
+   "rps": 9.6,
+   "error_rate": 0.0,
+   "client_error_rate": 0.0,
+   "p95_ms": 185
+  },
+  "frontend": {
+   "rps": 9.0,
+   "error_rate": 0.0,
+   "client_error_rate": 0.0,
+   "p95_ms": 170
+  },
+  "cart": {
+   "rps": 2.0,
+   "error_rate": 0.0,
+   "client_error_rate": 0.0,
+   "p95_ms": 9
+  },
+  "checkout": {
+   "rps": 0.41,
+   "error_rate": 0.0,
+   "client_error_rate": 0.0,
+   "p95_ms": 260
+  },
+  "currency": {
+   "rps": 3.1,
+   "error_rate": 0.0,
+   "client_error_rate": 0.0,
+   "p95_ms": 2
+  },
+  "product-catalog": {
+   "rps": 6.0,
+   "error_rate": 0.0,
+   "client_error_rate": 0.0,
+   "p95_ms": 6
+  },
+  "recommendation": {
+   "rps": 1.5,
+   "error_rate": 0.0,
+   "client_error_rate": 0.0,
+   "p95_ms": 28
+  },
+  "ad": {
+   "rps": 1.8,
+   "error_rate": 0.0,
+   "client_error_rate": 0.0,
+   "p95_ms": 12
+  },
+  "shipping": {
+   "rps": 0.8,
+   "error_rate": 0.0,
+   "client_error_rate": 0.0,
+   "p95_ms": 8
+  },
+  "quote": {
+   "rps": 0.4,
+   "error_rate": 0.0,
+   "client_error_rate": 0.0,
+   "p95_ms": 15
+  },
+  "image-provider": {
+   "rps": 4.2,
+   "error_rate": 0.0,
+   "client_error_rate": 0.0,
+   "p95_ms": 4
+  },
+  "payment": {
+   "rps": 0.4,
+   "error_rate": 0.0,
+   "client_error_rate": 0.0,
+   "p95_ms": 35
+  },
+  "email": {
+   "rps": 0.38,
+   "error_rate": 0.0,
+   "client_error_rate": 0.0,
+   "p95_ms": 40
+  }
+ }
+}

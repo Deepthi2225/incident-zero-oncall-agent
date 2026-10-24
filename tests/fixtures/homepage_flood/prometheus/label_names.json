@@ -1,0 +1,21 @@
+{
+ "status": "success",
+ "data": [
+  "container_cpu_utilization_ratio",
+  "container_memory_percent_ratio",
+  "container_memory_usage_limit_bytes",
+  "container_memory_usage_total_bytes",
+  "container_uptime_seconds",
+  "httpcheck_status",
+  "jvm_gc_duration_seconds_bucket",
+  "jvm_memory_used_bytes",
+  "nodejs_eventloop_delay_p99_seconds",
+  "process_cpu_utilization_ratio",
+  "process_memory_usage_bytes",
+  "target_info",
+  "traces_span_metrics_calls_total",
+  "traces_span_metrics_duration_milliseconds_bucket",
+  "traces_span_metrics_duration_milliseconds_count",
+  "traces_span_metrics_duration_milliseconds_sum"
+ ]
+}
