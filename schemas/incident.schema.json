@@ -74,6 +74,7 @@
     },
     "review": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/review"}]},
     "notifications": {"type": "array", "items": {"$ref": "#/$defs/notification"}},
+    "postmortem": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/postmortem"}]},
     "report_paths": {
       "type": "object",
       "required": ["report", "actions_log", "action_log_lines"],
@@ -85,6 +86,68 @@
     }
   },
   "$defs": {
+    "postmortem": {
+      "type": "object",
+      "description": "Draft postmortem derived from this record only (oncall/postmortem.py); null = unknown.",
+      "required": ["draft", "times", "durations", "impact", "five_whys", "went_well", "could_be_better", "action_items"],
+      "properties": {
+        "draft": {"type": "boolean"},
+        "times": {
+          "type": "object",
+          "required": ["fault_started", "detected", "investigation_started", "diagnosed", "approved", "executed",
+                       "recovery_verified", "ended"],
+          "properties": {
+            "fault_started": {"type": ["string", "null"]},
+            "fault_started_evidence": {"type": ["string", "null"]},
+            "fault_started_what": {"type": ["string", "null"]},
+            "detected": {"type": ["string", "null"]},
+            "investigation_started": {"type": ["string", "null"]},
+            "diagnosed": {"type": ["string", "null"]},
+            "approved": {"type": ["string", "null"]},
+            "executed": {"type": ["string", "null"]},
+            "recovery_verified": {"type": ["string", "null"]},
+            "ended": {"type": ["string", "null"]}
+          }
+        },
+        "durations": {
+          "type": "object",
+          "required": ["time_to_detect_s", "time_to_diagnose_s", "time_to_recover_s", "total_s"],
+          "properties": {
+            "time_to_detect_s": {"type": ["number", "null"]},
+            "time_to_diagnose_s": {"type": ["number", "null"]},
+            "time_to_recover_s": {"type": ["number", "null"]},
+            "total_s": {"type": ["number", "null"]}
+          }
+        },
+        "impact": {
+          "type": "object",
+          "required": ["services", "signals", "failed_requests", "failed_requests_total"],
+          "properties": {
+            "services": {"type": "array", "items": {"type": "object", "required": ["service", "evidence"],
+                         "properties": {"service": {"type": ["string", "null"]}, "impact": {"type": ["string", "null"]},
+                                        "evidence": {"$ref": "#/$defs/evidence_ids"}}}},
+            "signals": {"type": "array", "items": {"$ref": "#/$defs/cited_text"}},
+            "failed_requests": {"type": "array", "items": {"$ref": "#/$defs/cited_text"}},
+            "failed_requests_total": {"type": ["integer", "null"]},
+            "note": {"type": "string"}
+          }
+        },
+        "five_whys": {"type": "array", "items": {"type": "object", "required": ["n", "why", "because", "evidence", "source"],
+                      "properties": {"n": {"type": "integer", "minimum": 1}, "why": {"type": "string"},
+                                     "because": {"type": "string"}, "evidence": {"$ref": "#/$defs/evidence_ids"},
+                                     "source": {"enum": ["model", "derived", "unknown"]}}}},
+        "went_well": {"type": "array", "items": {"type": "string"}},
+        "could_be_better": {"type": "array", "items": {"type": "string"}},
+        "action_items": {"type": "array", "items": {"type": "object", "required": ["action", "type", "priority", "owner"],
+                         "properties": {"action": {"type": "string"}, "type": {"enum": ["prevent", "detect", "mitigate"]},
+                                        "priority": {"enum": ["high", "medium", "low"]}, "owner": {"type": "string"}}}}
+      }
+    },
+    "cited_text": {
+      "type": "object",
+      "required": ["text", "evidence"],
+      "properties": {"text": {"type": "string"}, "evidence": {"$ref": "#/$defs/evidence_ids"}}
+    },
     "notification": {
       "type": "object",
       "required": ["at", "event", "channel", "recipients", "status"],

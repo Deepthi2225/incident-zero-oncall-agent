@@ -81,6 +81,12 @@ def incident(run_id=None):
     awaiting = [s.get("step") for s in steps if (s.get("approval") or {}).get("status") == "awaiting"]
     r["ui"] = {"file": path.name, "awaiting_approval": awaiting if r.get("status") == "running" else [],
                "in_progress": r.get("status") == "running"}
+    if r.get("status") in ("complete", "interrupted") and not r.get("postmortem"):
+        try:  # older records: derived on the fly, the file is not changed
+            from oncall.postmortem import build_postmortem
+            r["postmortem"] = build_postmortem(r)
+        except Exception:  # an odd record must still render
+            r["postmortem"] = None
     return clean(r)
 
 

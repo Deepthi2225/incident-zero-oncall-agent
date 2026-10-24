@@ -118,6 +118,26 @@ removed, secrets redacted), and the page inserts all text with `textContent`, ne
 The page polls every 2.5 s and pauses while the tab is hidden. Missing fields show as "not
 recorded", so partial, interrupted and Day 1 records all render.
 
+## Postmortem (draft)
+
+Every incident report (`runs/<run_id>.report.md`) ends with a draft postmortem, also stored in the
+incident JSON under `postmortem` and shown in the dashboard's incident view. It is derived only
+from the record (`oncall/postmortem.py`); anything the record does not contain is "unknown":
+
+- Key times: fault started (earliest evidence, e.g. a container's stop time or the first error
+  log line), detected (the alert), diagnosed, approved, executed, recovery verified; time to
+  detect, diagnose and recover, and the total.
+- Impact: affected services and user flows from the diagnosis; error rates and traffic drops from
+  the metric evidence; failing traces and error log lines as counts. The total number of failed
+  requests is never estimated.
+- 5 Whys: each answer cites evidence IDs and the chain stops at "unknown, needs human
+  investigation" where the evidence runs out.
+- What went well / what could be better, from facts in the record.
+- Action items: the prevention recommendations as a table (type prevent / detect / mitigate,
+  priority from the service's criticality, owner "to assign").
+
+Records written before this feature get it computed when the report or dashboard shows them.
+
 ## Email escalation (off by default)
 
 Based on our teammate's notification work, shared as `ocAgent-main.zip`. Only the email part is

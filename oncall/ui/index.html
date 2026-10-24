@@ -181,7 +181,33 @@ function finish(t, r) {
     kv([["tokens in/out", v(acc.tokens_in) + " / " + v(acc.tokens_out)], ["cost", typeof acc.estimated_cost_usd === "number" ? "$" + acc.estimated_cost_usd.toFixed(4) : NR],
         ["duration", ph.total_s !== undefined && ph.total_s !== null ? ph.total_s + "s" : NR], ["model turns", v(acc.steps_used) + " of " + v(acc.step_budget)]]),
     el("a", { href: "/api/report/" + encodeURIComponent(((r.metadata || {}).run_id) || ""), target: "_blank", rel: "noopener" }, "open the markdown report (plain text)")));
+  if (r.postmortem) t.append(postmortemView(r.postmortem));
   renderEvidence(r.evidence || []);
+}
+const unk = (x) => (x === undefined || x === null || x === "") ? "unknown" : x;
+function cited(text, ids) { return el("div", { class: "small" }, text + " ", (ids || []).length ? evLinks(ids) : null); }
+function postmortemView(pm) {
+  const tm = pm.times || {}, du = pm.durations || {}, im = pm.impact || {};
+  const secs = (x) => (typeof x === "number") ? x + " s" : "unknown";
+  return phase("Postmortem (draft, from the record only)", "",
+    kv([["fault started", unk(tm.fault_started) + (tm.fault_started ? " (" + unk(tm.fault_started_what) + ", " + unk(tm.fault_started_evidence) + ")" : "")],
+        ["detected", unk(tm.detected)], ["diagnosed", unk(tm.diagnosed)], ["approved", unk(tm.approved)],
+        ["executed", unk(tm.executed)], ["recovery verified", unk(tm.recovery_verified)],
+        ["time to detect", secs(du.time_to_detect_s)], ["time to diagnose", secs(du.time_to_diagnose_s)],
+        ["time to recover", secs(du.time_to_recover_s)], ["total", secs(du.total_s)]]),
+    el("div", { class: "small" }, el("b", {}, "Impact")),
+    (im.services || []).map((s) => cited(unk(s.service) + ": " + unk(s.impact), s.evidence)),
+    (im.signals || []).map((s) => cited(s.text, s.evidence)),
+    (im.failed_requests || []).map((s) => cited(s.text, s.evidence)),
+    el("div", { class: "small muted" }, "total failed requests: " + unk(im.failed_requests_total)),
+    el("div", { class: "small" }, el("b", {}, "5 whys (draft)")),
+    (pm.five_whys || []).map((w) => cited(w.n + ". " + w.why + " " + w.because, w.evidence)),
+    el("div", { class: "small" }, el("b", {}, "Went well")), (pm.went_well || []).map((x) => el("div", { class: "small" }, "+ " + x)),
+    el("div", { class: "small" }, el("b", {}, "Could be better")), (pm.could_be_better || []).map((x) => el("div", { class: "small" }, "- " + x)),
+    el("div", { class: "small" }, el("b", {}, "Action items")),
+    (pm.action_items || []).length ? el("table", {}, el("tr", {}, ["action", "type", "priority", "owner"].map((c) => el("th", {}, c))),
+      pm.action_items.map((a) => el("tr", {}, el("td", {}, a.action), el("td", {}, a.type), el("td", {}, a.priority), el("td", {}, a.owner))))
+      : el("div", { class: "small muted" }, "none: no prevention recommendations in the record"));
 }
 function oneLine(result) {
   if (!result || typeof result !== "object") return "";

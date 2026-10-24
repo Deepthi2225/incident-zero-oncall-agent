@@ -3,7 +3,8 @@
     render_diagnosis(record)  terminal: the diagnosis and the proposed plan (before approvals)
     render_outcome(record)    terminal: the final outcome, per-step results and accounting
     build_report(record)      markdown: timeline, root cause, evidence, actions with their verify
-                              checks and before/after metrics, escalations, prevention
+                              checks and before/after metrics, escalations, prevention, and a
+                              draft postmortem (oncall/postmortem.py)
 
 so the terminal, the report and the JSON always agree. to_organiser_schema() maps the same record
 to the organisers' format once it is known.
@@ -14,6 +15,7 @@ import argparse
 import json
 from pathlib import Path
 
+from oncall.postmortem import build_postmortem
 from oncall.record import load, upgrade
 
 
@@ -222,6 +224,63 @@ def _review_section(review):
     return out
 
 
+PM_TIMES = [("fault_started", "Fault started (earliest evidence)"), ("detected", "Detected (alert)"),
+            ("investigation_started", "Investigation started"), ("diagnosed", "Diagnosed"),
+            ("approved", "Approved"), ("executed", "Action executed"), ("recovery_verified", "Recovery verified")]
+PM_DURATIONS = [("time_to_detect_s", "Time to detect (fault -> alert)"),
+                ("time_to_diagnose_s", "Time to diagnose (alert -> diagnosis)"),
+                ("time_to_recover_s", "Time to recover (alert -> verified recovery)"),
+                ("total_s", "Total duration (fault, else alert -> recovery, else end of run)")]
+
+
+def _cell(x):
+    return "unknown" if x is None or x == "" else str(x).replace("|", "/")
+
+
+def _ids(ids):
+    return f" ({', '.join(ids)})" if ids else ""
+
+
+def postmortem_section(pm):
+    """Markdown for record["postmortem"] (oncall/postmortem.py)."""
+    pm = pm or {}
+    times, durs, imp = pm.get("times") or {}, pm.get("durations") or {}, pm.get("impact") or {}
+    out = ["", "## Postmortem (draft)", "",
+           "Generated from the incident record only; anything the record does not contain is \"unknown\". "
+           "Review and complete it before sharing.", "", "### Key times", "", "| Moment | Time (UTC) |", "|---|---|"]
+    for key, label in PM_TIMES:
+        extra = ""
+        if key == "fault_started" and times.get(key):
+            extra = f" ({times.get('fault_started_what')}, {times.get('fault_started_evidence')})"
+        out.append(f"| {label} | {_cell(times.get(key))}{extra} |")
+    out += ["", "| Duration | Seconds |", "|---|---|"]
+    out += [f"| {label} | {_cell(durs.get(key))} |" for key, label in PM_DURATIONS]
+
+    out += ["", "### Impact", ""]
+    out += [f"- {s.get('service')}: {s.get('impact')}{_ids(s.get('evidence'))}" for s in imp.get("services") or []] \
+        or ["- Affected services: unknown"]
+    out += [f"- {s['text']}{_ids(s.get('evidence'))}" for s in imp.get("signals") or []] \
+        or ["- Error rates and traffic: unknown (no metric evidence in the record)"]
+    out += [f"- {s['text']}{_ids(s.get('evidence'))}" for s in imp.get("failed_requests") or []]
+    out.append(f"- Total failed requests: {_cell(imp.get('failed_requests_total'))}. {imp.get('note', '')}".rstrip())
+
+    out += ["", "### 5 Whys (draft)", ""]
+    for w in pm.get("five_whys") or []:
+        out.append(f"{w.get('n')}. {w.get('why')} {w.get('because')}{_ids(w.get('evidence'))}")
+
+    out += ["", "### What went well", ""] + ([f"- {x}" for x in pm.get("went_well") or []] or ["- (nothing recorded)"])
+    out += ["", "### What could be better", ""] + ([f"- {x}" for x in pm.get("could_be_better") or []]
+                                                   or ["- (nothing recorded)"])
+    out += ["", "### Action items", ""]
+    items = pm.get("action_items") or []
+    if items:
+        out += ["| Action | Type | Priority | Owner |", "|---|---|---|---|"]
+        out += [f"| {_cell(i.get('action'))} | {i.get('type')} | {i.get('priority')} | {i.get('owner')} |" for i in items]
+    else:
+        out.append("- None: the record has no prevention recommendations.")
+    return out
+
+
 def build_report(record):
     record = upgrade(record)
     meta, d = record["metadata"], record.get("diagnosis") or {}
@@ -295,6 +354,7 @@ def build_report(record):
     out += [f"- {p}" for p in out_.get("prevention") or d.get("prevention") or ["(none recorded)"]]
     if d.get("open_questions"):
         out += ["", "## Open questions", ""] + [f"- {q}" for q in d["open_questions"]]
+    out += postmortem_section(record.get("postmortem") or build_postmortem(record))
     out += ["", "## Accounting", "",
             f"- Tokens in/out: {acc['tokens_in']}/{acc['tokens_out']}; estimated cost {_fmt_cost(acc.get('estimated_cost_usd'))}",
             f"- Model turns: {acc.get('steps_used')} of {acc.get('step_budget')}",

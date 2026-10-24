@@ -336,6 +336,9 @@ class RunRecord:
                                 "plan_outcome": (self.saved.get("remediation_plan") or {}).get("outcome")}
         self.data["metadata"]["ended_at"] = now_iso()
         self.save(status="complete")
+        from oncall.postmortem import build_postmortem  # derived from the saved record only
+        self.data["postmortem"] = build_postmortem(self.saved)
+        self.save(status="complete")
         write_report(self.saved, self.report_path)
         self.notify(log)
         append_line(config.RUNS_DIR / "index.jsonl", index_entry(self.saved))
@@ -461,6 +464,8 @@ def save_existing(record, path, log=print):
     record["outcome"] = {**(record.get("outcome") or {}), "status": status, "summary": line}
     record["metadata"]["updated_at"] = now_iso()
     record["report_paths"]["action_log_lines"] = action_log_lines(record["metadata"]["run_id"])
+    from oncall.postmortem import build_postmortem  # a manual fix changes the recovery times
+    record["postmortem"] = build_postmortem(record)
     clean = scrub(json.loads(json.dumps(record, default=str)))
     atomic_write(path, json.dumps(clean, indent=2))
     write_report(clean, Path(path).with_suffix(".report.md"))
