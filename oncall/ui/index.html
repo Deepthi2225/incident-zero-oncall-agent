@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>On-call agent: live view</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --ink:#1d232b; --muted:#68707a; --line:#dde1e6; --green:#1f8a4c;
+          --amber:#b7791f; --red:#c0392b; --blue:#2b6cb0; --wait:#fff3cd; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background:var(--bg); color:var(--ink); }
+  header { position:sticky; top:0; z-index:5; background:#1d232b; color:#fff; padding:8px 16px; display:flex; gap:18px; flex-wrap:wrap; align-items:center; }
+  header h1 { font-size:15px; margin:0 12px 0 0; }
+  .pill { padding:2px 8px; border-radius:10px; background:#3a434e; font-size:12px; }
+  .pill.on { background:var(--red); } .pill.ok { background:var(--green); } .pill.bad { background:var(--amber); }
+  main { padding:12px 16px; display:grid; gap:12px; grid-template-columns: minmax(0,2fr) minmax(0,1fr); }
+  section { background:var(--card); border:1px solid var(--line); border-radius:6px; padding:10px 12px; min-width:0; }
+  section h2 { font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin:0 0 8px; }
+  .wide { grid-column:1 / -1; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:6px; }
+  .svc { border-left:4px solid var(--line); padding:4px 8px; background:#fafbfc; font-size:12px; }
+  .svc b { display:block; font-size:13px; }
+  .svc.green { border-color:var(--green); } .svc.amber { border-color:var(--amber); } .svc.red { border-color:var(--red); background:#fdf0ee; } .svc.idle { opacity:.6; }
+  .phase { border-left:3px solid var(--line); margin:0 0 10px 6px; padding:2px 0 2px 12px; }
+  .phase > .t { font-weight:600; }
+  .phase.done { border-color:var(--green); } .phase.warn { border-color:var(--amber); } .phase.fail { border-color:var(--red); } .phase.wait { border-color:var(--amber); background:var(--wait); }
+  .muted { color:var(--muted); } .small { font-size:12px; }
+  .waiting { font-weight:700; color:#7a4b00; background:var(--wait); padding:2px 6px; border-radius:4px; }
+  .kv { display:grid; grid-template-columns:max-content 1fr; gap:0 10px; font-size:13px; }
+  .kv > :nth-child(odd) { color:var(--muted); }
+  a.evid { color:var(--blue); cursor:pointer; margin-right:4px; text-decoration:none; font-family:ui-monospace, Consolas, monospace; }
+  .ev { padding:3px 4px; border-bottom:1px solid #f0f2f4; font-size:12px; }
+  .ev.cited { background:#eef5ff; } .ev.flash { outline:2px solid var(--blue); }
+  .ev code, td code { font-family:ui-monospace, Consolas, monospace; }
+  table { border-collapse:collapse; width:100%; font-size:12px; }
+  th, td { text-align:left; padding:3px 6px; border-bottom:1px solid #eef0f3; vertical-align:top; }
+  tr.click { cursor:pointer; } tr.click:hover { background:#f2f6fb; } tr.sel { background:#e7f0fb; }
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .log { max-height:300px; overflow:auto; font:12px ui-monospace, Consolas, monospace; white-space:pre-wrap; word-break:break-word; }
+  .scroll { max-height:520px; overflow:auto; }
+  @media (max-width: 900px) { main { grid-template-columns:1fr; } .cols { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>On-call agent: live view (read-only)</h1>
+  <span id="kill" class="pill">kill switch: ?</span>
+  <span id="api" class="pill">Action API: ?</span>
+  <span id="reviewer" class="pill">reviewer: ?</span>
+  <span id="agent" class="pill">agent: ?</span>
+  <span id="clock" class="pill muted">-</span>
+</header>
+<main>
+  <section class="wide"><h2>Shop health <span id="healthAt" class="muted small"></span></h2><div id="health" class="grid"></div></section>
+  <section><h2>Incident <span id="viewing" class="muted small"></span></h2><div id="timeline"></div></section>
+  <section><h2>Evidence</h2><div id="evidence" class="scroll"></div></section>
+  <section class="wide"><h2>Action logs</h2><div class="cols">
+    <div><div class="muted small">agent: runs/actions.jsonl</div><div id="agentLog" class="log"></div></div>
+    <div><div class="muted small">Action API: runs/action_api.jsonl</div><div id="apiLog" class="log"></div></div>
+  </div></section>
+  <section class="wide"><h2>History</h2><div id="history" class="scroll"></div></section>
+</main>
+<script>
+"use strict";
+// Everything is built with createElement/textContent: record text is never parsed as HTML.
+const NR = "not recorded";
+const state = { selected: null, lastIncident: "" };
+const $ = (id) => document.getElementById(id);
+function el(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, val] of Object.entries(attrs || {})) {
+    if (k === "class") e.className = val; else if (k === "onclick") e.addEventListener("click", val);
+    else e.setAttribute(k, val);
+  }
+  for (const kid of kids.flat()) if (kid !== null && kid !== undefined) e.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+  return e;
+}
+const v = (x) => (x === undefined || x === null || x === "") ? NR : x;
+const num = (x, d = 2) => (typeof x === "number") ? x.toFixed(d) : NR;
+async function get(url) { const r = await fetch(url, { cache: "no-store" }); if (!r.ok) throw new Error(String(r.status)); return r.json(); }
+function kv(pairs) { return el("div", { class: "kv" }, pairs.map(([k, val]) => [el("span", {}, k), el("span", {}, val instanceof Node ? val : v(val))])); }
+function evLinks(ids) {
+  if (!ids || !ids.length) return el("span", { class: "muted" }, "no evidence cited");
+  return el("span", {}, ids.map((id) => el("a", { class: "evid", title: "show evidence", onclick: () => showEvidence(id) }, id)));
+}
+function showEvidence(id) {
+  const target = document.querySelector('[data-ev="' + CSS.escape(String(id)) + '"]');
+  if (!target) return;
+  target.scrollIntoView({ behavior: "smooth", block: "center" });
+  target.classList.add("flash"); setTimeout(() => target.classList.remove("flash"), 1500);
+}
+function phase(title, cls, ...body) { return el("div", { class: "phase " + (cls || "") }, el("div", { class: "t" }, title), body); }
+
+// --- status bar ----------------------------------------------------------------------------------
+async function refreshStatus() {
+  const s = await get("/api/status");
+  $("kill").textContent = "kill switch: " + (s.kill_switch ? "ON" : "off"); $("kill").className = "pill" + (s.kill_switch ? " on" : "");
+  const api = s.action_api || {};
+  $("api").textContent = "Action API: " + (api.reachable ? "reachable" : "not reachable"); $("api").className = "pill " + (api.reachable ? "ok" : "bad");
+  $("reviewer").textContent = "reviewer: " + v(s.reviewer);
+  $("agent").textContent = "agent: " + v(s.agent);
+  $("clock").textContent = v(s.time);
+}
+
+// --- shop health -----------------------------------------------------------------------------------
+async function refreshHealth() {
+  const h = await get("/api/health");
+  const box = $("health"); box.replaceChildren();
+  $("healthAt").textContent = h.error ? h.error : ("updated " + v(h.at) + ", " + v(h.breaches) + " breach(es)");
+  for (const s of h.services || []) {
+    box.append(el("div", { class: "svc " + s.state, title: (s.breaches || []).join(", ") },
+      el("b", {}, s.service),
+      "rps " + num(s.rps, 3) + " · err " + num(s.error_pct, 1) + "%", el("br"),
+      "p95 " + (s.p95_ms === null ? "-" : num(s.p95_ms, 0) + "ms") + (s.p95_limit_ms ? " / " + num(s.p95_limit_ms, 0) : "")));
+  }
+}
+
+// --- incident timeline -------------------------------------------------------------------------------
+function renderIncident(r) {
+  const meta = r.metadata || {}, inv = r.investigation || {}, d = r.diagnosis, plan = r.remediation_plan, ui = r.ui || {};
+  $("viewing").textContent = (state.selected ? "selected: " : "newest: ") + v(meta.run_id) + " (" + v(r.status) + ")";
+  const t = $("timeline"); t.replaceChildren();
+  const alert = r.alert || {};
+  const triggers = (alert.trigger || []).map((x) => x.service + " " + x.signal + "=" + x.value);
+  t.append(phase("Alert", "done", kv([["incident", meta.incident_id], ["services", (alert.alerting_services || [alert.service]).filter(Boolean).join(", ")],
+    ["signals", triggers.length ? triggers.join("; ") : v(alert.signal)], ["mode", meta.mode], ["model", (meta.provider || "") + " " + (meta.model || "")]])));
+  const steps = inv.steps || [];
+  t.append(phase("Investigation (" + steps.length + " tool calls" + (inv.outcome ? ", " + inv.outcome : "") + ")", inv.outcome === "submitted" ? "done" : (inv.outcome ? "warn" : "wait"),
+    steps.length ? steps.map((s) => el("div", { class: "small" },
+      el("b", {}, s.tool), " ", el("code", {}, JSON.stringify(s.arguments || {})), " ", el("span", { class: "muted" }, num(s.seconds, 1) + "s "),
+      s.error ? el("span", { style: "color:var(--red)" }, "error: " + s.error) : el("span", { class: "muted" }, oneLine(s.result)), " ", evLinks(s.evidence_ids))) : el("div", { class: "muted" }, NR),
+    inv.error ? el("div", { style: "color:var(--red)" }, inv.error) : null));
+  if (!d) { t.append(phase("Diagnosis", "wait", el("div", { class: "muted" }, NR))); finish(t, r); return; }
+  t.append(phase("Diagnosis: " + v(d.status) + ", confidence " + num(d.confidence), d.status === "diagnosed" ? "done" : "warn",
+    el("div", {}, v(d.headline)),
+    (d.root_causes || []).map((rc) => el("div", { class: "small" }, el("b", {}, rc.component + " [" + rc.fault_class + "]"),
+      " " + (rc.status === "resolved" ? "RESOLVED before action" : "active") + ", confidence " + num(rc.confidence) + ": " + v(rc.cause) + " ", evLinks(rc.evidence))),
+    (d.ruled_out || []).length ? el("div", { class: "small" }, el("b", {}, "Ruled out: "), d.ruled_out.map((x) => el("span", {}, x.service + " (" + x.reason + ") ", evLinks(x.evidence)))) : null,
+    ((d.validation || {}).notes || []).map((n) => el("div", { class: "small muted" }, "validator: " + n))));
+  const rv = r.review;
+  if (rv) t.append(phase("Reviewer: " + (rv.status === "skipped" ? rv.reason : rv.verdict + " (confidence " + num(rv.confidence_before) + " → " + num(rv.confidence_after) + ")"),
+    rv.status === "skipped" ? "" : (rv.verdict === "agree" ? "done" : "warn"),
+    (rv.objections || []).map((o) => el("div", { class: "small" }, "objection: " + o.text + " ", evLinks(o.evidence))),
+    rv.alternative_root_cause ? el("div", { class: "small muted" }, "suggested alternative (not acted on): " + rv.alternative_root_cause.component) : null));
+  if (plan) {
+    t.append(phase("Plan (" + (plan.steps || []).length + " step(s)" + (plan.outcome ? ", " + plan.outcome : "") + ")", plan.outcome === "recovered" ? "done" : (plan.outcome ? "warn" : ""),
+      (plan.steps || []).map((s) => stepView(s, ui)),
+      (plan.resolved || []).map((x) => el("div", { class: "small muted" }, "resolved before action: " + x.component + " [" + x.fault_class + "]")),
+      plan.stopped_reason ? el("div", { class: "small" }, "stopped: " + plan.stopped_reason) : null));
+  }
+  for (const e of r.escalations || []) t.append(phase("Escalated to a human: " + v(e.target) + " [" + v(e.fault_class) + "]", "warn",
+    el("div", { class: "small" }, v(e.reason)), (e.next_steps || []).map((n) => el("div", { class: "small muted" }, "• " + n))));
+  finish(t, r);
+}
+function stepView(s, ui) {
+  const a = s.approval || {}, ex = s.execution || {}, vf = s.verify || {};
+  const waiting = a.status === "awaiting" && (ui.awaiting_approval || []).includes(s.step);
+  return el("div", { class: "phase " + (waiting ? "wait" : (s.outcome === "recovered" ? "done" : (s.outcome ? "warn" : ""))) },
+    el("div", { class: "t" }, "Step " + v(s.step) + ": " + s.action + " on " + s.target),
+    kv([["reason", s.reason], ["expected", s.expected_outcome], ["risk", s.risk_assessment || a.risk || "not assessed"],
+        ["rollback", s.rollback ? s.rollback.action + " (" + s.rollback.note + ")" : "none"],
+        ["approval", waiting ? el("span", { class: "waiting" }, "WAITING FOR HUMAN APPROVAL IN TERMINAL") : v(a.status) + (a.approved_by ? " by " + a.approved_by : "")],
+        ["kill switch", s.kill_switch ? Object.entries(s.kill_switch).map(([k, x]) => k + ": " + x).join(", ") : NR],
+        ["result", ex.status ? ex.status + (ex.reason || ex.error ? " (" + (ex.reason || ex.error) + ")" : "") : NR],
+        ["verify", vf.outcome ? vf.outcome + (vf.reason ? " (" + vf.reason + ")" : "") : NR],
+        ["serving", vf.serving ? vf.serving.target + ": " + vf.serving.server_spans + " span(s), " + vf.serving.client_calls + " call(s)" : NR],
+        ["outcome", s.outcome]]),
+    (vf.checks || []).map((c) => el("div", { class: "small" + (c.ok ? "" : " muted") },
+      "check " + c.poll + " " + v(c.at) + ": " + (c.ok ? "healthy" : "not healthy") + " " + v(c.passed) + "/" + v(c.judged) +
+      (c.no_shop_traffic ? " (no shop traffic)" : "") + " ", c.evidence ? evLinks([c.evidence]) : null)));
+}
+function finish(t, r) {
+  const o = r.outcome, acc = r.accounting || {}, ph = acc.phases || {};
+  t.append(phase("Outcome: " + (o ? o.status : (r.status === "running" ? "in progress" : v(r.status))), o ? (o.status === "recovered" ? "done" : "warn") : (r.status === "interrupted" ? "fail" : "wait"),
+    o ? el("div", {}, v(o.summary)) : null,
+    kv([["tokens in/out", v(acc.tokens_in) + " / " + v(acc.tokens_out)], ["cost", typeof acc.estimated_cost_usd === "number" ? "$" + acc.estimated_cost_usd.toFixed(4) : NR],
+        ["duration", ph.total_s !== undefined && ph.total_s !== null ? ph.total_s + "s" : NR], ["model turns", v(acc.steps_used) + " of " + v(acc.step_budget)]]),
+    el("a", { href: "/api/report/" + encodeURIComponent(((r.metadata || {}).run_id) || ""), target: "_blank", rel: "noopener" }, "open the markdown report (plain text)")));
+  renderEvidence(r.evidence || []);
+}
+function oneLine(result) {
+  if (!result || typeof result !== "object") return "";
+  const parts = Object.entries(result).filter(([, x]) => Array.isArray(x)).map(([k, x]) => k + "=" + x.length);
+  return parts.length ? parts.join(", ") : "ok";
+}
+function renderEvidence(items) {
+  const box = $("evidence"); box.replaceChildren();
+  if (!items.length) { box.append(el("div", { class: "muted" }, NR)); return; }
+  for (const e of items) box.append(el("div", { class: "ev" + (e.cited ? " cited" : ""), "data-ev": e.id },
+    el("code", {}, e.id), " ", el("span", { class: "muted" }, "[" + v(e.tool) + "] "), v(e.observation)));
+}
+async function refreshIncident() {
+  try {
+    const r = await get(state.selected ? "/api/incident/" + encodeURIComponent(state.selected) : "/api/incident");
+    const sig = JSON.stringify(r);
+    if (sig !== state.lastIncident) { state.lastIncident = sig; renderIncident(r); }
+  } catch (e) { $("timeline").replaceChildren(el("div", { class: "muted" }, "no incident records yet")); }
+}
+
+// --- logs and history -------------------------------------------------------------------------------
+async function refreshActions() {
+  const a = await get("/api/actions");
+  for (const [id, rows] of [["agentLog", a.agent || []], ["apiLog", a.action_api || []]]) {
+    const box = $(id); box.replaceChildren();
+    if (!rows.length) box.append(el("div", { class: "muted" }, NR));
+    for (const row of rows.slice().reverse()) box.append(el("div", {}, [row.ts, row.event || row.status, row.action, row.target || (row.params || {}).service, row.outcome || row.result || row.reason || row.error].filter((x) => x !== undefined && x !== null).join("  ")));
+  }
+}
+async function refreshHistory() {
+  const h = await get("/api/incidents");
+  const rows = (h.incidents || []).map((x) => el("tr", { class: "click" + (state.selected === x.run_id ? " sel" : ""), onclick: () => { state.selected = x.run_id; state.lastIncident = ""; tick(); } },
+    el("td", {}, v(x.time)), el("td", {}, v(x.incident_id)), el("td", {}, v(x.root_cause)), el("td", {}, v(x.fault_class)),
+    el("td", {}, num(x.confidence)), el("td", {}, v(x.outcome)), el("td", {}, typeof x.cost_usd === "number" ? "$" + x.cost_usd.toFixed(4) : NR)));
+  $("history").replaceChildren(el("div", { class: "small" }, el("a", { href: "#", onclick: (ev) => { ev.preventDefault(); state.selected = null; state.lastIncident = ""; tick(); } }, "follow the newest run")),
+    el("table", {}, el("tr", {}, ["time", "incident", "root cause", "fault class", "confidence", "outcome", "cost"].map((c) => el("th", {}, c))), rows));
+}
+
+// --- polling (paused while the tab is hidden) ----------------------------------------------------------
+let n = 0;
+async function tick() {
+  if (document.hidden) return;
+  await Promise.allSettled([refreshStatus(), refreshIncident(), refreshActions()]);
+  if (n % 4 === 0) refreshHistory().catch(() => {});
+  n += 1;
+}
+setInterval(tick, 2500);
+setInterval(() => { if (!document.hidden) refreshHealth().catch(() => { $("healthAt").textContent = "health unavailable"; }); }, 15000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) tick(); });
+tick(); refreshHealth().catch(() => { $("healthAt").textContent = "health unavailable"; });
+</script>
+</body>
+</html>

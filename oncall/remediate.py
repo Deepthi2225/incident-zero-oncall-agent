@@ -209,6 +209,11 @@ def run_plan(diag, client, approve, verifier, run_id="", log=print, on_update=No
             stopped = True
             break
 
+        # Saved before asking, so readers of the record (the live dashboard) can see that a human is
+        # being asked right now; replaced by the decision below.
+        step["approval"] = {"status": "awaiting", "since": _now(),
+                            "notes": "waiting for human approval in the terminal"}
+        update()
         step["approval"] = approve(step, diag)
         update()
         allowed, reason = _may_run(step, client)

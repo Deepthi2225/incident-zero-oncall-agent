@@ -188,7 +188,8 @@
       "type": "object",
       "required": ["status"],
       "properties": {
-        "status": {"enum": ["approved", "rejected", "pending"]},
+        "status": {"enum": ["approved", "rejected", "pending", "awaiting"]},
+        "since": {"type": ["string", "null"]},
         "approved_by": {"enum": ["human", "auto", null]},
         "decision_at": {"type": ["string", "null"]},
         "notes": {"type": ["string", "null"]}

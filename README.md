@@ -60,6 +60,29 @@ kill switch is checked before the call. On any error or a timeout (`ONCALL_REVIE
 default 30 s), the run continues exactly as without a reviewer and records "review skipped:
 <reason>".
 
+## Live dashboard (read-only)
+
+`python -m oncall.ui` serves a page at http://127.0.0.1:8090 (`ONCALL_UI_PORT`) where people can
+watch the agent. It only reads: the incident records in `runs/`, `runs/actions.jsonl`,
+`runs/action_api.jsonl`, the `STOP` file, the Action API's `GET /health`, and the detector's own
+read-only Prometheus queries. It has no buttons that act; approvals stay in the terminal.
+
+It uses the standard library only, is a single page with no CDN (works offline), and listens on
+127.0.0.1 only. It never imports faultctl. Every response passes through the sanitiser (flag data
+removed, secrets redacted), and the page inserts all text with `textContent`, never as HTML.
+
+| Panel | Shows |
+|---|---|
+| Status bar | Kill switch on/off, Action API reachable, reviewer on/off, and the agent when a run is in progress |
+| Shop health | Every service's rps, error % and p95, coloured against its detector limits (green / amber / red); refreshed every 15 s |
+| Incident | A timeline of the newest (or selected) run: alert; each tool call with arguments, duration, result size and evidence IDs; diagnosis with root causes (fault class, active or resolved, confidence, cited evidence); ruled-out suspects; reviewer verdict; each plan step with reason, expected outcome, risk, rollback, approval (**WAITING FOR HUMAN APPROVAL IN TERMINAL** while pending), result and each verify check; escalations; the outcome with tokens, cost and duration |
+| Evidence | Every evidence ID with its tool and text; cited ones highlighted; clicking an ID in the timeline scrolls to it |
+| Action logs | The latest lines of the agent's `actions.jsonl` and the Action API's `action_api.jsonl`, side by side |
+| History | Past runs (time, incident, root cause, fault class, confidence, outcome, cost); click one to view it; the timeline links to its markdown report as plain text |
+
+The page polls every 2.5 s and pauses while the tab is hidden. Missing fields show as "not
+recorded", so partial, interrupted and Day 1 records all render.
+
 ## Action API (our own)
 
 > **Confirmed by mentor `<name>` at `<time>`:** teams build their own Action API. Ours is a

@@ -129,6 +129,7 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")  # .env only
 EFFORT = os.getenv("ONCALL_EFFORT", "high")
 MAX_STEPS = int(os.getenv("ONCALL_MAX_STEPS", "10"))
+UI_PORT = int(os.getenv("ONCALL_UI_PORT", "8090"))  # read-only live dashboard (python -m oncall.ui)
 # Optional reviewer agent (stretch goal 2): one skeptical second opinion on the diagnosis before
 # approval. It can only lower confidence. Off unless ONCALL_REVIEWER=on.
 REVIEWER = os.getenv("ONCALL_REVIEWER", "off").strip().lower() in ("on", "1", "true", "yes")
