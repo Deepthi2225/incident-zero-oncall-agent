@@ -197,6 +197,10 @@ EMAIL_TO = list(dict.fromkeys(a.strip() for a in f"{_env('EMAIL_TO')},{_env('ONC
 ONCALL_PRIMARY_NAME = _env("ONCALL_PRIMARY_NAME")
 EMAIL_TIMEOUT_S = float(_env("EMAIL_TIMEOUT_S") or 10)
 EMAIL_ON_RECOVERED = env_flag("EMAIL_ON_RECOVERED", False)
+# "Approval needed" page: one email per plan step the moment its approval box is shown in the
+# terminal. On by default whenever EMAIL_ENABLED=on; EMAIL_ON_APPROVAL=off turns just this off.
+EMAIL_ON_APPROVAL = env_flag("EMAIL_ON_APPROVAL", True)
+UI_URL = f"http://127.0.0.1:{UI_PORT}"  # where the read-only dashboard shows the waiting step
 # Server-side refusal fallback. Disable if the organisers' key/proxy rejects the beta.
 USE_FALLBACKS = os.getenv("ONCALL_FALLBACKS", "1") == "1"
 TOOL_RESULT_MAX_BYTES = 2000

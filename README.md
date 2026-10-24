@@ -166,6 +166,24 @@ SEV4 low), affected services, root cause and confidence, why it escalated, the t
 open questions, next steps and the report path. It passes through the same scrubber as the
 incident record: no feature-flag data, no keys or passwords.
 
+**Approval page.** While a run is in progress, the moment a plan step's approval box appears in
+the terminal, the agent also sends a page (on by default when email is on; `EMAIL_ON_APPROVAL=off`
+turns it off):
+
+```
+[ON-CALL PAGE][SEV1] INC-20261024-101500 payment: approval needed — restart_service on payment
+```
+
+It says a fix is waiting for approval in the terminal, then gives the root cause and confidence,
+the reviewer's verdict and objections, the proposed action, reason, expected outcome, risk and
+rollback, the top evidence lines, and where to approve: the terminal running the agent (the
+dashboard at http://127.0.0.1:8090 shows the waiting step). **Approval is not possible by
+replying to the email.** One page per step (not repeated when the agent restarts on the same
+incident); it is sent in the background, so the prompt appears at once and a mail failure never
+blocks the approval. Its result goes into the incident record and `notifications.jsonl` like any
+other notification. No page is sent for dry-run auto-approval or without a terminal (those end in
+the `approval_needed` escalation instead).
+
 `runs/notifications.jsonl` always gets a line per event, even with email off. Every notification
 is also stored in the incident record under `notifications` (time, event, channel, recipients,
 status). The whole SMTP conversation has one deadline (`EMAIL_TIMEOUT_S`, default 10 s) and the run

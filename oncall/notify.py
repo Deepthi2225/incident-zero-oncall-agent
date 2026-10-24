@@ -10,6 +10,8 @@ failed send is tried again by the next run of the same incident):
   kill_switch          the kill switch stopped the agent or refused a step
   human_rejected       the on-call engineer said no at the approval prompt
   recovered            optional info message (EMAIL_ON_RECOVERED, default off)
+  approval_page        sent DURING the run, the moment a step's approval box is shown in the
+                       terminal (page(); one per step, EMAIL_ON_APPROVAL, default on)
 
 Channels: JsonlNotifier always appends to runs/notifications.jsonl. When EMAIL_ENABLED=on, email
 goes out by EMAIL_TRANSPORT: smtp (default; EmailNotifier, standard library smtplib +
@@ -363,11 +365,11 @@ def notifiers():
 # --- dispatch ----------------------------------------------------------------------------------------
 
 def already_done(record):
-    """{(event, channel)} already notified successfully for this incident: in this record, or in an
-    earlier run's record of the same incident (an agent restart re-investigating it). Failed
-    attempts do not count, so the next run tries again."""
+    """{(event, channel, key)} already notified successfully for this incident: in this record, or
+    in an earlier run's record of the same incident (an agent restart re-investigating it). key is
+    None except for per-step pages. Failed attempts do not count, so the next run tries again."""
     def ok(notes):
-        return {(n.get("event"), n.get("channel")) for n in notes or [] if n.get("status") in DONE}
+        return {(n.get("event"), n.get("channel"), n.get("key")) for n in notes or [] if n.get("status") in DONE}
     done = ok(record.get("notifications"))
     incident = (record.get("metadata") or {}).get("incident_id")
     index = config.RUNS_DIR / "index.jsonl"
@@ -412,7 +414,7 @@ def dispatch(record, chans=None, log=print):
     meta = record.get("metadata") or {}
     jobs = []
     for event, why in events_for(record):
-        todo = [c for c in chans if (event, c.channel) not in done]
+        todo = [c for c in chans if (event, c.channel, None) not in done]
         if not todo:
             log(f"[notify] {event}: already notified for {meta.get('incident_id')}, not repeated")
             continue
@@ -426,21 +428,142 @@ def dispatch(record, chans=None, log=print):
     entries = []
     for event, chan, t, box in jobs:
         t.join(max(0.0, deadline - time.monotonic()))
-        result = dict(box) if not t.is_alive() else {
-            "channel": chan.channel, "recipients": getattr(chan, "to", []), "status": "failed",
-            "error": f"email failed: no answer within {config.EMAIL_TIMEOUT_S:g}s"}
-        entry = {"at": now_iso(), "event": event, "channel": result.get("channel", chan.channel),
-                 "recipients": list(result.get("recipients") or []), "status": result.get("status", "failed")}
-        for key in ("transport", "message_id", "error"):
-            if result.get(key):
-                entry[key] = result[key]
-        entry = scrub(entry)
+        entry = _finish(event, chan, t, box, meta)
         entries.append(entry)
-        if entry["channel"] != "log":  # the email outcome goes to the log file too
-            append_line(notify_log(), {"ts": entry["at"], "incident_id": meta.get("incident_id"),
-                                       "run_id": meta.get("run_id"), **entry})
         log(_line(event, entry))
     return entries
+
+
+def _finish(event, chan, thread, box, meta, key=None):
+    """The record entry for one channel's attempt (the thread has ended or ran out of time); an
+    email outcome is also appended to notifications.jsonl."""
+    result = dict(box) if not thread.is_alive() else {
+        "channel": chan.channel, "recipients": getattr(chan, "to", []), "status": "failed",
+        "error": f"email failed: no answer within {config.EMAIL_TIMEOUT_S:g}s"}
+    entry = {"at": now_iso(), "event": event, "channel": result.get("channel", chan.channel),
+             "recipients": list(result.get("recipients") or []), "status": result.get("status", "failed")}
+    for name in ("transport", "message_id", "error"):
+        if result.get(name):
+            entry[name] = result[name]
+    if key:
+        entry["key"] = key
+    entry = scrub(entry)
+    if entry["channel"] != "log":
+        append_line(notify_log(), {"ts": entry["at"], "incident_id": meta.get("incident_id"),
+                                   "run_id": meta.get("run_id"), **entry})
+    return entry
+
+
+# --- the "approval needed" page --------------------------------------------------------------------
+
+PAGE = "approval_page"
+
+
+def page_key(step):
+    return f"step{step.get('step')}:{step.get('action')}:{step.get('target')}"
+
+
+def build_page(record, step):
+    """The page for one step whose approval box is being shown: subject and body lines, scrubbed."""
+    meta, diag = record.get("metadata") or {}, record.get("diagnosis") or {}
+    service = step.get("component") or step.get("target")
+    crit = config.CRITICALITY.get(service or "")
+    sev = SEVERITY.get(crit, "SEV?")
+    incident = meta.get("incident_id") or meta.get("run_id")
+    rc = next((r for r in diag.get("root_causes") or [] if r.get("component") == service), None) or _primary(record)
+    review = record.get("review") or {}
+    if not review:
+        reviewer = ["Reviewer: did not run"]
+    elif review.get("status") == "skipped":
+        reviewer = [f"Reviewer: skipped ({review.get('reason')})"]
+    else:
+        reviewer = [f"Reviewer: {review.get('verdict')} (confidence {review.get('confidence_before')} -> "
+                    f"{review.get('confidence_after')})"]
+        reviewer += [f"  objection: {o.get('text')} ({', '.join(o.get('evidence') or [])})"
+                     for o in review.get("objections") or []]
+    evidence = {e.get("id"): e for e in record.get("evidence") or []}
+    ids = [i for i in (rc or {}).get("evidence") or [] if i in evidence] or \
+          [e.get("id") for e in record.get("evidence") or [] if e.get("cited")]
+    top = [f"  - {i} [{evidence[i].get('tool')}] {str(evidence[i].get('observation', ''))[:200]}"
+           for i in ids[:MAX_EVIDENCE_LINES]] or ["  - none recorded"]
+    rb = step.get("rollback")
+    lines = ["This is an on-call page from Incident Zero. A fix is waiting for your approval in the terminal.",
+             "",
+             f"Incident: {incident} (run {meta.get('run_id')})",
+             f"Severity: {sev}" + (f" ({crit} service)" if crit else " (service criticality not known)"),
+             f"Root cause: {rc.get('component')} [{rc.get('fault_class')}]: {rc.get('cause')}" if rc and rc.get("fault_class")
+             else "Root cause: not determined with valid evidence",
+             f"Confidence: {(rc or {}).get('confidence', diag.get('confidence'))} (diagnosis {diag.get('confidence')})",
+             *reviewer,
+             "",
+             f"Proposed action: {step.get('action')} on {step.get('target')}"
+             + (f" (flag {step['flag']})" if step.get("flag") else "") + f" (step {step.get('step')})",
+             f"Reason: {step.get('reason') or 'not recorded'}",
+             f"Expected outcome: {step.get('expected_outcome') or 'not recorded'}",
+             f"Risk: {(step.get('risk_assessment') or '').strip() or 'not assessed'}",
+             f"Rollback: {rb['action']} ({rb.get('note')})" if rb else "Rollback: none (cannot be undone)",
+             "", "Top evidence:", *top, "",
+             "Where to approve: in the terminal running the agent (answer y or N at the prompt).",
+             f"The read-only dashboard at {config.UI_URL} shows the waiting step.",
+             "Approval is NOT possible by replying to this email. Replies are not read.",
+             "", f"Report (when the run ends): {(record.get('report_paths') or {}).get('report') or 'not written'}"]
+    subject = (f"[ON-CALL PAGE][{sev}] {incident} {service}: approval needed — "
+               f"{step.get('action')} on {step.get('target')}")
+    clean = scrub({"subject": subject, "lines": lines})
+    return {"incident_id": incident, "run_id": meta.get("run_id"), "event": PAGE, "severity": sev,
+            "why": f"step {step.get('step')} awaiting approval", "subject": " ".join(str(clean["subject"]).split()),
+            "lines": clean["lines"], "report": (record.get("report_paths") or {}).get("report")}
+
+
+class PendingPage:
+    """Sends started by page(); collect() returns the finished entries (waiting at most timeout s)."""
+
+    def __init__(self, jobs, meta, key, log):
+        self.jobs, self.meta, self.key, self.log = jobs, meta, key, log
+        self.entries = None
+
+    def done(self):
+        return all(not t.is_alive() for _, _, t, _ in self.jobs)
+
+    def collect(self, wait=0.0):
+        """The entries once every send has ended, waiting up to wait seconds; None while still
+        sending (wait=0). After a wait that ran out, an unfinished send is recorded as failed."""
+        if self.entries is not None:
+            return self.entries
+        deadline = time.monotonic() + wait
+        for _, _, t, _ in self.jobs:
+            t.join(max(0.0, deadline - time.monotonic()))
+        if not self.done() and not wait:
+            return None
+        self.entries = []
+        for event, chan, t, box in self.jobs:
+            entry = _finish(event, chan, t, box, self.meta, self.key)
+            self.entries.append(entry)
+            self.log(_line(event, entry))
+        return self.entries
+
+
+def page(record, step, log=print):
+    """Start the page for step in the background and return a PendingPage, or None when it was
+    already sent for this incident (also by an earlier run) or EMAIL_ON_APPROVAL is off. Returns
+    at once: the approval prompt is never delayed by the mail server."""
+    if not config.EMAIL_ON_APPROVAL:
+        return None
+    key = page_key(step)
+    done = already_done(record)
+    chans = [c for c in notifiers() if (PAGE, c.channel, key) not in done]
+    meta = record.get("metadata") or {}
+    if not chans:
+        log(f"[notify] {PAGE} {key}: already paged for {meta.get('incident_id')}, not repeated")
+        return None
+    message = build_page(record, step)
+    jobs = []
+    for chan in chans:
+        box = {}
+        t = threading.Thread(target=_run, args=(chan, message, box), name=f"notify-page-{chan.channel}")
+        t.start()
+        jobs.append((PAGE, chan, t, box))
+    return PendingPage(jobs, meta, key, log)
 
 
 # --- python -m oncall emailtest ---------------------------------------------------------------------

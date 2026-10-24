@@ -154,12 +154,13 @@
       "properties": {
         "at": {"type": "string"},
         "event": {"enum": ["low_confidence", "no_allowlisted_fix", "reviewer_objection", "approval_needed", "verification_failed",
-                           "kill_switch", "human_rejected", "recovered", "unknown"]},
+                           "kill_switch", "human_rejected", "recovered", "approval_page", "unknown"]},
         "channel": {"enum": ["log", "email", "none"]},
         "recipients": {"type": "array", "items": {"type": "string"}},
         "status": {"enum": ["logged", "sent", "failed"]},
         "transport": {"enum": ["smtp", "resend"]},
         "message_id": {"type": "string"},
+        "key": {"type": "string"},
         "error": {"type": "string"}
       }
     },

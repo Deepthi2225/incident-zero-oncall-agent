@@ -45,8 +45,10 @@ def risk_of(step):
     return (step.get("risk_assessment") or "").strip() or "not assessed"
 
 
-def make_approver(auto_approve=False, interactive=True):
-    """approve(step, diag) -> approval record for that one step."""
+def make_approver(auto_approve=False, interactive=True, on_prompt=None):
+    """approve(step, diag) -> approval record for that one step. on_prompt(step, diag) is called
+    just before the approval box is shown to a human (never for auto-approval or without a
+    terminal); the agent uses it to page the on-call engineer. It must return at once."""
 
     def approve(step, diag):
         record = approval_for(step, diag)
@@ -59,6 +61,11 @@ def make_approver(auto_approve=False, interactive=True):
         if not interactive or not hasattr(sys.stdin, "isatty") or not sys.stdin.isatty():
             return {"status": "pending", "decision_at": _now(), "notes": "no terminal: nobody to approve"}
         steps = (diag.get("remediation_plan") or {}).get("steps", [])
+        if on_prompt:
+            try:
+                on_prompt(step, diag)  # starts the "approval needed" page in the background
+            except Exception as e:  # a page must never block or break the approval
+                print(f"[notify] approval page not started: {type(e).__name__}: {e}"[:200], flush=True)
         print("\a", end="", flush=True)  # terminal bell: a human is needed (based on Aniruddha's aj_ck_3 branch)
         print("\n" + "=" * 64)
         print(f"   APPROVAL NEEDED: step {step['step']} of {len(steps)}")

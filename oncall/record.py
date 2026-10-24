@@ -293,6 +293,7 @@ class RunRecord:
                              "action_log_lines": []},
         }
         self.saved = None
+        self._pages = []  # "approval needed" pages still sending (oncall/notify.py page())
 
     # phases -----------------------------------------------------------------------------------
     def model_turn(self, tokens_in, tokens_out):
@@ -326,8 +327,31 @@ class RunRecord:
     def plan_updated(self):
         self.save()
 
+    def page_approval(self, step, log=print):
+        """Page a human that step's approval box is being shown. Returns at once: the email goes
+        out in the background and its result is added by the next save. Never raises."""
+        from oncall import notify
+        try:
+            pending = notify.page(self.saved or self.save(), step, log=log)
+        except Exception as e:
+            log(f"[notify] {notify.PAGE}: failed to start: {type(e).__name__}: {e}"[:300])
+            return
+        if pending:
+            self._pages.append(pending)
+
+    def _collect_pages(self, wait=0.0):
+        """Move finished pages' entries into the record (main thread only); wait > 0 waits for
+        unfinished ones, at most that long in total."""
+        deadline = time.monotonic() + wait
+        for pending in list(self._pages):
+            entries = pending.collect(max(0.0, deadline - time.monotonic()) if wait else 0.0)
+            if entries is not None:
+                self.data.setdefault("notifications", []).extend(entries)
+                self._pages.remove(pending)
+
     def finish(self, log=print):
         self.timers["remediation_s"] = round(time.time() - self.t0 - (self.timers["investigation_s"] or 0), 1)
+        self._collect_pages(wait=config.EMAIL_TIMEOUT_S + 2)  # every page's final status is recorded
         self.save(status="complete")
         status, summary = compute_outcome(self.saved)
         self.data["outcome"] = {"status": status, "summary": summary,
@@ -360,6 +384,7 @@ class RunRecord:
     def interrupt(self, reason="interrupted"):
         self.data["investigation"].setdefault("error", None)
         self.data["interrupted_reason"] = reason
+        self._collect_pages(wait=config.EMAIL_TIMEOUT_S + 2)
         self.save(status="interrupted")
         try:
             write_report(self.saved, self.report_path)
@@ -369,6 +394,7 @@ class RunRecord:
     # writing -----------------------------------------------------------------------------------
     def save(self, status=None):
         from oncall.evidence import registry
+        self._collect_pages()  # pages that finished since the last save
         d = self.data
         if status:
             d["status"] = status

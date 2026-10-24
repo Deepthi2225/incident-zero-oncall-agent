@@ -92,7 +92,8 @@ class Agent:
         self.interactive = (not auto_approve) if interactive is None else interactive
         # Dry run unless a live Action API client is passed in (--execute).
         self.action_client = action_client or DryRunClient()
-        self.approve = make_approver(auto_approve, self.interactive)
+        self._rec = None  # the run being recorded, for the "approval needed" page
+        self.approve = make_approver(auto_approve, self.interactive, on_prompt=self._page)
         self.verifier = verifier
         self.tools = TOOL_SPECS + [SUBMIT_TOOL]
         self.system = build_system_prompt(self.max_steps)
@@ -100,6 +101,12 @@ class Agent:
     def log(self, text):
         if self.verbose:
             print(text, flush=True)
+
+    def _page(self, step, diag):
+        """Called by the approver just before it shows the approval box: page the on-call engineer
+        in the background (oncall/notify.py page()); the prompt is not delayed."""
+        if self._rec is not None:
+            self._rec.page_approval(step, log=self.log)
 
     @property
     def use_fallbacks(self):  # Anthropic refusal fallbacks; kept on the agent for callers and tests
@@ -122,6 +129,7 @@ class Agent:
         rec = RunRecord(run_id, alert, info, model=self.model, max_steps=self.max_steps,
                         provider=self.llm.name)
         rec.save()  # phase: alert received
+        self._rec = rec
         try:
             self._investigate_and_act(rec, alert, info, run_id)
         finally:
