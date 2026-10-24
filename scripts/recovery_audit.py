@@ -28,6 +28,10 @@ sys.path.insert(0, str(ROOT))
 import detector  # noqa: E402
 import faultctl  # noqa: E402
 from faultctl import core  # noqa: E402
+
+# The organisers' tool is also called faultctl: never drive theirs by accident.
+if Path(faultctl.__file__).resolve().parent != ROOT / "faultctl":
+    sys.exit(f"refusing to run: 'faultctl' resolved to {faultctl.__file__}, not this repo's harness")
 from oncall import config  # noqa: E402
 
 SHOP = "http://localhost:8080"
@@ -172,7 +176,7 @@ def audit_fault(fault, hold, healthy, healthy_tel, host_cpus):
 
     log("   reset")
     t0 = time.time()
-    rec["reset"] = faultctl.reset()
+    rec["reset"] = faultctl.reset(everything=False)
 
     t, problems = wait_until(lambda: container_ok(target, healthy, host_cpus)[0], 120, every=5)
     settled = containers()[target]["restarts"]
@@ -204,7 +208,7 @@ def main():
     args = p.parse_args()
     faults = [f for f in core.FAULTS.values() if not args.only or f.id in args.only]
 
-    print("\n".join(faultctl.reset()))
+    print("\n".join(faultctl.reset(everything=False)))
     host_cpus = core.host_cpus()
     healthy = containers()
     healthy_tel = telemetry()
@@ -218,7 +222,7 @@ def main():
             report["faults"].append(audit_fault(f, args.hold, healthy, healthy_tel, host_cpus))
             out.write_text(json.dumps(report, indent=2), encoding="utf-8")
     finally:
-        print("\n".join(faultctl.reset()))
+        print("\n".join(faultctl.reset(everything=False)))
         end = containers()
         expected = {f.container for f in faults if f.kind in ("restart_loop", "mem_starve", "stop")}
         report["side_effects"] = {

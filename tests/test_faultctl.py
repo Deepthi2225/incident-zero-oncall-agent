@@ -94,9 +94,37 @@ def test_reset_after_crash_uses_state_and_starts_stopped_containers(fake):
     # Simulate a crash: the process that injected is gone, only state.json remains.
     lines = core.reset()
     assert "reset cache-down" in lines and fake.containers["valkey-cart"]["running"]
-    # A container stopped outside faultctl is started too.
+    # A container stopped outside faultctl is started only by the explicit sweep.
     fake.containers["payment"]["running"] = False
-    assert core.reset() == ["started payment"]
+    assert core.reset() == ["nothing to reset"] and not fake.containers["payment"]["running"]
+    assert core.reset(everything=True) == ["started payment"]
+
+
+def test_scoped_reset_leaves_faults_it_did_not_inject(fake, monkeypatch):
+    """Someone else's faults (e.g. the organisers' tool) survive our default reset."""
+    killed = []
+    monkeypatch.setattr(core, "loop_pids", lambda: [4242])
+    monkeypatch.setattr(core, "_stop_loop", lambda e: killed.append(e["pid"]))
+    core.inject("stop-payment")
+    core.remember_original("cart", {"nano_cpus": 0, "memory": 160 * 2 ** 20, "memory_swap": 320 * 2 ** 20})
+    fake.containers["cart"]["nano"] = int(0.1 * 1e9)       # starved by someone else
+    fake.containers["valkey-cart"]["running"] = False       # stopped by someone else
+    assert core.reset() == ["reset stop-payment"]
+    assert fake.containers["payment"]["running"]            # ours is undone
+    assert not fake.containers["valkey-cart"]["running"]    # theirs are untouched
+    assert fake.containers["cart"]["nano"] == int(0.1 * 1e9)
+    assert killed == []
+    assert not any(c[0] == "ps" for c in fake.calls)        # no project-wide sweep at all
+
+
+def test_cli_reset_all_flag(fake, monkeypatch, capsys):
+    import sys
+    from faultctl import __main__ as cli
+    fake.containers["frontend"]["running"] = False
+    monkeypatch.setattr(sys, "argv", ["faultctl", "reset"])
+    assert cli.main() == 0 and "nothing to reset" in capsys.readouterr().out
+    monkeypatch.setattr(sys, "argv", ["faultctl", "reset", "--all"])
+    assert cli.main() == 0 and "started frontend" in capsys.readouterr().out
 
 
 def test_one_fault_per_container_and_unknown_ids(fake):
@@ -111,18 +139,18 @@ def test_one_fault_per_container_and_unknown_ids(fake):
 
 def test_reset_starts_any_stopped_demo_container(fake):
     fake.containers["frontend"]["running"] = False  # not a faultctl target, stopped for any reason
-    assert "started frontend" in core.reset()
-    assert core.reset() == ["nothing to reset"]
+    assert "started frontend" in core.reset(everything=True)
+    assert core.reset(everything=True) == ["nothing to reset"]
 
 
 def test_limits_restored_even_if_state_is_lost(fake):
     core.inject("cpu-starve-cart")
     core.STATE_FILE.unlink()  # crash: state.json gone, originals.json survives
-    lines = core.reset()
+    lines = core.reset(everything=True)
     assert "restored cart cpus to 20" in lines and fake.containers["cart"]["nano"] == 20 * 10 ** 9
     core.inject("mem-starve-ad")
     core.STATE_FILE.unlink()
-    assert "restored ad memory to 160MiB" in core.reset()
+    assert "restored ad memory to 160MiB" in core.reset(everything=True)
     assert fake.containers["ad"]["mem"] == 160 * 2 ** 20
 
 
@@ -130,7 +158,7 @@ def test_reset_kills_orphaned_restart_loops(fake, monkeypatch):
     killed = []
     monkeypatch.setattr(core, "loop_pids", lambda: [4242])
     monkeypatch.setattr(core, "_stop_loop", lambda e: killed.append(e["pid"]))
-    assert "killed leftover restart loop (pid 4242)" in core.reset() and killed == [4242]
+    assert "killed leftover restart loop (pid 4242)" in core.reset(everything=True) and killed == [4242]
 
 
 def test_crash_falls_back_when_sigterm_has_no_effect(fake):

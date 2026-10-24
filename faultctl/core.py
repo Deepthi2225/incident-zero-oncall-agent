@@ -280,10 +280,13 @@ def _project_containers():
     return sorted({f.container for f in FAULTS.values()})
 
 
-def reset():
-    """Undo every recorded fault, then sweep: kill leftover restart loops, restore limits that
-    still look starved, and start every stopped container of the demo. Safe to run repeatedly
-    and after a crash (state.json, originals.json and the process list drive it)."""
+def reset(everything=False):
+    """Undo only the faults recorded in state.json. Safe to run repeatedly and after a crash.
+
+    everything=True (`reset --all`) also sweeps: kills leftover restart loops, restores limits
+    that still look starved and starts every stopped demo container. The sweep can undo faults
+    that faultctl did not inject (e.g. the organisers' own tool), so it is never the default.
+    """
     state = load_state()
     lines = []
     for fault_id, entry in list(state["faults"].items()):
@@ -297,6 +300,8 @@ def reset():
             state["faults"][fault_id] = entry  # keep it so the next reset retries
             save_state(state)
             lines.append(f"FAILED to reset {fault_id}: {e}")
+    if not everything:
+        return lines or ["nothing to reset"]
     for pid in loop_pids():
         _stop_loop({"pid": pid})
         lines.append(f"killed leftover restart loop (pid {pid})")

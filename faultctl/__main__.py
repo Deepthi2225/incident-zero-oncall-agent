@@ -1,4 +1,4 @@
-"""python -m faultctl list | inject <id> | reset | status"""
+"""python -m faultctl list | inject <id> | reset [--all] | status"""
 import argparse
 import sys
 
@@ -11,7 +11,10 @@ def main():
     sub.add_parser("list", help="every fault with a one-line description")
     inj = sub.add_parser("inject", help="inject one fault")
     inj.add_argument("fault", choices=sorted(core.FAULTS), metavar="FAULT")
-    sub.add_parser("reset", help="undo everything (safe to repeat, works after a crash)")
+    r = sub.add_parser("reset", help="undo the faults faultctl recorded (safe to repeat, works after a crash)")
+    r.add_argument("--all", action="store_true", dest="everything",
+                   help="also kill leftover loops, restore starved limits and start every stopped "
+                        "demo container, even ones faultctl did not touch")
     sub.add_parser("status", help="what is injected right now")
     loop = sub.add_parser("_loop")  # internal: background process for restart-loop faults
     loop.add_argument("fault")
@@ -23,7 +26,7 @@ def main():
         elif args.cmd == "inject":
             lines = [core.inject(args.fault)]
         elif args.cmd == "reset":
-            lines = core.reset()
+            lines = core.reset(everything=args.everything)
         elif args.cmd == "status":
             lines = core.status()
         else:
