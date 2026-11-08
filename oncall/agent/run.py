@@ -19,7 +19,7 @@ import anthropic
 from oncall import config
 from oncall.agent.prompt import alert_message, build_system_prompt
 from oncall.agent.actions import hold_for_human
-from oncall.agent.diagnosis import CONFIDENT, SUBMIT_TOOL, empty_summary, validate
+from oncall.agent.diagnosis import CONFIDENT, SUBMIT_TOOL, check_coverage, empty_summary, validate
 from oncall.agent.reviewer import review_diagnosis
 from oncall.agent.providers import (AnthropicProvider, FallbackProvider, GeminiProvider, GroqProvider, LLMError,
                                     NoCredentials, OllamaProvider)
@@ -73,10 +73,17 @@ def _add_user_text(messages, text):
         messages.append({"role": "user", "content": text})
 
 
+def step_budget(alert, base):
+    """Turns for this alert: two more per extra alerting service, at most twice the base."""
+    services = alert.get("alerting_services") if isinstance(alert, dict) else None
+    return min(base * 2, base + 2 * max(0, len(services or []) - 1))
+
+
 class Agent:
     def __init__(self, model=None, max_steps=None, verbose=True, auto_approve=False, interactive=None,
                  action_client=None, verifier=None, provider=None):
-        self.max_steps = max_steps or config.MAX_STEPS
+        self.fixed_budget = max_steps is not None  # an explicit --max-steps is used exactly
+        self.base_steps = self.max_steps = max_steps or config.MAX_STEPS
         self.verbose = verbose
         # The provider is chosen explicitly (ONCALL_PROVIDER), never from which keys happen to be set.
         name = (provider or config.PROVIDER).strip().lower()
@@ -137,6 +144,9 @@ class Agent:
         """One incident: investigate -> diagnose -> plan step by step. Returns the incident record
         (exactly what is saved in runs/<run_id>.json) plus its "path"."""
         registry.reset()
+        if not self.fixed_budget:
+            self.max_steps = step_budget(alert, self.base_steps)
+            self.system = build_system_prompt(self.max_steps)
         if hasattr(self.llm, "fallback_calls"):  # counted per incident; `watch` reuses the agent
             self.llm.fallback_calls = 0
         info = source_info()
@@ -233,6 +243,9 @@ class Agent:
         if diagnosed_on_fallback:  # a weaker local model never puts a fix in front of the on-call engineer
             hold_for_human(summary, f"the fallback model {self.llm.fallback.model} helped produce this diagnosis, "
                                     "so no fix is offered; a human must confirm it")
+        if outcome == "submitted":
+            for service in check_coverage(summary, alert):
+                self.log(f"!!! {service} alerted but no root cause explains it; escalating it to a human")
         rec.set_diagnosis(summary)  # phase: diagnosis
         self.log(render_diagnosis(rec.saved))
 

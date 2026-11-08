@@ -9,6 +9,7 @@ failed send is tried again by the next run of the same incident):
   verification_failed  an executed step (or a manual fix) did not verify, after rollback if any
   kill_switch          the kill switch stopped the agent or refused a step
   human_rejected       the on-call engineer said no at the approval prompt
+  unexplained_alert    a diagnosis left an alerting service unexplained: possibly a second fault
   recovered            optional info message (EMAIL_ON_RECOVERED, default off)
   approval_page        sent DURING the run, the moment a step's approval box is shown in the
                        terminal (page(); one per step, EMAIL_ON_APPROVAL, default on)
@@ -47,8 +48,9 @@ from oncall import config
 from oncall.record import append_line, now_iso, record_path, scrub
 
 EVENTS = ["low_confidence", "no_allowlisted_fix", "reviewer_objection", "fallback_model", "approval_needed",
-          "verification_failed", "kill_switch", "human_rejected", "recovered"]
-TITLES = {"low_confidence": "low confidence, needs a human", "no_allowlisted_fix": "no allowlisted fix",
+          "verification_failed", "kill_switch", "human_rejected", "recovered", "unexplained_alert"]
+TITLES = {"unexplained_alert": "an alert is still unexplained, needs a human",
+          "low_confidence": "low confidence, needs a human", "no_allowlisted_fix": "no allowlisted fix",
           "reviewer_objection": "reviewer objected", "fallback_model": "diagnosed by the fallback model, needs a human",
           "approval_needed": "fix waiting for a human approval",
           "verification_failed": "fix did not verify", "kill_switch": "stopped by the kill switch",
@@ -153,6 +155,10 @@ def events_for(record):
         head = f"{e.get('target')} [{e.get('fault_class')}]"
         reason = str(e.get("reason") or "")
         out.append(("no_allowlisted_fix", reason if reason.startswith(head) else f"{head}: {reason}"))
+
+    unexplained = [e for e in record.get("escalations") or [] if e.get("source") == "unexplained alert"]
+    if unexplained and inv == "submitted":
+        out.append(("unexplained_alert", "; ".join(str(e.get("reason")) for e in unexplained)))
 
     if ((record.get("outcome") or {}).get("status") == "recovered" and config.EMAIL_ON_RECOVERED
             and not out):

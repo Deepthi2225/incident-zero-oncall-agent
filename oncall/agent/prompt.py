@@ -44,6 +44,15 @@ earlier, unrelated incidents. (Based on Padma's checkpoint3 branch.)
 - Network latency/loss between A and B: A's client span to B is much longer than B's server span; timeouts.
 - CPU or memory starvation: usage pinned at the limit, latency up, possibly OOM.
 
+## Several problems at once, or one you do not recognise
+- An alert can list several services, and they may have separate causes. Do not stop at the first origin: \
+check whether each remaining alerting service really depends on it (dependency map) and fails the same way.
+- Before submitting, account for EVERY alerting service: it is a root cause, a victim downstream of a root \
+cause, or listed in ruled_out with evidence. An alerting service left unaccounted for goes to a human.
+- The fault classes above are common ones, not a complete list. If the evidence does not match one, use \
+fault_class "unknown", describe exactly what you observed, and say what a human should check. Never pick \
+the nearest class to have an answer. A class also needs its own kind of evidence, or its confidence is capped.
+
 ## Evidence rules
 - Every tool result carries evidence IDs such as "E7". Cite ONLY those IDs. Claims without a \
 valid ID are deleted automatically, so never invent IDs, trace ids, log lines or numbers.

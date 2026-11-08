@@ -291,6 +291,16 @@ EMAIL_TO=you@example.com
 
 Check it with `python -m oncall emailtest`. You cannot approve a fix by replying to an email.
 
+## When there is more than one problem
+
+- **Several services alert:** P0ppy gets extra investigation turns, and reports each cause with its own evidence.
+- **Something stays unexplained:** any alerting service that is not a root cause, a victim of one, or
+  ruled out with evidence goes to a human as a possible second fault.
+- **A fault it does not recognise:** it can answer "unknown" and hand over its findings. A diagnosis
+  without the right kind of evidence for its label has its confidence capped, so no fix is offered.
+- **A new alert during a run:** `python -m oncall watch` keeps watching, queues it, and investigates
+  everything still broken as one incident afterwards.
+
 ## How it stays safe
 
 - **The agent only reads.** Every change goes through the Action API, a separate local service that

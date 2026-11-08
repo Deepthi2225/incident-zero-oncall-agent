@@ -21,6 +21,7 @@ import json
 import math
 import os
 import sys
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -249,10 +250,12 @@ def start_investigation(incident):
         f.write(json.dumps(incident) + "\n")
 
 
-def make_incident(breaches):
+def make_incident(breaches, earlier=None):
     now = datetime.now(timezone.utc)
     breaches = sorted(breaches, key=lambda b: b["severity"], reverse=True)
+    extra = {"earlier_incident": earlier} if earlier else {}
     return {
+        **extra,
         "incident_id": "INC-" + now.strftime("%Y%m%d-%H%M%S"),
         "detected_at": now.isoformat(timespec="seconds"),
         "trigger": breaches,
@@ -270,13 +273,73 @@ def detect_once():
 
 
 # ---------------------------------------------------------------- MAIN LOOP
+class _Tracker:
+    """Which breaches have persisted long enough to alert."""
+
+    def __init__(self, baseline):
+        self.baseline = baseline
+        self.peaks = {}       # service -> highest rps seen (silence reference without a baseline)
+        self.streak = {}      # (service, signal) -> consecutive breach count
+        self.last_fired = {}  # (service, signal) -> unix time of last alert
+
+    def check(self):
+        """One poll: (breaches ready to alert, the set of (service, signal) breaching now)."""
+        breaches, snap = poll(self.baseline, self.peaks)
+        for s, r in snap["rps"].items():
+            if s not in EXCLUDE and r >= MIN_RPS:
+                self.peaks[s] = max(self.peaks.get(s, 0.0), r)
+        now = time.time()
+        current = {(b["service"], b["signal"]) for b in breaches}
+        self.streak = {k: v for k, v in self.streak.items() if k in current}  # reset recovered
+        ready = []
+        for b in breaches:
+            k = (b["service"], b["signal"])
+            self.streak[k] = self.streak.get(k, 0) + 1
+            if self.streak[k] >= CONSECUTIVE and now - self.last_fired.get(k, 0) > COOLDOWN_SECS:
+                self.last_fired[k] = now
+                ready.append(b)
+        return ready, current
+
+
+def _investigate_while_watching(on_incident, incident, tracker):
+    """Run on_incident on this thread while another keeps polling. (its result, alerts queued)."""
+    stop, queued = threading.Event(), []
+
+    def watch():
+        while not stop.wait(POLL_SECS):
+            try:
+                ready, _ = tracker.check()
+            except Exception:  # Prometheus hiccup: the next poll tries again
+                continue
+            for b in ready:
+                print(f"[watch] new alert during this investigation: {b['service']} {b['signal']}={b['value']}. "
+                      "Queued for afterwards.", flush=True)
+            queued.extend(ready)
+
+    watcher = threading.Thread(target=watch, name="detector-watch", daemon=True)
+    watcher.start()
+    try:
+        result = on_incident(incident)
+    finally:
+        stop.set()
+        watcher.join(POLL_SECS)
+    return result, queued
+
+
+def _brief(incident, result):
+    """What the next incident is told about this one, so the agent can tell old from new."""
+    causes = ((result or {}).get("diagnosis") or {}).get("root_causes") or [] if isinstance(result, dict) else []
+    return {"incident_id": incident["incident_id"], "alerting_services": incident["alerting_services"],
+            "root_causes": [{"component": rc.get("component"), "fault_class": rc.get("fault_class")} for rc in causes]}
+
+
 def run(on_incident=start_investigation, once=False):
     """Poll forever; hand ONE grouped incident to on_incident when breaches persist for
-    CONSECUTIVE polls. once=True returns after the first incident."""
+    CONSECUTIVE polls. Polling continues during an investigation: new alerts are queued and handed
+    over together afterwards, if still breaching. once=True returns after the first incident."""
     baseline = load_baseline()
-    peaks = {}        # service -> highest rps seen (silence reference without a baseline)
-    streak = {}       # (service, signal) -> consecutive breach count
-    last_fired = {}   # (service, signal) -> unix time of last alert
+    tracker = _Tracker(baseline)
+    earlier, waiting = None, []
     print(f"watching {PROM} every {POLL_SECS}s | error_rate>{ERR_RATE_MAX} | "
           f"silent<{SILENT_RATIO:.0%} of baseline rps | need {CONSECUTIVE} polls in a row", flush=True)
     if baseline:
@@ -286,29 +349,24 @@ def run(on_incident=start_investigation, once=False):
               "Run: python detector.py --calibrate", flush=True)
     while True:
         try:
-            breaches, snap = poll(baseline, peaks)
-            for s, r in snap["rps"].items():
-                if s not in EXCLUDE and r >= MIN_RPS:
-                    peaks[s] = max(peaks.get(s, 0.0), r)
+            ready, current = tracker.check()
         except Exception as ex:  # keep running if Prometheus hiccups
             print(f"[warn] poll failed: {ex}", file=sys.stderr, flush=True)
             time.sleep(POLL_SECS)
             continue
 
-        now = time.time()
-        current = {(b["service"], b["signal"]) for b in breaches}
-        streak = {k: v for k, v in streak.items() if k in current}  # reset recovered
-        ready = []
-        for b in breaches:
+        fired = {(b["service"], b["signal"]) for b in ready}
+        for b in waiting:
             k = (b["service"], b["signal"])
-            streak[k] = streak.get(k, 0) + 1
-            if streak[k] >= CONSECUTIVE and now - last_fired.get(k, 0) > COOLDOWN_SECS:
+            if k in current and k not in fired:
                 ready.append(b)
-
+            elif k not in current:  # recovered while queued: it may alert again later
+                tracker.last_fired.pop(k, None)
+        waiting = []
         if ready:
-            for b in ready:
-                last_fired[(b["service"], b["signal"])] = now
-            on_incident(make_incident(ready))  # ONE incident, many signals
+            incident = make_incident(ready, earlier)  # ONE incident, many signals
+            result, waiting = _investigate_while_watching(on_incident, incident, tracker)
+            earlier = _brief(incident, result)
             if once:
                 return
         time.sleep(POLL_SECS)

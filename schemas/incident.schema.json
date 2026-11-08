@@ -153,7 +153,7 @@
       "required": ["at", "event", "channel", "recipients", "status"],
       "properties": {
         "at": {"type": "string"},
-        "event": {"enum": ["low_confidence", "no_allowlisted_fix", "reviewer_objection", "fallback_model", "approval_needed", "verification_failed",
+        "event": {"enum": ["unexplained_alert", "low_confidence", "no_allowlisted_fix", "reviewer_objection", "fallback_model", "approval_needed", "verification_failed",
                            "kill_switch", "human_rejected", "recovered", "approval_page", "unknown"]},
         "channel": {"enum": ["log", "email", "call", "telegram", "none"]},
         "recipients": {"type": "array", "items": {"type": "string"}},

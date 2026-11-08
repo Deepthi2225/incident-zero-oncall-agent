@@ -7,7 +7,7 @@ Checkpoint 2 output is a full DIAGNOSIS in JSON schema:
   - an ordered remediation plan; each step is approved and run by oncall/remediate.py
   - graceful escalation when confidence is low or evidence is insufficient
 """
-from oncall.agent.actions import AVAILABLE_ACTIONS, ESCALATE, build_plan, prevention_for
+from oncall.agent.actions import AVAILABLE_ACTIONS, ESCALATE, _escalation, build_plan, depends_on, prevention_for
 from oncall.evidence import registry
 
 CONFIDENT = 0.6
@@ -26,6 +26,18 @@ FAULT_CLASSES = [
     "network_degradation",
     "unknown",
 ]
+
+# The kinds of evidence (registry "kind") a fault class needs. A label cited without any is a guess.
+NEEDS_EVIDENCE = {
+    "container_stopped_or_restarting": ("container", "deploy"),
+    "memory_leak": ("metric", "container", "deploy"),
+    "cpu_or_gc_pressure": ("metric", "container", "deploy"),
+    "resource_starvation": ("metric", "container", "deploy"),
+    "traffic_flood": ("metric",),
+    "network_degradation": ("trace", "metric"),
+    "input_specific_error": ("trace", "log"),
+}
+UNEXPLAINED = "unexplained alert"
 
 # What the model may propose: the available Action API actions, or escalation to a human.
 # The validator then enforces the fault-class mapping in oncall/agent/actions.py.
@@ -235,6 +247,12 @@ def validate(diag):
         rc_clean["evidence_detail"] = {e: registry.get(e)["summary"] for e in valid_ev if registry.get(e)}
         if rc_clean.get("fault_class") not in FAULT_CLASSES:
             rc_clean["fault_class"] = "unknown"
+        needed = NEEDS_EVIDENCE.get(rc_clean["fault_class"])
+        if (needed and rc_clean["confidence"] >= CONFIDENT
+                and not any(registry.get(e)["kind"] in needed for e in valid_ev)):
+            rc_clean["confidence"] = round(CONFIDENT - 0.01, 2)
+            notes.append(f"root cause {rc_clean.get('component')}: {rc_clean['fault_class']} cites no "
+                         f"{' or '.join(needed)} evidence; confidence capped below {CONFIDENT}")
         if rc_clean.get("status") not in ROOT_CAUSE_STATUS:
             if rc_clean.get("status") is not None:
                 notes.append(f"root cause {rc_clean.get('component')}: status {rc_clean['status']!r} "
@@ -310,6 +328,29 @@ def validate(diag):
     diag["validation"] = {"dropped_evidence_ids": sorted(set(dropped_ids)), "notes": notes,
                           "overrides": overrides}
     return diag
+
+
+def check_coverage(diag, alert):
+    """Escalate every alerting service the diagnosis does not account for: it may be a second fault.
+    Accounted for means a root cause, a caller of one (a victim), or ruled out with evidence. Steps
+    already planned stay; each still needs its own human approval."""
+    alert = alert if isinstance(alert, dict) else {}
+    services = alert.get("alerting_services") or ([alert["service"]] if alert.get("service") else [])
+    causes = diag.get("root_causes") or []
+    if not causes or any(rc.get("fault_class") == "traffic_flood" for rc in causes):
+        return []  # nothing to compare against / a flood explains every service it reaches
+    origins = {rc.get("component") for rc in causes}
+    cleared = {item.get("service") for item in diag.get("ruled_out") or []}
+    missing = [s for s in dict.fromkeys(services)
+               if s not in origins and s not in cleared and not any(depends_on(s, o) for o in origins)]
+    plan = diag["remediation_plan"]
+    for service in missing:
+        reason = (f"{service} alerted, but no root cause explains it: it is not one of them and does not "
+                  f"depend on {', '.join(sorted(o for o in origins if o))}. It may be a separate fault.")
+        plan.setdefault("escalations", []).append({**_escalation(service, "unknown", reason), "source": UNEXPLAINED})
+        diag["validation"]["notes"].append(reason)
+        diag["open_questions"].append(f"What is wrong with {service}? Its alert is not explained by this diagnosis.")
+    return missing
 
 
 def empty_summary(reason):
