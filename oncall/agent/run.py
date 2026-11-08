@@ -20,7 +20,7 @@ from oncall import config
 from oncall.agent.prompt import alert_message, build_system_prompt
 from oncall.agent.diagnosis import CONFIDENT, SUBMIT_TOOL, empty_summary, validate
 from oncall.agent.reviewer import review_diagnosis
-from oncall.agent.providers import AnthropicProvider, GeminiProvider, LLMError, NoCredentials
+from oncall.agent.providers import AnthropicProvider, GeminiProvider, GroqProvider, LLMError, NoCredentials
 from oncall.action_api import DryRunClient
 from oncall.record import RunRecord, unique_run_id
 from oncall.remediate import make_approver, run_plan
@@ -86,8 +86,11 @@ class Agent:
         elif name == "gemini":  # optional second provider (based on Shivakumar's Day 1 Gemini adapter)
             self.model = model or config.GEMINI_MODEL
             self.llm = GeminiProvider(self.model, config.GEMINI_API_KEY)
+        elif name == "groq":
+            self.model = model or config.GROQ_MODEL
+            self.llm = GroqProvider(self.model, config.GROQ_API_KEY)
         else:
-            raise ValueError(f"unknown ONCALL_PROVIDER {name!r}; use anthropic or gemini")
+            raise ValueError(f"unknown ONCALL_PROVIDER {name!r}; use anthropic, gemini or groq")
         self.auto_approve = auto_approve
         self.interactive = (not auto_approve) if interactive is None else interactive
         # Dry run unless a live Action API client is passed in (--execute).

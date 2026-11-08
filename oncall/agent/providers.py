@@ -12,6 +12,7 @@ outcome "llm_error".
     AnthropicProvider  the agent's original Claude call, unchanged (thinking, effort, refusal fallback)
     GeminiProvider     Gemini through its OpenAI-compatible endpoint. Rebuilt from Shivakumar's Day 1
                        Gemini adapter: his reply-to-blocks conversion, without the second history.
+    GroqProvider       Open models on Groq, through the same OpenAI-compatible code.
 """
 import json
 from types import SimpleNamespace
@@ -69,6 +70,7 @@ class AnthropicProvider:
 # --- Gemini (OpenAI-compatible endpoint) -------------------------------------------------------------
 
 GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 # JSON Schema keywords Gemini's function declarations do not accept; stripped for Gemini only.
 GEMINI_UNSUPPORTED_KEYWORDS = {"additionalProperties", "strict", "$schema"}
 
@@ -153,8 +155,9 @@ def from_openai_reply(res):
         output_tokens=getattr(usage, "completion_tokens", 0) or 0))
 
 
-class GeminiProvider:
-    name = "gemini"
+class OpenAICompatibleProvider:
+    """Chat completions with tools on any OpenAI-compatible endpoint. Subclasses set the three names."""
+    name = base_url = key_setting = None
 
     def __init__(self, model, api_key=None, client=None, errors=None):
         """client/errors: injected in tests. Otherwise the openai package is imported here only."""
@@ -162,10 +165,10 @@ class GeminiProvider:
             try:
                 import openai
             except ImportError as e:
-                raise LLMError("ONCALL_PROVIDER=gemini needs the openai package: pip install openai") from e
+                raise LLMError(f"ONCALL_PROVIDER={self.name} needs the openai package: pip install openai") from e
             if not api_key:
-                raise NoCredentials("no LLM credentials: set GEMINI_API_KEY")
-            client = openai.OpenAI(api_key=api_key, base_url=GEMINI_BASE_URL)
+                raise NoCredentials(f"no LLM credentials: set {self.key_setting}")
+            client = openai.OpenAI(api_key=api_key, base_url=self.base_url)
             errors = (openai.OpenAIError,)
         self.client, self.model = client, model
         self.errors = errors or ()
@@ -177,3 +180,11 @@ class GeminiProvider:
         except self.errors as e:
             raise LLMError(f"{type(e).__name__}: {e}") from e
         return from_openai_reply(res)
+
+
+class GeminiProvider(OpenAICompatibleProvider):
+    name, base_url, key_setting = "gemini", GEMINI_BASE_URL, "GEMINI_API_KEY"
+
+
+class GroqProvider(OpenAICompatibleProvider):
+    name, base_url, key_setting = "groq", GROQ_BASE_URL, "GROQ_API_KEY"

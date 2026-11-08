@@ -8,7 +8,7 @@ import pytest
 
 from oncall import config
 from oncall.agent import run
-from oncall.agent.providers import (AnthropicProvider, GeminiProvider, LLMError, NoCredentials,
+from oncall.agent.providers import (AnthropicProvider, GeminiProvider, GroqProvider, LLMError, NoCredentials,
                                     gemini_schema, to_openai_messages)
 
 
@@ -169,6 +169,37 @@ def test_gemini_needs_the_openai_package_and_a_key(monkeypatch):
     monkeypatch.setitem(sys.modules, "openai", fake_openai)
     with pytest.raises(NoCredentials, match="GEMINI_API_KEY"):
         GeminiProvider("m", api_key="")
+
+
+def test_groq_runs_the_same_loop_and_is_recorded(payment_down, monkeypatch):
+    fake = FakeOpenAI(diagnose_payment)
+    monkeypatch.setattr(run, "GroqProvider", lambda model, key: GroqProvider(model, client=fake, errors=(FakeAPIError,)))
+    agent = run.Agent(provider="groq", verbose=False)
+    rec = agent.run({"incident_id": "INC-Q", "service": "checkout"})
+    assert fake.requests[0]["model"] == config.GROQ_MODEL
+    assert "additionalProperties" not in json.dumps(fake.requests[0]["tools"])
+    assert rec["diagnosis"]["root_causes"][0]["component"] == "payment"
+    assert (rec["metadata"]["provider"], rec["metadata"]["model"]) == ("groq", config.GROQ_MODEL)
+    assert rec["accounting"]["estimated_cost_usd"] is None  # no Groq price table
+
+
+def test_groq_uses_its_own_endpoint_and_key(monkeypatch):
+    seen = {}
+    fake_openai = SimpleNamespace(OpenAI=lambda **kw: seen.update(kw), OpenAIError=FakeAPIError)
+    monkeypatch.setitem(sys.modules, "openai", fake_openai)
+    GroqProvider("m", api_key="gsk-test")
+    assert seen == {"api_key": "gsk-test", "base_url": "https://api.groq.com/openai/v1"}
+    with pytest.raises(NoCredentials, match="GROQ_API_KEY"):
+        GroqProvider("m", api_key="")
+    monkeypatch.setitem(sys.modules, "openai", None)
+    with pytest.raises(LLMError, match="ONCALL_PROVIDER=groq needs the openai package"):
+        GroqProvider("m", api_key="k")
+
+
+def test_groq_key_is_a_known_secret(monkeypatch):
+    from oncall import record
+    monkeypatch.setattr(config, "GROQ_API_KEY", "gsk-not-a-real-key")
+    assert "gsk-not-a-real-key" in record._known_secrets()
 
 
 def test_anthropic_missing_credentials_is_llm_error():

@@ -18,7 +18,23 @@ TOOL = {
 }
 
 
+def check_groq():
+    from oncall.agent.providers import GroqProvider, LLMError
+    prompt = [{"role": "user", "content": "Checkout alerts fired. Call get_service_health for the last 5 minutes."}]
+    try:
+        response = GroqProvider(config.GROQ_MODEL, config.GROQ_API_KEY).create("You are an on-call agent.", [TOOL], prompt)
+    except LLMError as e:
+        sys.exit(f"FAIL: {e}")
+    calls = [b for b in response.content if b.type == "tool_use"]
+    if not calls:
+        sys.exit(f"FAIL: no tool call (stop_reason={response.stop_reason})")
+    print(f"OK provider=groq model={config.GROQ_MODEL} tool={calls[0].name} input={calls[0].input} "
+          f"tokens in/out={response.usage.input_tokens}/{response.usage.output_tokens}")
+
+
 def main():
+    if config.PROVIDER.strip().lower() == "groq":
+        return check_groq()
     client = anthropic.Anthropic()
     try:
         response = client.messages.create(
