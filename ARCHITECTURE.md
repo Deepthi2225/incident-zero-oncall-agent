@@ -1,4 +1,4 @@
-# Incident Zero: architecture
+# P0ppy: architecture
 
 An AI on-call engineer for the OpenTelemetry demo. An alert starts an agent that chooses which
 read-only tool to call next. Every observation is registered as evidence with an ID. Checkpoint 1 delivered a validated **symptom summary**: affected services, anomalies with numbers, the suspected

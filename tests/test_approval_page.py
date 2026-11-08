@@ -85,7 +85,7 @@ def test_page_content(payment_down, monkeypatch, smtp):
     assert subject(msg) == SUBJECT
     text = body(msg)
     assert text.startswith("*** TEST ONLY: this came from fixture data")
-    assert "This is an on-call page from Incident Zero. A fix is waiting for your approval in the terminal." in text
+    assert "This is an on-call page from P0ppy. A fix is waiting for your approval in the terminal." in text
     for part in ("Incident: INC-7", "Severity: SEV1 (critical service)",
                  "Root cause: payment [container_stopped_or_restarting]: payment exited (env had <redacted>)",
                  "Confidence: 0.9", "Reviewer: did not run", "Proposed action: restart_service on payment (step 1)",

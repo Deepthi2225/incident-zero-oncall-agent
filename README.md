@@ -1,4 +1,8 @@
-# Incident Zero: AI On-Call Engineer
+# P0ppy 🐾
+
+**Your little buddy for big incidents.**
+
+DETECT · INVESTIGATE · RESOLVE
 
 An AI agent that responds to a production incident in a microservices shop. It investigates using
 real telemetry, names the root cause with evidence, proposes a safe fix, waits for a human to
@@ -9,7 +13,7 @@ Built for the Bosch AI hackathon at PES University (23 and 24 October 2026), on 
 AI for IT operations. It runs against the open-source
 [OpenTelemetry Demo](https://github.com/open-telemetry/opentelemetry-demo).
 
-This is a personal continuation of the team project at
+P0ppy began as Incident Zero, and this is a personal continuation of the team project at
 [aniruddhajoshi100/ocAgent](https://github.com/aniruddhajoshi100/ocAgent).
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the design and [EVALUATION.md](EVALUATION.md) for results.

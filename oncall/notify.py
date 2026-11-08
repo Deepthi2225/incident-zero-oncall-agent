@@ -607,7 +607,7 @@ def build_page(record, step):
     rb = step.get("rollback")
     banner = _non_live_banner(meta)
     lines = ([banner, ""] if banner else []) + [
-             "This is an on-call page from Incident Zero. A fix is waiting for your approval in the terminal.",
+             "This is an on-call page from P0ppy. A fix is waiting for your approval in the terminal.",
              "",
              f"Incident: {incident} (run {meta.get('run_id')})",
              f"Severity: {sev}" + (f" ({crit} service)" if crit else " (service criticality not known)"),

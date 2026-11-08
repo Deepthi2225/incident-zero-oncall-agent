@@ -1,4 +1,4 @@
-"""Incident Zero CLI.
+"""P0ppy CLI.
 
   python -m oncall check                         verify endpoints (read-only)
   python -m oncall baseline --window 5m          save healthy numbers (before injecting faults)
