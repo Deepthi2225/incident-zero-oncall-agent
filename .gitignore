@@ -6,6 +6,7 @@ __pycache__/
 
 # secrets and local tool state
 .env
+/escalation.json
 .claude/
 
 # runtime state and output (never committed)

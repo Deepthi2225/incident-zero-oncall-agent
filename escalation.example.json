@@ -1,0 +1,14 @@
+{
+  "people": {
+    "primary": {"email": "primary@example.com", "phone": "+910000000001", "telegram": "100000001"},
+    "lead": {"email": "lead@example.com", "phone": "+910000000002", "telegram": "100000002"},
+    "manager": {"email": "manager@example.com", "phone": "+910000000003", "telegram": "100000003"}
+  },
+  "routes": {
+    "SEV1": ["primary", "lead", "manager"],
+    "SEV2": ["primary", "lead"],
+    "SEV3": ["primary"],
+    "SEV4": ["primary"],
+    "unknown": ["primary", "lead"]
+  }
+}

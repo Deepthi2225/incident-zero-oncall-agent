@@ -172,6 +172,7 @@ turns the agent back on.
 | `python -m oncall verify <run_id>` | Checks recovery after a human fixed something by hand |
 | `python -m oncall emailtest` | Sends one test email |
 | `python -m oncall calltest` | Places one test phone call |
+| `python -m oncall telegramtest` | Sends one test Telegram message |
 | `python -m faultctl list` / `inject <id>` / `status` / `reset` | Practice faults |
 
 ## Troubleshooting
@@ -223,11 +224,29 @@ a fix**: the findings go to a human, because the smaller model is less reliable.
 `ONCALL_REVIEWER=on` adds one skeptical second opinion before anything is shown for approval. It can
 lower confidence and remove steps, but it can never raise confidence, add a step or approve anything.
 
+### Who gets alerted
+
+By default, alerts go to the contacts in `.env`. To alert different people by severity, copy
+`escalation.example.json` to `escalation.json` (ignored by Git) and fill in each person's contacts.
+`routes` lists who hears about each severity, and `unknown` covers services with no known severity.
+Anything missing falls back to `.env`, and test runs only ever reach the `.env` contacts.
+
+### Telegram alerts (optional, off by default)
+
+P0ppy can message you from a Telegram bot during live incidents. It is free. Runs on recorded data are
+not sent, and nothing can be approved from Telegram.
+
+1. In Telegram, message [@BotFather](https://t.me/BotFather), send `/newbot`, and copy the token.
+2. Add `TELEGRAM_BOT_TOKEN=your-token` and `TELEGRAM_ENABLED=on` to `.env`.
+3. Send your new bot any message, then run `python -m oncall telegramtest`. It prints your chat id.
+4. Add `TELEGRAM_CHAT_ID=your-chat-id` to `.env` and run the same command to get a test message.
+
 ### Phone calls (optional, off by default)
 
 For live SEV1 and SEV2 incidents, P0ppy can phone the on-call engineer through
 [Twilio](https://www.twilio.com) and read a short summary. Runs on recorded data never ring. The call
-is one-way: it cannot acknowledge or approve anything. Add these to `.env`, using numbers with a
+is one-way: it cannot acknowledge or approve anything. The spoken summary passes through Twimlets,
+Twilio's free text-to-call page. Add these to `.env`, using numbers with a
 country code, then check them with `python -m oncall calltest`.
 
 ```

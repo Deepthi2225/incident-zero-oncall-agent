@@ -10,6 +10,7 @@
   python -m oncall stop | resume                 kill switch on / off
   python -m oncall emailtest                     send one test email with the .env settings
   python -m oncall calltest                      place one test phone call with the .env settings
+  python -m oncall telegramtest                  send one test Telegram message with the .env settings
 
 Source flags (before the command). Default is live. --source bundle --bundle DIR replays a recording;
 --record DIR saves one while live; --test [--fixtures DIR] uses fixtures under tests/fixtures/ and
@@ -151,6 +152,25 @@ def cmd_calltest(_args):
     sys.exit(1)
 
 
+def cmd_telegramtest(_args):
+    """One clearly labelled test message, or the chat id to use when it is not set yet."""
+    from oncall import config, notify
+    if config.TELEGRAM_BOT_TOKEN and not config.TELEGRAM_CHAT_ID:
+        chats = notify.telegram_chats()
+        if not chats:
+            print("no chats found: send your bot any message in Telegram, check TELEGRAM_BOT_TOKEN, and run this again")
+            sys.exit(1)
+        for chat_id, name in chats:
+            print(f"found chat with {name}: add TELEGRAM_CHAT_ID={chat_id} to .env")
+        return
+    entry = notify.send_test_telegram()
+    if entry["status"] == "sent":
+        print(f"telegram message sent to chat {', '.join(entry['recipients'])}")
+        return
+    print(entry.get("error") or "telegram failed: unknown reason")
+    sys.exit(1)
+
+
 def cmd_resume(_args):
     config.KILL_SWITCH_FILE.unlink(missing_ok=True)
     print("kill switch OFF")
@@ -182,12 +202,13 @@ def main():
     sub.add_parser("resume")
     sub.add_parser("emailtest", help="send one test email with the email settings in .env")
     sub.add_parser("calltest", help="place one test phone call with the Twilio settings in .env")
+    sub.add_parser("telegramtest", help="send one test Telegram message with the settings in .env")
     args = p.parse_args()
-    if args.cmd not in ("stop", "resume", "emailtest", "calltest"):
+    if args.cmd not in ("stop", "resume", "emailtest", "calltest", "telegramtest"):
         apply_source_args(p, args)
     {"check": cmd_check, "baseline": cmd_baseline, "investigate": cmd_investigate,
      "watch": cmd_watch, "verify": cmd_verify, "stop": cmd_stop, "resume": cmd_resume,
-     "emailtest": cmd_emailtest, "calltest": cmd_calltest}[args.cmd](args)
+     "emailtest": cmd_emailtest, "calltest": cmd_calltest, "telegramtest": cmd_telegramtest}[args.cmd](args)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 """Voice calls through a fake Twilio: when they ring, what they say, what is recorded."""
 from types import SimpleNamespace
+from urllib.parse import unquote_plus
 
 import pytest
 
@@ -36,7 +37,9 @@ def test_places_a_call_and_never_records_the_full_number(twilio):
     call = http.calls[0]
     assert call.url == "https://api.twilio.com/2010-04-01/Accounts/ACtest/Calls.json"
     assert call.auth == ("ACtest", SECRET) and call.data["To"] == NUMBER and call.timeout == 10.0
-    assert "Severity 1 incident" in call.data["Twiml"] and "payment, checkout" in call.data["Twiml"]
+    spoken = unquote_plus(call.data["Url"])
+    assert "Twiml" not in call.data and spoken.startswith("https://twimlets.com/message?")
+    assert "Severity 1 incident" in spoken and "payment, checkout" in spoken
     assert result["status"] == "sent" and result["message_id"] == "CA123"
     assert NUMBER not in str(result) and result["recipients"] == ["+91******2345"]
 
@@ -48,8 +51,9 @@ def test_only_live_serious_incidents_ring(twilio):
     assert not chan.wants(event(subject="[TEST] [on-call SEV1] INC-9: fix"))
 
 
-def test_text_is_escaped_in_call_instructions():
-    assert "<img" not in notify.twiml("<img src=x>") and "&amp; more" in notify.twiml("& more")
+def test_text_cannot_break_out_of_the_link():
+    url = notify.spoken_url("a & b=c")
+    assert "a & b" not in url and "b=c" not in url and url.count("&") == 1
 
 
 def test_missing_settings_fail_without_a_request(twilio, monkeypatch):
@@ -96,4 +100,4 @@ def test_test_call_says_it_is_a_test(twilio, monkeypatch):
     real = notify.CallNotifier
     monkeypatch.setattr(notify, "CallNotifier", lambda: real(http=http))
     assert notify.send_test_call()["status"] == "sent"
-    assert "only a test call" in http.calls[0].data["Twiml"]
+    assert "only a test call" in unquote_plus(http.calls[0].data["Url"])

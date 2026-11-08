@@ -27,6 +27,7 @@ The email escalation is based on our teammate's notification work in ocAgent-mai
 on this repo's design (record, scrubber, fault classes) and limited to email.
 """
 import base64
+import copy
 import html
 import json
 import os
@@ -36,6 +37,8 @@ import socket
 import ssl
 import threading
 import time
+import urllib.parse
+from concurrent.futures import ThreadPoolExecutor
 from email.message import EmailMessage
 from itertools import groupby
 from pathlib import Path
@@ -238,9 +241,22 @@ def build_event(record, event, why):
 class Notifier:
     """notify(event) -> {"channel", "recipients", "status", "error"?}. Must not raise."""
     channel = "none"
+    contact = None  # which field of a person in escalation.json this channel uses
 
     def wants(self, event):
         return True
+
+    def for_event(self, event):
+        """This channel aimed at the people the event's severity routes to, or unchanged if none."""
+        people = contacts_for(event, self.contact) if self.contact else []
+        if not people:
+            return self
+        routed = copy.copy(self)
+        routed.use(people)
+        return routed
+
+    def use(self, people):
+        self.to = people
 
     def notify(self, event):
         raise NotImplementedError
@@ -262,6 +278,44 @@ class JsonlNotifier(Notifier):
         except Exception as e:
             return {"channel": self.channel, "recipients": [], "status": "failed",
                     "error": f"log failed: {type(e).__name__}: {e}"}
+
+
+def _escalation():
+    """The contents of escalation.json, or {} when there is none or it cannot be read."""
+    try:
+        plan = json.loads(config.ESCALATION_FILE.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {}
+    except (OSError, ValueError) as e:
+        print(f"[notify] {config.ESCALATION_FILE.name} ignored, using .env contacts: {type(e).__name__}")
+        return {}
+    return plan if isinstance(plan, dict) else {}
+
+
+def contacts_for(event, kind):
+    """Addresses of kind (email, phone, telegram) for the event's severity. Empty means use the .env
+    contacts, so an alert is never lost to a gap in the file. Test messages never reach the list."""
+    sev = str(event.get("severity") or "").split(" ")[0]
+    if str(event.get("subject") or "").startswith("[TEST]") or not (sev.startswith("SEV") or sev == "unknown"):
+        return []
+    try:
+        plan = _escalation()
+        routes, people = plan.get("routes") or {}, plan.get("people") or {}
+        found = [(people.get(name) or {}).get(kind) for name in routes.get(sev) or routes.get("unknown") or []]
+        return list(dict.fromkeys(str(value).replace(" ", "") for value in found if value))
+    except (AttributeError, TypeError):
+        return []
+
+
+def _send_all(result, targets, send):
+    """send(target) for every target at once. Failed unless all succeed, so the next run tries again."""
+    with ThreadPoolExecutor(max_workers=len(targets)) as pool:
+        outcomes = list(pool.map(send, targets))
+    errors = [o["error"] for o in outcomes if o["status"] != "sent"]
+    if errors:
+        return {**result, "status": "failed", "error": "; ".join(errors)[:300]}
+    ids = [o["message_id"] for o in outcomes if o.get("message_id")]
+    return {**result, "status": "sent", **({"message_id": ids[0]} if ids else {})}
 
 
 def _explain(e, host, port):
@@ -348,7 +402,7 @@ def email_html(event):
 
 class EmailNotifier(Notifier):
     """SMTP transport (EMAIL_TRANSPORT=smtp, the default)."""
-    channel, transport = "email", "smtp"
+    channel, transport, contact = "email", "smtp", "email"
 
     def __init__(self):
         self.host, self.port = config.SMTP_HOST, config.SMTP_PORT  # used exactly as given
@@ -416,7 +470,7 @@ class ResendNotifier(Notifier):
     """Resend transport (EMAIL_TRANSPORT=resend): one HTTPS POST to Resend's API
     (https://resend.com/docs/api-reference/emails/send-email). The API key goes only into the
     Authorization header; it is never printed, logged or stored, and the scrubber redacts it."""
-    channel, transport = "email", "resend"
+    channel, transport, contact = "email", "resend", "email"
 
     def __init__(self, http=None):
         import requests
@@ -461,6 +515,7 @@ class ResendNotifier(Notifier):
 
 CALL_SEVERITIES = ("SEV1", "SEV2")
 TWILIO_URL = "https://api.twilio.com/2010-04-01/Accounts/{sid}/Calls.json"
+TWIMLET_URL = "https://twimlets.com/message?"  # Twilio's free page that speaks the text in its link
 
 
 def _masked(number):
@@ -478,24 +533,26 @@ def spoken_summary(event):
             "Details are in your email. Approve any fix in the terminal.")
 
 
-def twiml(text):
-    """Inline call instructions: the message, a pause, then the message again."""
-    say = f"<Say>{html.escape(text, quote=False)}</Say>"
-    return f'<Response>{say}<Pause length="2"/>{say}</Response>'
+def spoken_url(text):
+    """The link Twilio fetches for what to say: the message, twice. Trial accounts refuse inline Twiml."""
+    return TWIMLET_URL + urllib.parse.urlencode({"Message[0]": text, "Message[1]": text})
 
 
 class CallNotifier(Notifier):
     """Voice call through Twilio: one HTTPS POST that places a call reading a short summary. One-way:
     the call cannot acknowledge or approve anything. Only live SEV1 and SEV2 notifications ring."""
-    channel, transport = "call", "twilio"
+    channel, transport, contact = "call", "twilio", "phone"
 
     def __init__(self, http=None):
         import requests
         self.http = http or requests  # tests pass a fake client
         self.sid, self.token = config.TWILIO_ACCOUNT_SID, config.TWILIO_AUTH_TOKEN
-        self.sender, self.number = config.TWILIO_FROM_NUMBER, config.ONCALL_PRIMARY_PHONE
+        self.sender = config.TWILIO_FROM_NUMBER
         self.timeout = config.EMAIL_TIMEOUT_S
-        self.to = [_masked(self.number)] if self.number else []  # numbers are never recorded in full
+        self.use([config.ONCALL_PRIMARY_PHONE] if config.ONCALL_PRIMARY_PHONE else [])
+
+    def use(self, people):
+        self.numbers, self.to = people, [_masked(n) for n in people]  # numbers are never recorded in full
 
     def wants(self, event):
         return (str(event.get("severity") or "").split(" ")[0] in CALL_SEVERITIES
@@ -504,26 +561,30 @@ class CallNotifier(Notifier):
     def notify(self, event):
         result = {"channel": self.channel, "transport": self.transport, "recipients": self.to}
         missing = [n for n, v in (("TWILIO_ACCOUNT_SID", self.sid), ("TWILIO_AUTH_TOKEN", self.token),
-                                  ("TWILIO_FROM_NUMBER", self.sender), ("ONCALL_PRIMARY_PHONE", self.number)) if not v]
+                                  ("TWILIO_FROM_NUMBER", self.sender), ("ONCALL_PRIMARY_PHONE", self.numbers)) if not v]
         if missing:
             return {**result, "status": "failed", "error": f"call failed: {' and '.join(missing)} not set"}
-        form = {"To": self.number, "From": self.sender, "Twiml": twiml(event.get("speech") or spoken_summary(event))}
+        text = event.get("speech") or spoken_summary(event)
+        return _send_all(result, self.numbers, lambda number: self.call(number, text))
+
+    def call(self, number, text):
+        form = {"To": number, "From": self.sender, "Url": spoken_url(text)}
         try:
             resp = self.http.post(TWILIO_URL.format(sid=self.sid), data=form, auth=(self.sid, self.token),
                                   timeout=self.timeout)
         except Exception as e:  # network errors: the message never names the token
-            return {**result, "status": "failed", "error": f"call failed: Twilio {type(e).__name__}"}
+            return {"status": "failed", "error": f"call failed: Twilio {type(e).__name__}"}
         try:
             data = resp.json()
         except ValueError:
             data = {}
         data = data if isinstance(data, dict) else {}
         if 200 <= resp.status_code < 300 and data.get("sid"):
-            return {**result, "status": "sent", "message_id": str(data["sid"])}
+            return {"status": "sent", "message_id": str(data["sid"])}
         reason = data.get("message") or (getattr(resp, "text", "") or "")[:200] or "no details"
         code = f" (Twilio error {data['code']})" if data.get("code") else ""
         error = str(scrub(f"call failed: HTTP {resp.status_code}: {reason}{code}"))[:300]
-        return {**result, "status": "failed", "error": error.replace(self.number, _masked(self.number))}
+        return {"status": "failed", "error": error.replace(number, _masked(number))}
 
 
 def send_test_call():
@@ -531,6 +592,85 @@ def send_test_call():
     return CallNotifier().notify({"subject": "[on-call TEST]", "severity": "test", "title": "test", "lines": [],
                                   "speech": "This is Poppy, your on-call agent. This is only a test call. "
                                             "Nothing is wrong."})
+
+
+TELEGRAM_URL = "https://api.telegram.org/bot{token}/{method}"
+TELEGRAM_MAX_CHARS = 4000  # Telegram refuses messages over 4096 characters
+TELEGRAM_CUT = "\n\n(cut short: the full details are in the report)"
+
+
+def telegram_text(event):
+    """Plain text from the event's scrubbed subject and lines, within Telegram's size limit."""
+    lines = [line.replace("replying to this email", "replying to this message")
+             for line in event["lines"] if not line.startswith("Report: attached as")]
+    text = "\n".join([event["subject"], ""] + lines).strip()
+    return text if len(text) <= TELEGRAM_MAX_CHARS else text[:TELEGRAM_MAX_CHARS - len(TELEGRAM_CUT)] + TELEGRAM_CUT
+
+
+class TelegramNotifier(Notifier):
+    """A message from a Telegram bot: one HTTPS POST. One-way: nothing can be approved from Telegram.
+    Only live incidents are sent. The token is part of the URL, so errors never quote the request."""
+    channel, transport, contact = "telegram", "telegram", "telegram"
+
+    def __init__(self, http=None):
+        import requests
+        self.http = http or requests  # tests pass a fake client
+        self.token = config.TELEGRAM_BOT_TOKEN
+        self.timeout = config.EMAIL_TIMEOUT_S
+        self.use([config.TELEGRAM_CHAT_ID] if config.TELEGRAM_CHAT_ID else [])
+
+    def use(self, people):
+        self.chats, self.to = people, [_masked(c) for c in people]  # chat ids are never recorded in full
+
+    def wants(self, event):
+        return not str(event.get("subject") or "").startswith("[TEST]")
+
+    def notify(self, event):
+        result = {"channel": self.channel, "transport": self.transport, "recipients": self.to}
+        missing = [n for n, v in (("TELEGRAM_BOT_TOKEN", self.token), ("TELEGRAM_CHAT_ID", self.chats)) if not v]
+        if missing:
+            return {**result, "status": "failed", "error": f"telegram failed: {' and '.join(missing)} not set"}
+        text = telegram_text(event)
+        return _send_all(result, self.chats, lambda chat: self.send(chat, text))
+
+    def send(self, chat, text):
+        body = {"chat_id": chat, "text": text, "disable_web_page_preview": True}
+        try:
+            resp = self.http.post(TELEGRAM_URL.format(token=self.token, method="sendMessage"), json=body,
+                                  timeout=self.timeout)
+        except Exception as e:  # the exception text can contain the URL, and so the token
+            return {"status": "failed", "error": f"telegram failed: {type(e).__name__}"}
+        try:
+            data = resp.json()
+        except ValueError:
+            data = {}
+        data = data if isinstance(data, dict) else {}
+        if 200 <= resp.status_code < 300 and data.get("ok"):
+            return {"status": "sent"}
+        error = f"telegram failed: HTTP {resp.status_code}: {data.get('description') or 'no details'}"
+        error = error.replace(self.token, "[token]").replace(chat, _masked(chat))
+        return {"status": "failed", "error": str(scrub(error))[:300]}
+
+
+def telegram_chats(http=None):
+    """[(chat id, name)] of people who have messaged the bot, to help fill in TELEGRAM_CHAT_ID."""
+    if http is None:
+        import requests as http
+    try:
+        resp = http.get(TELEGRAM_URL.format(token=config.TELEGRAM_BOT_TOKEN, method="getUpdates"),
+                        timeout=config.EMAIL_TIMEOUT_S)
+        updates = resp.json().get("result") or []
+    except Exception:  # the exception text can contain the token
+        return []
+    chats = [(u.get("message") or {}).get("chat") or {} for u in updates]
+    return list(dict.fromkeys((str(c["id"]), c.get("first_name") or c.get("title") or "unknown")
+                              for c in chats if c.get("id")))
+
+
+def send_test_telegram():
+    """One labelled test message; ignores TELEGRAM_ENABLED so the setup can be checked first."""
+    return TelegramNotifier().notify({"subject": "[on-call TEST] Telegram test from P0ppy",
+                                      "lines": ["This is only a test message. Nothing is wrong."]})
 
 
 def email_notifier():
@@ -556,6 +696,8 @@ def notifiers():
         chans.append(email_notifier())
     if config.CALLS_ENABLED:
         chans.append(CallNotifier())
+    if config.TELEGRAM_ENABLED:
+        chans.append(TelegramNotifier())
     return chans
 
 
@@ -586,13 +728,17 @@ def already_done(record):
 
 def _run(chan, message, box):
     try:
-        box.update(chan.notify(message))
+        box.update(chan.for_event(message).notify(message))
     except Exception as e:  # a channel must never take the agent down
         box.update(channel=chan.channel, status="failed", error=f"{chan.channel} failed: {type(e).__name__}: {e}"[:300])
 
 
 def _line(event, entry):
     """The one terminal line for one attempt."""
+    if entry["channel"] == "telegram":
+        if entry["status"] == "sent":
+            return f"[notify] {event}: telegram message sent to chat {', '.join(entry['recipients'])}"
+        return f"[notify] {event}: {entry.get('error') or 'telegram failed: unknown reason'}"
     if entry["channel"] == "call":
         if entry["status"] == "sent":
             return f"[notify] {event}: call placed to {', '.join(entry['recipients'])}"
@@ -640,7 +786,7 @@ def _finish(event, chan, thread, box, meta, key=None):
     email outcome is also appended to notifications.jsonl."""
     result = dict(box) if not thread.is_alive() else {
         "channel": chan.channel, "recipients": getattr(chan, "to", []), "status": "failed",
-        "error": f"email failed: no answer within {config.EMAIL_TIMEOUT_S:g}s"}
+        "error": f"{chan.channel} failed: no answer within {config.EMAIL_TIMEOUT_S:g}s"}
     entry = {"at": now_iso(), "event": event, "channel": result.get("channel", chan.channel),
              "recipients": list(result.get("recipients") or []), "status": result.get("status", "failed")}
     for name in ("transport", "message_id", "error"):

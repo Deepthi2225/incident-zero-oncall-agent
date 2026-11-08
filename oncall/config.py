@@ -216,6 +216,12 @@ TWILIO_ACCOUNT_SID = _env("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = _env("TWILIO_AUTH_TOKEN")
 TWILIO_FROM_NUMBER = _env("TWILIO_FROM_NUMBER")
 ONCALL_PRIMARY_PHONE = _env("ONCALL_PRIMARY_PHONE").replace(" ", "")
+# Who is alerted for each severity (see escalation.example.json). No file: everyone in .env as before.
+ESCALATION_FILE = Path(os.getenv("ONCALL_ESCALATION_FILE", ROOT / "escalation.json"))
+# Telegram alerts through a bot: off unless TELEGRAM_ENABLED=on. .env only.
+TELEGRAM_ENABLED = env_flag("TELEGRAM_ENABLED", False)
+TELEGRAM_BOT_TOKEN = _env("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = _env("TELEGRAM_CHAT_ID")
 UI_URL = f"http://127.0.0.1:{UI_PORT}"  # where the read-only dashboard shows the waiting step
 # Server-side refusal fallback. Disable if the organisers' key/proxy rejects the beta.
 USE_FALLBACKS = os.getenv("ONCALL_FALLBACKS", "1") == "1"
