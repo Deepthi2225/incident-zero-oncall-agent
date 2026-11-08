@@ -2,6 +2,7 @@
 once per step (also across a restart), in the background so the prompt is not delayed, never
 blocking the approval, scrubbed, and recorded in the incident record and notifications.jsonl.
 Fake transports only; the developer's .env is never read (tests/conftest.py)."""
+from tests.mailtools import plain_text
 import json
 import sys
 import time
@@ -20,7 +21,7 @@ from tests.test_notify_resend import resend  # noqa: F401  (a fixture)
 from tests.test_remediate import StubVerifier
 
 SECRET = "sk-ant-api03-PAGESECRET1234567890"
-SUBJECT = "[ON-CALL PAGE][SEV1] INC-7 payment: approval needed — restart_service on payment"
+SUBJECT = "[TEST] [ON-CALL PAGE][SEV1] INC-7 payment: approval needed — restart_service on payment"
 
 
 def run_paged(monkeypatch, script=diagnosis_script, answer="y", alert=ALERT, **agent_kw):
@@ -36,7 +37,7 @@ def run_paged(monkeypatch, script=diagnosis_script, answer="y", alert=ALERT, **a
 
 
 def pages(server):
-    return [m["msg"] for m in server.messages if m["msg"]["Subject"].startswith("[ON-CALL PAGE]")]
+    return [m["msg"] for m in server.messages if m["msg"]["Subject"].startswith("[TEST] [ON-CALL PAGE]")]
 
 
 def page_entries(rec):
@@ -48,7 +49,7 @@ def subject(msg):
 
 
 def body(msg):
-    return msg.get_payload(decode=True).decode()
+    return plain_text(msg)
 
 
 def two_causes(inp):  # payment stopped and its cache down: a two-step plan
@@ -83,8 +84,8 @@ def test_page_content(payment_down, monkeypatch, smtp):
     msg = pages(server)[0]
     assert subject(msg) == SUBJECT
     text = body(msg)
-    assert text.startswith("This is an on-call page from Incident Zero. A fix is waiting for your approval "
-                           "in the terminal.")
+    assert text.startswith("*** TEST ONLY: this came from fixture data")
+    assert "This is an on-call page from Incident Zero. A fix is waiting for your approval in the terminal." in text
     for part in ("Incident: INC-7", "Severity: SEV1 (critical service)",
                  "Root cause: payment [container_stopped_or_restarting]: payment exited (env had <redacted>)",
                  "Confidence: 0.9", "Reviewer: did not run", "Proposed action: restart_service on payment (step 1)",

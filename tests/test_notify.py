@@ -1,6 +1,7 @@
 """Email escalation (oncall/notify.py) against a local fake SMTP server: one email per escalation
 type, scrubbed content, failures and timeouts never break a run, EMAIL_ENABLED=off sends nothing,
 no duplicates (also across a restart), and the dashboard shows notifications safely."""
+from tests.mailtools import plain_text
 import email
 import json
 import socket
@@ -184,7 +185,7 @@ def test_each_escalation_sends_exactly_one_email(payment_down, monkeypatch, smtp
     m = server.messages[0]
     assert m["rcpts"] == ["oncall@example.test", "lead@example.test"]
     assert notify.TITLES[event] in m["msg"]["Subject"] and "INC-7" in m["msg"]["Subject"]
-    body = m["msg"].get_payload(decode=True).decode()
+    body = plain_text(m["msg"])
     for part in ("Incident: INC-7", "Severity: ", "Why: ", "Affected services: ", "Root cause: ",
                  "Top evidence:", "Open questions:", "Next steps:", "Report: "):
         assert part in body
@@ -199,7 +200,7 @@ def test_content_is_scrubbed_and_specific(payment_down, monkeypatch, smtp):
     server = smtp()
     rec = run(monkeypatch, script=edited(leaky))
     msg = server.messages[0]["msg"]
-    body = msg.get_payload(decode=True).decode()
+    body = plain_text(msg)
     everything = str(msg) + body + json.dumps(rec) + notify.notify_log().read_text(encoding="utf-8")
     assert SECRET not in everything and SMTP_SECRET not in everything
     assert "feature_flag" not in everything.lower()

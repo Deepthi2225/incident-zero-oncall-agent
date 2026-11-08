@@ -177,6 +177,11 @@ SEV4 low), affected services, root cause and confidence, why it escalated, the t
 open questions, next steps and the report path. It passes through the same scrubber as the
 incident record: no feature-flag data, no keys or passwords.
 
+**Format.** Each email has a formatted HTML version and a plain-text copy, and the finished run's
+report is attached as a `.txt` file so it can be read without access to this machine. Runs on
+fixtures or replayed data get `[TEST]` in the subject and a warning at the top. The emails contain
+no links to click: the dashboard is only reachable on the machine running the agent.
+
 **Approval page.** While a run is in progress, the moment a plan step's approval box appears in
 the terminal, the agent also sends a page (on by default when email is on; `EMAIL_ON_APPROVAL=off`
 turns it off):
@@ -227,7 +232,7 @@ EMAIL_TO=alice@example.com,bob@example.com
 
 `EMAIL_TRANSPORT=resend` sends each email with one HTTPS POST to Resend's API
 (`https://api.resend.com/emails`, `Authorization: Bearer <RESEND_API_KEY>`, JSON with `from`, `to`,
-`subject`, `text`). It uses the same deadline as SMTP (`EMAIL_TIMEOUT_S`, default 10 s) and prints
+`subject`, `text`, `html` and the report under `attachments`). It uses the same deadline as SMTP (`EMAIL_TIMEOUT_S`, default 10 s) and prints
 `email sent (resend id ...) to ...` or `email failed: <reason>`. The API key is only ever put in that
 header: it is never printed or logged, and the scrubber redacts it anywhere it could appear.
 

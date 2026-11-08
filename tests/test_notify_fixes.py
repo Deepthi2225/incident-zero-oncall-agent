@@ -3,6 +3,7 @@ no email lost at process exit, STARTTLS off really skipped, no login without a u
 exactly as given ("localhost" too), .env parsing, every escalation path (including --test with
 --non-interactive, watch mode, a human's N, a failed verify and the kill switch), one terminal
 line per attempt, per-channel deduplication with retry after a failure, and `oncall emailtest`."""
+from tests.mailtools import plain_text
 import json
 import os
 import smtplib
@@ -65,7 +66,7 @@ def test_emailtest_command_sends_one_labelled_email_and_exits(tmp_path):
     assert out.returncode == 0, out.stderr
     assert "SMTP_PASSWORD=absent" in out.stdout and "sent to oncall@example.test, lead@example.test" in out.stdout
     msg = server.messages[0]["msg"]
-    assert msg["Subject"].startswith("[on-call TEST]") and "not an incident" in msg.get_payload(decode=True).decode()
+    assert msg["Subject"].startswith("[on-call TEST]") and "not an incident" in plain_text(msg)
     assert not (tmp_path / "runs" / "index.jsonl").exists()           # the agent did not run
     line = json.loads((tmp_path / "runs" / "notifications.jsonl").read_text(encoding="utf-8"))
     assert (line["event"], line["status"]) == ("email_test", "sent")
@@ -190,14 +191,14 @@ def test_human_answers_n_at_the_terminal(payment_down, monkeypatch, smtp):
     monkeypatch.setattr("builtins.input", lambda prompt="": "n")
     rec = run(monkeypatch, approve=make_approver())
     assert [n["event"] for n in emails(rec)] == ["human_rejected"]
-    assert "rejected by the on-call engineer" in server.messages[0]["msg"].get_payload(decode=True).decode()
+    assert "rejected by the on-call engineer" in plain_text(server.messages[0]["msg"])
 
 
 def test_failed_verify_after_rollback(payment_down, monkeypatch, smtp):
     server = smtp()
     rec = run(monkeypatch, client=FakeClient(live=True), outcome=NOT_RECOVERED)
     assert [n["event"] for n in emails(rec)] == ["verification_failed"]
-    assert "verified as not_recovered; rollback: " in server.messages[0]["msg"].get_payload(decode=True).decode()
+    assert "verified as not_recovered; rollback: " in plain_text(server.messages[0]["msg"])
 
 
 def test_failed_manual_verify_emails(payment_down, monkeypatch, smtp):

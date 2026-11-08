@@ -69,7 +69,7 @@ def test_request_shape_and_sent_line(payment_down, monkeypatch, resend, capsys):
     assert call["url"] == "https://api.resend.com/emails" and call["timeout"] == 10.0
     assert call["headers"] == {"Authorization": f"Bearer {KEY}", "Content-Type": "application/json"}
     body = call["json"]
-    assert set(body) == {"from", "to", "subject", "text"}
+    assert set(body) == {"from", "to", "subject", "text", "html", "attachments"}
     assert body["from"] == "AI On-Call Agent <onboarding@resend.dev>" and body["to"] == ["owner@example.test"]
     assert "INC-7" in body["subject"] and "low confidence" in body["subject"]
     assert "Incident: INC-7" in body["text"] and "Top evidence:" in body["text"]
@@ -201,4 +201,4 @@ def test_greeting_uses_the_primary_name(payment_down, monkeypatch, resend):
     fake = resend()
     monkeypatch.setattr(config, "ONCALL_PRIMARY_NAME", "Alex")
     run(monkeypatch, script=edited(low))
-    assert fake.calls[0]["json"]["text"].startswith("Hello Alex,\n\nIncident: INC-7")
+    assert fake.calls[0]["json"]["text"].startswith("Hello Alex,\n\n*** TEST ONLY")

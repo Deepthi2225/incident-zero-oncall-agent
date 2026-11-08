@@ -26,14 +26,18 @@ Every message is scrubbed (record.scrub): no feature-flag data, no keys.
 The email escalation is based on our teammate's notification work in ocAgent-main.zip, rebuilt
 on this repo's design (record, scrubber, fault classes) and limited to email.
 """
+import base64
+import html
 import json
 import os
+import re
 import smtplib
 import socket
 import ssl
 import threading
 import time
 from email.message import EmailMessage
+from itertools import groupby
 from pathlib import Path
 
 from oncall import config
@@ -50,6 +54,35 @@ SEVERITY = {"critical": "SEV1", "high": "SEV2", "medium": "SEV3", "low": "SEV4"}
 FAILED_VERIFY = ("not_recovered", "partial", "inconclusive")
 DONE = ("sent", "logged")
 MAX_EVIDENCE_LINES = 5
+MAX_EVIDENCE_CHARS = 400
+MAX_ATTACHMENT_CHARS = 300_000
+NON_LIVE = {"test": "fixture data", "bundle": "a recorded replay"}  # metadata.mode -> what the data is
+SEV_COLOURS = {"SEV1": "#b42318", "SEV2": "#c4320a", "SEV3": "#b54708", "SEV4": "#475467"}
+TOOL_NAMES = {"get_service_health": "Service health", "get_metric": "Metric", "find_error_traces": "Traces",
+              "search_logs": "Logs", "get_deploy_history": "Containers and deploys"}
+
+
+def _non_live_banner(meta):
+    """The warning line for a run on fixture or replayed data, or None for a live incident."""
+    label = NON_LIVE.get(meta.get("mode"))
+    return f"*** TEST ONLY: this came from {label}, not a live incident. Nothing needs doing. ***" if label else None
+
+
+def _tagged(subject, meta):
+    return f"[TEST] {subject}" if NON_LIVE.get(meta.get("mode")) else subject
+
+
+def _attachment(record):
+    """(filename, text) of the finished run's report, scrubbed, or None when it cannot be attached."""
+    meta = record.get("metadata") or {}
+    try:
+        text = Path((record.get("report_paths") or {}).get("report") or "").read_text(encoding="utf-8")
+    except (OSError, ValueError):
+        return None
+    if len(text) > MAX_ATTACHMENT_CHARS:
+        return None
+    banner = _non_live_banner(meta)
+    return f"incident-report-{meta.get('run_id')}.txt", str(scrub((banner + "\n\n" if banner else "") + text))
 
 
 def notify_log():
@@ -159,7 +192,7 @@ def build_event(record, event, why):
     root = (f"{rc.get('component')} [{rc.get('fault_class')}]: {rc.get('cause')} "
             f"(confidence {rc.get('confidence')})" if rc.get("fault_class") else "not determined with valid evidence")
     cited = [e for e in record.get("evidence") or [] if e.get("cited")] or (record.get("evidence") or [])
-    evidence = [f"{e.get('id')} [{e.get('tool')}] {str(e.get('observation', ''))[:200]}"
+    evidence = [f"{e.get('id')} [{e.get('tool')}] {str(e.get('observation', ''))[:MAX_EVIDENCE_CHARS]}"
                 for e in cited[:MAX_EVIDENCE_LINES]]
     next_steps = []
     for e in record.get("escalations") or []:
@@ -173,7 +206,13 @@ def build_event(record, event, why):
                           "or fix by hand and run python -m oncall verify <run_id>.")
     next_steps = list(dict.fromkeys(next_steps)) or ["Read the report and decide on a fix by hand."]
 
-    lines = [f"Incident: {incident} (run {meta.get('run_id')})",
+    attachment = _attachment(record)
+    report = (record.get("report_paths") or {}).get("report") or "not written"
+    report_line = (f"Report: attached as {attachment[0]} (also on the agent's machine at {report})" if attachment
+                   else f"Report: on the agent's machine at {report}")
+    banner = _non_live_banner(meta)
+    lines = ([banner, ""] if banner else []) + [
+             f"Incident: {incident} (run {meta.get('run_id')})",
              f"Severity: {sev}",
              f"Event: {TITLES[event]}",
              f"Why: {why}",
@@ -183,14 +222,15 @@ def build_event(record, event, why):
              "", "Top evidence:"] + [f"  - {x}" for x in evidence or ["none recorded"]] + \
             ["", "Open questions:"] + [f"  - {q}" for q in diag.get("open_questions") or ["none"]] + \
             ["", "Next steps:"] + [f"  - {s}" for s in next_steps] + \
-            ["", f"Report: {(record.get('report_paths') or {}).get('report') or 'not written'}",
+            ["", report_line,
              f"Outcome so far: {(record.get('outcome') or {}).get('summary', 'not recorded')}",
              "", "Sent by the AI on-call agent. Nothing was changed because of this message."]
-    subject = f"[on-call {sev.split(' ')[0]}] {incident}: {TITLES[event]}"
+    subject = _tagged(f"[on-call {sev.split(' ')[0]}] {incident}: {TITLES[event]}", meta)
     clean = scrub({"subject": subject, "lines": lines})
     return {"incident_id": incident, "run_id": meta.get("run_id"), "event": event, "severity": sev,
             "why": why, "subject": " ".join(str(clean["subject"]).split()), "lines": clean["lines"],
-            "report": (record.get("report_paths") or {}).get("report")}
+            "report": (record.get("report_paths") or {}).get("report"), "title": TITLES[event],
+            "attachment": attachment}
 
 
 # --- channels ----------------------------------------------------------------------------------------
@@ -241,6 +281,68 @@ def body_text(event):
     return "\n".join(greeting + list(event["lines"])) + "\n"
 
 
+_FIELD = re.compile(r"^([A-Z][A-Za-z ()]{1,40}): (.+)$")
+_EVIDENCE = re.compile(r"^(E\d+) \[(\w+)\] (.*)$", re.S)
+
+
+def _kind(line):
+    text = line.strip()
+    if not text:
+        return "blank"
+    if text.startswith("***"):
+        return "banner"
+    if text.startswith("- "):
+        return "item"
+    if _FIELD.match(text):
+        return "field"
+    return "heading" if text.endswith(":") else "text"
+
+
+def _item_html(text):
+    match = _EVIDENCE.match(text)
+    if not match:
+        return f'<li style="margin:0 0 6px">{html.escape(text)}</li>'
+    eid, tool, observation = match.groups()
+    return (f'<li style="margin:0 0 8px"><strong>{html.escape(TOOL_NAMES.get(tool, tool.replace("_", " ").capitalize()))}'
+            f'</strong> <span style="color:#667085">({html.escape(eid)})</span><br>{html.escape(observation)}</li>')
+
+
+def email_html(event):
+    """The HTML part, built only from the event's already-scrubbed lines; all text is escaped."""
+    sev = str(event.get("severity") or "SEV?").split(" ")[0]
+    colour = SEV_COLOURS.get(sev, "#475467")
+    parts = []
+    if config.ONCALL_PRIMARY_NAME:
+        parts.append(f'<p style="margin:0 0 14px">Hello {html.escape(config.ONCALL_PRIMARY_NAME)},</p>')
+    for kind, group in groupby(event["lines"], key=_kind):
+        lines = [line.strip() for line in group]
+        if kind == "banner":
+            parts += [f'<p style="margin:0 0 14px;padding:10px 12px;background:#fef0c7;color:#7a2e0e;font-weight:bold">'
+                      f'{html.escape(line.strip("* "))}</p>' for line in lines]
+        elif kind == "field":
+            rows = "".join(
+                '<tr><td style="padding:5px 12px 5px 0;color:#667085;vertical-align:top;white-space:nowrap">'
+                f'{html.escape(k)}</td><td style="padding:5px 0">{html.escape(v)}</td></tr>'
+                for k, v in (_FIELD.match(line).groups() for line in lines))
+            parts.append(f'<table role="presentation" style="border-collapse:collapse;margin:0 0 14px">{rows}</table>')
+        elif kind == "heading":
+            parts += [f'<h3 style="margin:18px 0 8px;font-size:15px">{html.escape(line.rstrip(":"))}</h3>' for line in lines]
+        elif kind == "item":
+            items = "".join(_item_html(line[2:]) for line in lines)
+            parts.append(f'<ul style="margin:0 0 14px;padding-left:20px">{items}</ul>')
+        elif kind == "text":
+            parts += [f'<p style="margin:0 0 12px">{html.escape(line)}</p>' for line in lines]
+    title = html.escape(str(event.get("title") or event.get("subject") or "On-call notification"))
+    incident = html.escape(str(event.get("incident_id") or ""))
+    return ('<!doctype html><html><body style="margin:0;padding:16px;background:#f2f4f7">'
+            '<div style="max-width:640px;margin:0 auto;background:#ffffff;color:#101828;'
+            'font:14px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">'
+            f'<div style="background:{colour};color:#ffffff;padding:14px 18px">'
+            f'<div style="font-size:12px;font-weight:bold">{html.escape(sev)} &middot; {incident}</div>'
+            f'<div style="font-size:18px;font-weight:bold">{title}</div></div>'
+            f'<div style="padding:18px">{"".join(parts)}</div></div></body></html>')
+
+
 class EmailNotifier(Notifier):
     """SMTP transport (EMAIL_TRANSPORT=smtp, the default)."""
     channel, transport = "email", "smtp"
@@ -258,6 +360,11 @@ class EmailNotifier(Notifier):
         msg["From"] = self.sender
         msg["To"] = ", ".join(self.to)
         msg.set_content(body_text(event))
+        if event.get("title"):  # incident emails; the settings test stays plain text
+            msg.add_alternative(email_html(event), subtype="html")
+        if event.get("attachment"):
+            filename, text = event["attachment"]
+            msg.add_attachment(text, filename=filename)
         return msg
 
     def send(self, msg):
@@ -317,8 +424,14 @@ class ResendNotifier(Notifier):
 
     def request(self, event):
         """(headers, json) of the API call."""
-        return ({"Authorization": f"Bearer {self.key}", "Content-Type": "application/json"},
-                {"from": self.sender, "to": self.to, "subject": event["subject"], "text": body_text(event)})
+        body = {"from": self.sender, "to": self.to, "subject": event["subject"], "text": body_text(event)}
+        if event.get("title"):
+            body["html"] = email_html(event)
+        if event.get("attachment"):
+            filename, text = event["attachment"]
+            body["attachments"] = [{"filename": filename,
+                                    "content": base64.b64encode(text.encode("utf-8")).decode("ascii")}]
+        return {"Authorization": f"Bearer {self.key}", "Content-Type": "application/json"}, body
 
     def notify(self, event):
         result = {"channel": self.channel, "transport": self.transport, "recipients": self.to}
@@ -489,10 +602,12 @@ def build_page(record, step):
     evidence = {e.get("id"): e for e in record.get("evidence") or []}
     ids = [i for i in (rc or {}).get("evidence") or [] if i in evidence] or \
           [e.get("id") for e in record.get("evidence") or [] if e.get("cited")]
-    top = [f"  - {i} [{evidence[i].get('tool')}] {str(evidence[i].get('observation', ''))[:200]}"
+    top = [f"  - {i} [{evidence[i].get('tool')}] {str(evidence[i].get('observation', ''))[:MAX_EVIDENCE_CHARS]}"
            for i in ids[:MAX_EVIDENCE_LINES]] or ["  - none recorded"]
     rb = step.get("rollback")
-    lines = ["This is an on-call page from Incident Zero. A fix is waiting for your approval in the terminal.",
+    banner = _non_live_banner(meta)
+    lines = ([banner, ""] if banner else []) + [
+             "This is an on-call page from Incident Zero. A fix is waiting for your approval in the terminal.",
              "",
              f"Incident: {incident} (run {meta.get('run_id')})",
              f"Severity: {sev}" + (f" ({crit} service)" if crit else " (service criticality not known)"),
@@ -512,12 +627,13 @@ def build_page(record, step):
              f"The read-only dashboard at {config.UI_URL} shows the waiting step.",
              "Approval is NOT possible by replying to this email. Replies are not read.",
              "", f"Report (when the run ends): {(record.get('report_paths') or {}).get('report') or 'not written'}"]
-    subject = (f"[ON-CALL PAGE][{sev}] {incident} {service}: approval needed — "
-               f"{step.get('action')} on {step.get('target')}")
+    subject = _tagged(f"[ON-CALL PAGE][{sev}] {incident} {service}: approval needed — "
+                      f"{step.get('action')} on {step.get('target')}", meta)
     clean = scrub({"subject": subject, "lines": lines})
     return {"incident_id": incident, "run_id": meta.get("run_id"), "event": PAGE, "severity": sev,
             "why": f"step {step.get('step')} awaiting approval", "subject": " ".join(str(clean["subject"]).split()),
-            "lines": clean["lines"], "report": (record.get("report_paths") or {}).get("report")}
+            "lines": clean["lines"], "report": (record.get("report_paths") or {}).get("report"),
+            "title": "Approval needed"}
 
 
 class PendingPage:
