@@ -15,6 +15,8 @@ outcome "llm_error".
     GroqProvider       Open models on Groq, through the same OpenAI-compatible code.
 """
 import json
+import re
+import time
 from types import SimpleNamespace
 
 import anthropic
@@ -71,6 +73,20 @@ class AnthropicProvider:
 
 GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
+GROQ_TOOL_RETRIES = 2
+GROQ_TOOL_ERRORS = ("tool call validation failed", "tool_use_failed")
+GROQ_RATE_WAITS = 6          # waits allowed for one model call
+GROQ_RATE_WAIT_MAX_S = 65    # a longer wait means a daily limit, which is not worth waiting out
+GROQ_RETRY_AFTER = re.compile(r"try again in (?:(\d+)h)?(?:(\d+)m(?!s))?(\d+(?:\.\d+)?)(ms|s)")
+
+
+def groq_rate_limit_wait(text):
+    """Seconds Groq asks us to wait, or None if this is not a rate-limit error that says so."""
+    match = GROQ_RETRY_AFTER.search(text) if "rate limit" in text.lower() else None
+    if not match:
+        return None
+    hours, minutes, amount, unit = match.groups()
+    return int(hours or 0) * 3600 + int(minutes or 0) * 60 + float(amount) / (1000 if unit == "ms" else 1)
 # JSON Schema keywords Gemini's function declarations do not accept; stripped for Gemini only.
 GEMINI_UNSUPPORTED_KEYWORDS = {"additionalProperties", "strict", "$schema"}
 
@@ -187,4 +203,30 @@ class GeminiProvider(OpenAICompatibleProvider):
 
 
 class GroqProvider(OpenAICompatibleProvider):
+    """Groq validates tool arguments on its servers and answers 400 when they do not match the schema.
+    The model gets the error and another try; the agent's conversation is not changed.
+    Per-minute rate limits are waited out for the time Groq asks; longer limits stay errors."""
     name, base_url, key_setting = "groq", GROQ_BASE_URL, "GROQ_API_KEY"
+    sleep = staticmethod(time.sleep)
+
+    def create(self, system, tools, messages):
+        attempt_messages = messages
+        tool_retries = rate_waits = 0
+        while True:
+            try:
+                return super().create(system, tools, attempt_messages)
+            except LLMError as e:
+                text = str(e)
+                wait = groq_rate_limit_wait(text)
+                if wait is not None and wait <= GROQ_RATE_WAIT_MAX_S and rate_waits < GROQ_RATE_WAITS:
+                    rate_waits += 1
+                    print(f"  (Groq rate limit: waiting {wait + 1:.0f} s)", flush=True)
+                    self.sleep(wait + 1)
+                elif tool_retries < GROQ_TOOL_RETRIES and any(m in text.lower() for m in GROQ_TOOL_ERRORS):
+                    tool_retries += 1
+                    attempt_messages = messages + [{"role": "user", "content": (
+                        f"Your last tool call was rejected: {text[:500]}\n"
+                        "Call the tool again with arguments that match its schema exactly. "
+                        "Fields of type array must be JSON arrays, even with one item.")}]
+                else:
+                    raise

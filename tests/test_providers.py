@@ -9,7 +9,7 @@ import pytest
 from oncall import config
 from oncall.agent import run
 from oncall.agent.providers import (AnthropicProvider, GeminiProvider, GroqProvider, LLMError, NoCredentials,
-                                    gemini_schema, to_openai_messages)
+                                    gemini_schema, groq_rate_limit_wait, to_openai_messages)
 
 
 class FakeAPIError(Exception):
@@ -194,6 +194,79 @@ def test_groq_uses_its_own_endpoint_and_key(monkeypatch):
     monkeypatch.setitem(sys.modules, "openai", None)
     with pytest.raises(LLMError, match="ONCALL_PROVIDER=groq needs the openai package"):
         GroqProvider("m", api_key="k")
+
+
+REJECTED = "Error code: 400 - Tool call validation failed: /prevention: expected array, but got string"
+
+
+def test_groq_rejected_tool_call_is_retried_with_the_error(payment_down, monkeypatch):
+    def script(n, kwargs):
+        if n == 2:  # the submit_diagnosis attempt, as in the real failure
+            return FakeAPIError(REJECTED)
+        return diagnose_payment(1 if n == 1 else 2, kwargs)
+
+    fake = FakeOpenAI(script)
+    monkeypatch.setattr(run, "GroqProvider", lambda model, key: GroqProvider(model, client=fake, errors=(FakeAPIError,)))
+    rec = run.Agent(provider="groq", verbose=False).run({"service": "checkout"})
+    assert len(fake.requests) == 3
+    assert "expected array" in fake.requests[2]["messages"][-1]["content"]
+    assert rec["investigation"]["outcome"] == "submitted"
+    assert rec["diagnosis"]["root_causes"][0]["component"] == "payment"
+
+
+def groq_with(script):
+    fake = FakeOpenAI(script)
+    return GroqProvider("m", client=fake, errors=(FakeAPIError,)), fake
+
+
+def test_groq_gives_up_after_the_retries_and_keeps_the_conversation():
+    provider, fake = groq_with(lambda n, kw: FakeAPIError(REJECTED))
+    messages = [{"role": "user", "content": "hi"}]
+    with pytest.raises(LLMError, match="validation failed"):
+        provider.create("s", [], messages)
+    assert len(fake.requests) == 3
+    assert messages == [{"role": "user", "content": "hi"}]
+
+
+def test_groq_does_not_retry_other_errors():
+    provider, fake = groq_with(lambda n, kw: FakeAPIError("503 overloaded"))
+    with pytest.raises(LLMError, match="503"):
+        provider.create("s", [], [{"role": "user", "content": "hi"}])
+    assert len(fake.requests) == 1
+
+
+LIMITED = "RateLimitError: 429 - Rate limit reached on tokens per minute (TPM): Please try again in 2.04s. Need more?"
+
+
+def test_groq_waits_out_a_per_minute_limit():
+    provider, fake = groq_with(lambda n, kw: FakeAPIError(LIMITED) if n == 1 else reply(content="ok"))
+    waits = []
+    provider.sleep = waits.append
+    out = provider.create("s", [], [{"role": "user", "content": "hi"}])
+    assert out.content[0].text == "ok" and len(fake.requests) == 2
+    assert waits == [pytest.approx(3.04)]
+
+
+def test_groq_does_not_wait_out_a_daily_limit():
+    daily = LIMITED.replace("2.04s", "1h12m3.5s")
+    provider, fake = groq_with(lambda n, kw: FakeAPIError(daily))
+    provider.sleep = lambda s: pytest.fail("must not wait")
+    with pytest.raises(LLMError, match="Rate limit"):
+        provider.create("s", [], [{"role": "user", "content": "hi"}])
+    assert len(fake.requests) == 1
+
+
+def test_groq_stops_waiting_after_the_limit_of_waits():
+    provider, fake = groq_with(lambda n, kw: FakeAPIError(LIMITED))
+    provider.sleep = lambda s: None
+    with pytest.raises(LLMError):
+        provider.create("s", [], [{"role": "user", "content": "hi"}])
+    assert len(fake.requests) == 7
+
+
+@pytest.mark.parametrize("text,seconds", [("2.04s", 2.04), ("450ms", 0.45), ("1m30.5s", 90.5)])
+def test_groq_wait_parsing(text, seconds):
+    assert groq_rate_limit_wait(f"rate limit: try again in {text}.") == pytest.approx(seconds)
 
 
 def test_groq_key_is_a_known_secret(monkeypatch):
