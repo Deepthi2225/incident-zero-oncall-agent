@@ -1,0 +1,932 @@
+{
+  "schema_version": 2,
+  "status": "complete",
+  "metadata": {
+    "run_id": "20261108-153148",
+    "incident_id": "INC-APP-PRODUCT",
+    "started_at": "2026-11-08T10:01:48+00:00",
+    "ended_at": "2026-11-08T10:04:42+00:00",
+    "updated_at": "2026-11-08T10:04:43+00:00",
+    "mode": "test",
+    "source_detail": "fixtures tests/fixtures/product_one_item",
+    "provider": "groq",
+    "model": "openai/gpt-oss-120b",
+    "git": {
+      "commit": "9763df448022e556a6ea367156aec7ce7aff56d4",
+      "dirty": false
+    }
+  },
+  "alert": {
+    "incident_id": "INC-APP-PRODUCT",
+    "detected_at": "2026-10-23T07:20:00Z",
+    "alerting_services": [
+      "product-catalog"
+    ],
+    "trigger": [
+      {
+        "service": "product-catalog",
+        "signal": "error_rate",
+        "value": 0.097,
+        "threshold": 0.05,
+        "window": "3m"
+      }
+    ],
+    "note": "alerting service is a symptom, not necessarily the root cause"
+  },
+  "investigation": {
+    "steps": [
+      {
+        "step": 1,
+        "tool": "get_service_health",
+        "arguments": {
+          "window": "5m"
+        },
+        "result": {
+          "window_s": 300,
+          "baseline": "loaded",
+          "flagged": [
+            {
+              "service": "frontend",
+              "rps": 9.0,
+              "error_rate": 0.0344,
+              "client_error_rate": 0.0204,
+              "p95_ms": 170.0,
+              "baseline": {
+                "rps": 9.0,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 170
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 1.0,
+              "flags": [
+                "errors",
+                "client_call_errors"
+              ],
+              "criticality": "critical",
+              "evidence": "E1"
+            },
+            {
+              "service": "product-catalog",
+              "rps": 6.0,
+              "error_rate": 0.0967,
+              "client_error_rate": 0.0,
+              "p95_ms": 6.0,
+              "baseline": {
+                "rps": 6.0,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 6
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 1.0,
+              "flags": [
+                "errors"
+              ],
+              "criticality": "high",
+              "evidence": "E2"
+            },
+            {
+              "service": "frontend-proxy",
+              "rps": 9.6,
+              "error_rate": 0.0323,
+              "client_error_rate": 0.0,
+              "p95_ms": 185.0,
+              "baseline": {
+                "rps": 9.6,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 185
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 1.0,
+              "flags": [
+                "errors"
+              ],
+              "criticality": "critical",
+              "evidence": "E3"
+            },
+            {
+              "service": "recommendation",
+              "rps": 1.5,
+              "error_rate": 0.0,
+              "client_error_rate": 0.08,
+              "p95_ms": 28.0,
+              "baseline": {
+                "rps": 1.5,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 28
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 1.0,
+              "flags": [
+                "client_call_errors"
+              ],
+              "criticality": "medium",
+              "evidence": "E4"
+            }
+          ],
+          "healthy": [
+            "checkout",
+            "payment",
+            "currency",
+            "cart",
+            "shipping",
+            "email",
+            "ad",
+            "image-provider",
+            "quote"
+          ]
+        },
+        "evidence_ids": [
+          "E1",
+          "E2",
+          "E3",
+          "E4"
+        ],
+        "seconds": 0.0,
+        "at_s": 23.9,
+        "error": null
+      },
+      {
+        "step": 2,
+        "tool": "find_error_traces",
+        "arguments": {
+          "errors_only": true,
+          "limit": 20,
+          "lookback": "5m",
+          "service": "product-catalog"
+        },
+        "result": {
+          "service": "product-catalog",
+          "lookback_s": 300,
+          "errors_only": true,
+          "traces_examined": 6,
+          "origins": [
+            {
+              "origin_service": "product-catalog",
+              "operation": "oteldemo.ProductCatalogService/GetProduct",
+              "count": 6,
+              "message": "Error: product OLJCESPC7Z could not be loaded: query returned an invalid row",
+              "chain": [
+                "frontend",
+                "product-catalog"
+              ],
+              "example_trace": "6c2d0000000000000000000000000000",
+              "evidence": "E5"
+            }
+          ],
+          "attribute_clusters": [
+            {
+              "service": "product-catalog",
+              "attribute": "app.product.id",
+              "value": "OLJCESPC7Z",
+              "share": 1.0,
+              "count": 6,
+              "evidence": "E6"
+            }
+          ],
+          "edges": [
+            {
+              "edge": "frontend->product-catalog",
+              "calls": 6,
+              "avg_client_ms": 9.0,
+              "avg_server_ms": 4.1,
+              "avg_gap_ms": 4.9
+            }
+          ],
+          "slowest": [
+            {
+              "trace_id": "6c2d0000000000000000000000000000",
+              "root": "frontend GET /api/products/OLJCESPC7Z",
+              "duration_ms": 21.0
+            },
+            {
+              "trace_id": "6c2d0000000000000000000000000001",
+              "root": "frontend GET /api/products/OLJCESPC7Z",
+              "duration_ms": 21.0
+            },
+            {
+              "trace_id": "6c2d0000000000000000000000000002",
+              "root": "frontend GET /api/products/OLJCESPC7Z",
+              "duration_ms": 21.0
+            }
+          ]
+        },
+        "evidence_ids": [
+          "E5",
+          "E6"
+        ],
+        "seconds": 0.0,
+        "at_s": 25.2,
+        "error": null
+      },
+      {
+        "step": 3,
+        "tool": "get_deploy_history",
+        "arguments": {
+          "lookback": "10m",
+          "names": [
+            "astronomy-db"
+          ]
+        },
+        "result": {
+          "lookback_s": 600,
+          "containers": 1,
+          "stats_available": true,
+          "changed_or_unhealthy": [],
+          "healthy": [
+            "astronomy-db"
+          ],
+          "top_memory": [
+            {
+              "name": "astronomy-db",
+              "mem_pct": 30.0
+            }
+          ],
+          "organiser_history": "not configured",
+          "our_actions": [
+            {
+              "ts": "2026-10-24T10:39:07+00:00",
+              "run_id": "20261024-160811",
+              "event": "dry_run",
+              "step": 1,
+              "action": "restart_service",
+              "target": "payment",
+              "request": {
+                "method": "POST",
+                "url": "http://127.0.0.1:8099/actions/restart_service",
+                "json": {
+                  "service": "payment"
+                }
+              },
+              "response": "dry run: nothing sent",
+              "approval": {
+                "status": "approved",
+                "approved_by": "human",
+                "decision_at": "2026-10-24T10:39:07+00:00",
+                "notes": "explicitly approved by the on-call engineer",
+                "risk": "Low. Payment is down already, so a restart cannot make it worse. If something keeps stopping it, it may exit again, so watch restart_count and exit codes. Orders that failed during the outage will not be retried."
+              }
+            },
+            {
+              "ts": "2026-10-24T10:55:27+00:00",
+              "run_id": "20261024-161009",
+              "event": "refused",
+              "step": 1,
+              "action": "restart_service",
+              "target": "payment",
+              "reason": "not approved (status rejected)",
+              "approval": {
+                "status": "rejected",
+                "decision_at": "2026-10-24T10:55:27+00:00",
+                "notes": "cancelled or interrupted",
+                "risk": "Low. The container is already down, so a restart cannot make things worse. If something external stopped it again (a payment restart was also needed at 05:28 today), it may fail again, so watch it after the restart."
+              }
+            }
+          ],
+          "evidence": "E7",
+          "truncated": true
+        },
+        "evidence_ids": [
+          "E7"
+        ],
+        "seconds": 0.01,
+        "at_s": 36.0,
+        "error": null
+      },
+      {
+        "step": 4,
+        "tool": "search_logs",
+        "arguments": {
+          "contains": "OLJCESPC7Z",
+          "level": "error",
+          "services": [
+            "product-catalog"
+          ],
+          "since": "10m"
+        },
+        "result": {
+          "since_s": 600,
+          "min_level": "error",
+          "contains": "OLJCESPC7Z",
+          "services": {
+            "product-catalog": {
+              "log_source": "docker logs",
+              "matching_lines": 6
+            }
+          },
+          "patterns": [
+            {
+              "service": "product-catalog",
+              "level": "error",
+              "count": 6,
+              "first_seen": "2026-10-23T07:17:30.000000000Z",
+              "last_seen": "2026-10-23T07:19:10.000000000Z",
+              "example": "{\"level\": \"error\", \"msg\": \"failed to get product OLJCESPC7Z: query returned an invalid row\"}",
+              "evidence": "E8"
+            }
+          ]
+        },
+        "evidence_ids": [
+          "E8"
+        ],
+        "seconds": 0.0,
+        "at_s": 39.9,
+        "error": null
+      },
+      {
+        "step": 5,
+        "tool": "get_deploy_history",
+        "arguments": {
+          "lookback": "15m",
+          "names": [
+            "product-catalog"
+          ]
+        },
+        "result": {
+          "lookback_s": 900,
+          "containers": 1,
+          "stats_available": true,
+          "changed_or_unhealthy": [],
+          "healthy": [
+            "product-catalog"
+          ],
+          "top_memory": [
+            {
+              "name": "product-catalog",
+              "mem_pct": 30.0
+            }
+          ],
+          "organiser_history": "not configured",
+          "our_actions": [
+            {
+              "ts": "2026-10-24T10:39:07+00:00",
+              "run_id": "20261024-160811",
+              "event": "dry_run",
+              "step": 1,
+              "action": "restart_service",
+              "target": "payment",
+              "request": {
+                "method": "POST",
+                "url": "http://127.0.0.1:8099/actions/restart_service",
+                "json": {
+                  "service": "payment"
+                }
+              },
+              "response": "dry run: nothing sent",
+              "approval": {
+                "status": "approved",
+                "approved_by": "human",
+                "decision_at": "2026-10-24T10:39:07+00:00",
+                "notes": "explicitly approved by the on-call engineer",
+                "risk": "Low. Payment is down already, so a restart cannot make it worse. If something keeps stopping it, it may exit again, so watch restart_count and exit codes. Orders that failed during the outage will not be retried."
+              }
+            },
+            {
+              "ts": "2026-10-24T10:55:27+00:00",
+              "run_id": "20261024-161009",
+              "event": "refused",
+              "step": 1,
+              "action": "restart_service",
+              "target": "payment",
+              "reason": "not approved (status rejected)",
+              "approval": {
+                "status": "rejected",
+                "decision_at": "2026-10-24T10:55:27+00:00",
+                "notes": "cancelled or interrupted",
+                "risk": "Low. The container is already down, so a restart cannot make things worse. If something external stopped it again (a payment restart was also needed at 05:28 today), it may fail again, so watch it after the restart."
+              }
+            }
+          ],
+          "evidence": "E9",
+          "truncated": true
+        },
+        "evidence_ids": [
+          "E9"
+        ],
+        "seconds": 0.0,
+        "at_s": 56.2,
+        "error": null
+      },
+      {
+        "step": 6,
+        "tool": "search_logs",
+        "arguments": {
+          "contains": "OLJCESPC7Z",
+          "level": "error",
+          "services": [
+            "astronomy-db"
+          ],
+          "since": "15m"
+        },
+        "result": {
+          "since_s": 900,
+          "min_level": "error",
+          "contains": "OLJCESPC7Z",
+          "services": {
+            "astronomy-db": {
+              "log_source": "docker logs",
+              "matching_lines": 0,
+              "evidence": "E10"
+            }
+          },
+          "patterns": []
+        },
+        "evidence_ids": [
+          "E10"
+        ],
+        "seconds": 0.0,
+        "at_s": 88.3,
+        "error": null
+      },
+      {
+        "step": 7,
+        "tool": "find_error_traces",
+        "arguments": {
+          "errors_only": true,
+          "limit": 20,
+          "lookback": "5m",
+          "service": "astronomy-db"
+        },
+        "result": {
+          "service": "astronomy-db",
+          "lookback_s": 300,
+          "errors_only": true,
+          "traces_examined": 0,
+          "origins": [],
+          "attribute_clusters": [],
+          "edges": [],
+          "slowest": [],
+          "evidence": "E11"
+        },
+        "evidence_ids": [
+          "E11"
+        ],
+        "seconds": 0.0,
+        "at_s": 124.6,
+        "error": null
+      }
+    ],
+    "outcome": "llm_error",
+    "error": "BadRequestError: Error code: 400 - Failed to parse tool call arguments as JSON",
+    "model_turns": 7,
+    "submitted_at_s": 174.3
+  },
+  "evidence": [
+    {
+      "id": "E1",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "frontend [errors,client_call_errors] over 300s: error_rate 3.4% (baseline 0.0%) client_error_rate 2.0% (baseline 0.0%) p95 170.0ms (baseline 170ms) rps 9.0 (baseline 9.0)",
+      "ts": "2026-11-08T10:02:12+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "frontend",
+          "rps": 9.0,
+          "error_rate": 0.0344,
+          "client_error_rate": 0.0204,
+          "p95_ms": 170.0,
+          "baseline": {
+            "rps": 9.0,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 170
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 1.0,
+          "flags": [
+            "errors",
+            "client_call_errors"
+          ],
+          "criticality": "critical",
+          "evidence": "E1"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E2",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "product-catalog [errors] over 300s: error_rate 9.7% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 6.0ms (baseline 6ms) rps 6.0 (baseline 6.0)",
+      "ts": "2026-11-08T10:02:12+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "product-catalog",
+          "rps": 6.0,
+          "error_rate": 0.0967,
+          "client_error_rate": 0.0,
+          "p95_ms": 6.0,
+          "baseline": {
+            "rps": 6.0,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 6
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 1.0,
+          "flags": [
+            "errors"
+          ],
+          "criticality": "high",
+          "evidence": "E2"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E3",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "frontend-proxy [errors] over 300s: error_rate 3.2% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 185.0ms (baseline 185ms) rps 9.6 (baseline 9.6)",
+      "ts": "2026-11-08T10:02:12+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "frontend-proxy",
+          "rps": 9.6,
+          "error_rate": 0.0323,
+          "client_error_rate": 0.0,
+          "p95_ms": 185.0,
+          "baseline": {
+            "rps": 9.6,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 185
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 1.0,
+          "flags": [
+            "errors"
+          ],
+          "criticality": "critical",
+          "evidence": "E3"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E4",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "recommendation [client_call_errors] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 8.0% (baseline 0.0%) p95 28.0ms (baseline 28ms) rps 1.5 (baseline 1.5)",
+      "ts": "2026-11-08T10:02:12+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "recommendation",
+          "rps": 1.5,
+          "error_rate": 0.0,
+          "client_error_rate": 0.08,
+          "p95_ms": 28.0,
+          "baseline": {
+            "rps": 1.5,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 28
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 1.0,
+          "flags": [
+            "client_call_errors"
+          ],
+          "criticality": "medium",
+          "evidence": "E4"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E5",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "observation": "6/6 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/GetProduct' msg='Error: product OLJCESPC7Z could not be loaded: query returned an invalid row' chain=frontend>product-catalog e.g. trace 6c2d0000000000000000000000000000",
+      "ts": "2026-11-08T10:02:13+00:00",
+      "cited": false,
+      "data": {
+        "origin_service": "product-catalog",
+        "operation": "oteldemo.ProductCatalogService/GetProduct",
+        "count": 6,
+        "message": "Error: product OLJCESPC7Z could not be loaded: query returned an invalid row",
+        "chain": [
+          "frontend",
+          "product-catalog"
+        ],
+        "example_trace": "6c2d0000000000000000000000000000",
+        "lookback_s": 300
+      }
+    },
+    {
+      "id": "E6",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "observation": "6/6 failing product-catalog spans have app.product.id=OLJCESPC7Z",
+      "ts": "2026-11-08T10:02:13+00:00",
+      "cited": false,
+      "data": {
+        "service": "product-catalog",
+        "attribute": "app.product.id",
+        "value": "OLJCESPC7Z",
+        "share": 1.0,
+        "count": 6,
+        "evidence": "E6"
+      }
+    },
+    {
+      "id": "E7",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "observation": "all 1 containers running and healthy; none (re)started in the last 600s",
+      "ts": "2026-11-08T10:02:24+00:00",
+      "cited": false,
+      "data": {
+        "healthy": [
+          "astronomy-db"
+        ]
+      }
+    },
+    {
+      "id": "E8",
+      "tool": "search_logs",
+      "kind": "log",
+      "observation": "product-catalog logs (docker logs, 600s): 6x ERROR '{\"level\": \"error\", \"msg\": \"failed to get product OLJCESPC7Z: query returned an invalid row\"}' first 2026-10-23T07:17:30.000000000Z last 2026-10-23T07:19:10.000000000Z",
+      "ts": "2026-11-08T10:02:28+00:00",
+      "cited": false,
+      "data": {
+        "service": "product-catalog",
+        "log_source": "docker logs",
+        "level": "error",
+        "pattern": "failed to get product OLJCESPC<n>Z: query returned an invalid row",
+        "count": 6,
+        "first_seen": "2026-10-23T07:17:30.000000000Z",
+        "last_seen": "2026-10-23T07:19:10.000000000Z",
+        "example": "{\"level\": \"error\", \"msg\": \"failed to get product OLJCESPC7Z: query returned an invalid row\"}"
+      }
+    },
+    {
+      "id": "E9",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "observation": "all 1 containers running and healthy; none (re)started in the last 900s",
+      "ts": "2026-11-08T10:02:44+00:00",
+      "cited": false,
+      "data": {
+        "healthy": [
+          "product-catalog"
+        ]
+      }
+    },
+    {
+      "id": "E10",
+      "tool": "search_logs",
+      "kind": "log",
+      "observation": "astronomy-db: no error+ log lines containing 'OLJCESPC7Z' in last 900s (docker logs)",
+      "ts": "2026-11-08T10:03:16+00:00",
+      "cited": false,
+      "data": {
+        "service": "astronomy-db",
+        "since_s": 900,
+        "level": "error",
+        "contains": "OLJCESPC7Z",
+        "log_source": "docker logs"
+      }
+    },
+    {
+      "id": "E11",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "observation": "no error traces for service astronomy-db in last 300s",
+      "ts": "2026-11-08T10:03:53+00:00",
+      "cited": false,
+      "data": {
+        "service": "astronomy-db",
+        "lookback_s": 300
+      }
+    }
+  ],
+  "diagnosis": {
+    "status": "escalate",
+    "headline": "Investigation ended without a diagnosis (agent outcome: llm_error).",
+    "confidence": 0.0,
+    "root_causes": [],
+    "suspected_origin": {
+      "service": "unknown",
+      "reasoning": "agent outcome: llm_error",
+      "confidence": 0.0,
+      "evidence": []
+    },
+    "affected_services": [],
+    "anomalies": [],
+    "ruled_out": [],
+    "open_questions": [],
+    "prevention": [
+      "Close the telemetry gaps that kept this diagnosis uncertain (logs, traces, metrics).",
+      "Write a runbook entry once the cause is known."
+    ],
+    "proposed_action": {
+      "action": "escalate_to_human",
+      "target": "unknown",
+      "fault_class": "unknown",
+      "reason": "Confidence below threshold or no root cause with valid evidence; a human must decide.",
+      "next_steps": [
+        "Review the cited evidence and the open questions.",
+        "Collect more telemetry: traces of the alerting service, logs, container state over time."
+      ]
+    },
+    "validation": {
+      "dropped_evidence_ids": [],
+      "notes": [
+        "no root cause with valid evidence; escalated to human"
+      ],
+      "overrides": []
+    }
+  },
+  "remediation_plan": {
+    "steps": []
+  },
+  "escalations": [
+    {
+      "target": "unknown",
+      "fault_class": "unknown",
+      "reason": "Confidence below threshold or no root cause with valid evidence; a human must decide.",
+      "next_steps": [
+        "Review the cited evidence and the open questions.",
+        "Collect more telemetry: traces of the alerting service, logs, container state over time."
+      ],
+      "source": "no allowlisted fix"
+    }
+  ],
+  "manual_verifications": [],
+  "outcome": {
+    "status": "escalated",
+    "summary": "investigation ended without a diagnosis (llm_error); escalated to a human",
+    "prevention": [
+      "Close the telemetry gaps that kept this diagnosis uncertain (logs, traces, metrics).",
+      "Write a runbook entry once the cause is known."
+    ],
+    "investigation_outcome": "llm_error",
+    "plan_outcome": null
+  },
+  "review": null,
+  "notifications": [
+    {
+      "at": "2026-11-08T10:04:43+00:00",
+      "event": "low_confidence",
+      "channel": "log",
+      "recipients": [
+        "C:\\Placement\\hackathon\\runs\\notifications.jsonl"
+      ],
+      "status": "logged"
+    }
+  ],
+  "accounting": {
+    "tokens_in": 29521,
+    "tokens_out": 1153,
+    "estimated_cost_usd": null,
+    "reviewer_tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "price_basis": "USD per 1M tokens, Anthropic first-party rates",
+    "phases": {
+      "investigation_s": 174.3,
+      "remediation_s": -0.0,
+      "verify_s": 0,
+      "total_s": 174.4
+    },
+    "steps_used": 7,
+    "step_budget": 10
+  },
+  "report_paths": {
+    "report": "C:\\Placement\\hackathon\\runs\\20261108-153148-test.report.md",
+    "actions_log": "C:\\Placement\\hackathon\\runs\\actions.jsonl",
+    "action_log_lines": []
+  },
+  "postmortem": {
+    "draft": true,
+    "times": {
+      "fault_started": "2026-10-23T07:17:30+00:00",
+      "fault_started_evidence": "E8",
+      "fault_started_what": "first error log line in product-catalog",
+      "detected": "2026-10-23T07:20:00+00:00",
+      "investigation_started": "2026-11-08T10:01:48+00:00",
+      "diagnosed": null,
+      "approved": null,
+      "executed": null,
+      "recovery_verified": null,
+      "ended": "2026-11-08T10:04:42+00:00"
+    },
+    "durations": {
+      "time_to_detect_s": 150.0,
+      "time_to_diagnose_s": null,
+      "time_to_recover_s": null,
+      "total_s": 1392432.0
+    },
+    "impact": {
+      "services": [],
+      "signals": [
+        {
+          "text": "frontend: error rate 3.4% (baseline 0.0%); client-call error rate 2.0% (baseline 0.0%)",
+          "evidence": [
+            "E1"
+          ]
+        },
+        {
+          "text": "product-catalog: error rate 9.7% (baseline 0.0%)",
+          "evidence": [
+            "E2"
+          ]
+        },
+        {
+          "text": "frontend-proxy: error rate 3.2% (baseline 0.0%)",
+          "evidence": [
+            "E3"
+          ]
+        },
+        {
+          "text": "recommendation: client-call error rate 8.0% (baseline 0.0%)",
+          "evidence": [
+            "E4"
+          ]
+        }
+      ],
+      "failed_requests": [
+        {
+          "text": "6 failing trace(s) originating in product-catalog 'oteldemo.ProductCatalogService/GetProduct' (sampled traces, not all requests)",
+          "evidence": [
+            "E5"
+          ]
+        },
+        {
+          "text": "6 error log line(s) in product-catalog",
+          "evidence": [
+            "E8"
+          ]
+        }
+      ],
+      "failed_requests_total": null,
+      "note": "Failed-request numbers are counts from sampled traces and log lines in the record; the total number of failed requests is unknown."
+    },
+    "five_whys": [
+      {
+        "n": 1,
+        "why": "Why did this incident happen?",
+        "because": "unknown, needs human investigation",
+        "evidence": [],
+        "source": "unknown"
+      }
+    ],
+    "went_well": [],
+    "could_be_better": [
+      "The investigation ended without a diagnosis (llm_error).",
+      "Detection took 2.5 minutes after the first evidence of the fault.",
+      "The reviewer did not run (ONCALL_REVIEWER off)."
+    ],
+    "action_items": [
+      {
+        "action": "Close the telemetry gaps that kept this diagnosis uncertain (logs, traces, metrics).",
+        "type": "prevent",
+        "priority": "medium",
+        "owner": "to assign"
+      },
+      {
+        "action": "Write a runbook entry once the cause is known.",
+        "type": "mitigate",
+        "priority": "medium",
+        "owner": "to assign"
+      }
+    ]
+  }
+}

@@ -1,0 +1,1145 @@
+{
+  "schema_version": 2,
+  "status": "complete",
+  "metadata": {
+    "run_id": "20261108-153656",
+    "incident_id": "INC-APP-PAYMENT",
+    "started_at": "2026-11-08T10:06:56+00:00",
+    "ended_at": "2026-11-08T10:08:33+00:00",
+    "updated_at": "2026-11-08T10:08:33+00:00",
+    "mode": "test",
+    "source_detail": "fixtures tests/fixtures/payment_app_error",
+    "provider": "groq",
+    "model": "openai/gpt-oss-120b",
+    "git": {
+      "commit": "9763df448022e556a6ea367156aec7ce7aff56d4",
+      "dirty": true
+    }
+  },
+  "alert": {
+    "incident_id": "INC-APP-PAYMENT",
+    "detected_at": "2026-10-23T07:20:00Z",
+    "alerting_services": [
+      "checkout"
+    ],
+    "trigger": [
+      {
+        "service": "checkout",
+        "signal": "error_rate",
+        "value": 0.93,
+        "threshold": 0.05,
+        "window": "3m"
+      }
+    ],
+    "note": "alerting service is a symptom, not necessarily the root cause"
+  },
+  "investigation": {
+    "steps": [
+      {
+        "step": 1,
+        "tool": "get_service_health",
+        "arguments": {
+          "window": "5m"
+        },
+        "result": {
+          "window_s": 300,
+          "baseline": "loaded",
+          "flagged": [
+            {
+              "service": "checkout",
+              "rps": 0.41,
+              "error_rate": 0.9268,
+              "client_error_rate": 0.148,
+              "p95_ms": 260.0,
+              "baseline": {
+                "rps": 0.41,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 260
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 1.0,
+              "flags": [
+                "errors",
+                "client_call_errors"
+              ],
+              "criticality": "critical",
+              "evidence": "E1"
+            },
+            {
+              "service": "payment",
+              "rps": 0.4,
+              "error_rate": 0.925,
+              "client_error_rate": 0.0,
+              "p95_ms": 35.0,
+              "baseline": {
+                "rps": 0.4,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 35
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 1.0,
+              "flags": [
+                "errors"
+              ],
+              "criticality": "critical",
+              "evidence": "E2"
+            },
+            {
+              "service": "email",
+              "rps": 0.03,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 40.0,
+              "baseline": {
+                "rps": 0.38,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 40
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 0.08,
+              "flags": [
+                "traffic_drop",
+                "silent"
+              ],
+              "criticality": "medium",
+              "evidence": "E3"
+            },
+            {
+              "service": "frontend",
+              "rps": 9.0,
+              "error_rate": 0.0422,
+              "client_error_rate": 0.025,
+              "p95_ms": 170.0,
+              "baseline": {
+                "rps": 9.0,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 170
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 1.0,
+              "flags": [
+                "errors",
+                "client_call_errors"
+              ],
+              "criticality": "critical",
+              "evidence": "E4"
+            },
+            {
+              "service": "frontend-proxy",
+              "rps": 9.6,
+              "error_rate": 0.0396,
+              "client_error_rate": 0.0,
+              "p95_ms": 185.0,
+              "baseline": {
+                "rps": 9.6,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 185
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 1.0,
+              "flags": [
+                "errors"
+              ],
+              "criticality": "critical",
+              "evidence": "E5"
+            }
+          ],
+          "healthy": [
+            "product-catalog",
+            "currency",
+            "shipping",
+            "cart",
+            "ad",
+            "recommendation",
+            "quote",
+            "image-provider"
+          ]
+        },
+        "evidence_ids": [
+          "E1",
+          "E2",
+          "E3",
+          "E4",
+          "E5"
+        ],
+        "seconds": 0.01,
+        "at_s": 1.0,
+        "error": null
+      },
+      {
+        "step": 2,
+        "tool": "get_deploy_history",
+        "arguments": {
+          "lookback": "5m",
+          "names": [
+            "payment"
+          ]
+        },
+        "result": {
+          "lookback_s": 300,
+          "containers": 1,
+          "stats_available": true,
+          "changed_or_unhealthy": [],
+          "healthy": [
+            "payment"
+          ],
+          "top_memory": [
+            {
+              "name": "payment",
+              "mem_pct": 30.0
+            }
+          ],
+          "organiser_history": "not configured",
+          "our_actions": [
+            {
+              "ts": "2026-10-24T10:39:07+00:00",
+              "run_id": "20261024-160811",
+              "event": "dry_run",
+              "step": 1,
+              "action": "restart_service",
+              "target": "payment",
+              "request": {
+                "method": "POST",
+                "url": "http://127.0.0.1:8099/actions/restart_service",
+                "json": {
+                  "service": "payment"
+                }
+              },
+              "response": "dry run: nothing sent",
+              "approval": {
+                "status": "approved",
+                "approved_by": "human",
+                "decision_at": "2026-10-24T10:39:07+00:00",
+                "notes": "explicitly approved by the on-call engineer",
+                "risk": "Low. Payment is down already, so a restart cannot make it worse. If something keeps stopping it, it may exit again, so watch restart_count and exit codes. Orders that failed during the outage will not be retried."
+              }
+            },
+            {
+              "ts": "2026-10-24T10:55:27+00:00",
+              "run_id": "20261024-161009",
+              "event": "refused",
+              "step": 1,
+              "action": "restart_service",
+              "target": "payment",
+              "reason": "not approved (status rejected)",
+              "approval": {
+                "status": "rejected",
+                "decision_at": "2026-10-24T10:55:27+00:00",
+                "notes": "cancelled or interrupted",
+                "risk": "Low. The container is already down, so a restart cannot make things worse. If something external stopped it again (a payment restart was also needed at 05:28 today), it may fail again, so watch it after the restart."
+              }
+            }
+          ],
+          "evidence": "E6",
+          "truncated": true
+        },
+        "evidence_ids": [
+          "E6"
+        ],
+        "seconds": 0.07,
+        "at_s": 1.6,
+        "error": null
+      },
+      {
+        "step": 3,
+        "tool": "find_error_traces",
+        "arguments": {
+          "errors_only": true,
+          "limit": 20,
+          "lookback": "5m",
+          "service": "checkout"
+        },
+        "result": {
+          "service": "checkout",
+          "lookback_s": 300,
+          "errors_only": true,
+          "traces_examined": 6,
+          "origins": [
+            {
+              "origin_service": "payment",
+              "operation": "oteldemo.PaymentService/Charge",
+              "count": 6,
+              "message": "Payment request failed. Invalid token. app.loyalty.level=gold",
+              "chain": [
+                "frontend",
+                "checkout",
+                "payment"
+              ],
+              "example_trace": "5a1b0000000000000000000000000000",
+              "evidence": "E7"
+            }
+          ],
+          "attribute_clusters": [
+            {
+              "service": "payment",
+              "attribute": "app.payment.card_type",
+              "value": "visa",
+              "share": 1.0,
+              "count": 6,
+              "evidence": "E8"
+            },
+            {
+              "service": "payment",
+              "attribute": "app.payment.charged",
+              "value": "False",
+              "share": 1.0,
+              "count": 6,
+              "evidence": "E9"
+            }
+          ],
+          "edges": [
+            {
+              "edge": "checkout->payment",
+              "calls": 6,
+              "avg_client_ms": 9.0,
+              "avg_server_ms": 7.6,
+              "avg_gap_ms": 1.4
+            }
+          ],
+          "slowest": [
+            {
+              "trace_id": "5a1b0000000000000000000000000000",
+              "root": "frontend POST /api/checkout",
+              "duration_ms": 61.0
+            },
+            {
+              "trace_id": "5a1b0000000000000000000000000001",
+              "root": "frontend POST /api/checkout",
+              "duration_ms": 61.0
+            },
+            {
+              "trace_id": "5a1b0000000000000000000000000002",
+              "root": "frontend POST /api/checkout",
+              "duration_ms": 61.0
+            }
+          ]
+        },
+        "evidence_ids": [
+          "E7",
+          "E8",
+          "E9"
+        ],
+        "seconds": 0.02,
+        "at_s": 2.7,
+        "error": null
+      },
+      {
+        "step": 4,
+        "tool": "search_logs",
+        "arguments": {
+          "contains": "Invalid token",
+          "level": "error",
+          "services": [
+            "payment"
+          ],
+          "since": "5m"
+        },
+        "result": {
+          "since_s": 300,
+          "min_level": "error",
+          "contains": "Invalid token",
+          "services": {
+            "payment": {
+              "log_source": "docker logs",
+              "matching_lines": 6
+            }
+          },
+          "patterns": [
+            {
+              "service": "payment",
+              "level": "error",
+              "count": 6,
+              "first_seen": "2026-10-23T07:18:00.009999990Z",
+              "last_seen": "2026-10-23T07:19:15.009999990Z",
+              "example": "{\"level\": 50, \"time\": 1792739880010, \"pid\": 1, \"hostname\": \"payment\", \"msg\": \"Payment request failed. Invalid token. app.loyalty.level=gold\", \"err\": {\"type\": \"Error\", \"message\": \"Payment request failed. Invalid token. app.loyalty.level=gold\"}}",
+              "evidence": "E10"
+            }
+          ]
+        },
+        "evidence_ids": [
+          "E10"
+        ],
+        "seconds": 0.0,
+        "at_s": 32.7,
+        "error": null
+      }
+    ],
+    "outcome": "submitted",
+    "error": null,
+    "model_turns": 5,
+    "submitted_at_s": 93.5
+  },
+  "evidence": [
+    {
+      "id": "E1",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "checkout [errors,client_call_errors] over 300s: error_rate 92.7% (baseline 0.0%) client_error_rate 14.8% (baseline 0.0%) p95 260.0ms (baseline 260ms) rps 0.41 (baseline 0.41)",
+      "ts": "2026-11-08T10:06:57+00:00",
+      "cited": true,
+      "data": {
+        "row": {
+          "service": "checkout",
+          "rps": 0.41,
+          "error_rate": 0.9268,
+          "client_error_rate": 0.148,
+          "p95_ms": 260.0,
+          "baseline": {
+            "rps": 0.41,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 260
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 1.0,
+          "flags": [
+            "errors",
+            "client_call_errors"
+          ],
+          "criticality": "critical",
+          "evidence": "E1"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E2",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "payment [errors] over 300s: error_rate 92.5% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 35.0ms (baseline 35ms) rps 0.4 (baseline 0.4)",
+      "ts": "2026-11-08T10:06:57+00:00",
+      "cited": true,
+      "data": {
+        "row": {
+          "service": "payment",
+          "rps": 0.4,
+          "error_rate": 0.925,
+          "client_error_rate": 0.0,
+          "p95_ms": 35.0,
+          "baseline": {
+            "rps": 0.4,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 35
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 1.0,
+          "flags": [
+            "errors"
+          ],
+          "criticality": "critical",
+          "evidence": "E2"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E3",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "email [traffic_drop,silent] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 40.0ms (baseline 40ms) rps 0.03 (baseline 0.38)",
+      "ts": "2026-11-08T10:06:57+00:00",
+      "cited": true,
+      "data": {
+        "row": {
+          "service": "email",
+          "rps": 0.03,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 40.0,
+          "baseline": {
+            "rps": 0.38,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 40
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 0.08,
+          "flags": [
+            "traffic_drop",
+            "silent"
+          ],
+          "criticality": "medium",
+          "evidence": "E3"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E4",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "frontend [errors,client_call_errors] over 300s: error_rate 4.2% (baseline 0.0%) client_error_rate 2.5% (baseline 0.0%) p95 170.0ms (baseline 170ms) rps 9.0 (baseline 9.0)",
+      "ts": "2026-11-08T10:06:57+00:00",
+      "cited": true,
+      "data": {
+        "row": {
+          "service": "frontend",
+          "rps": 9.0,
+          "error_rate": 0.0422,
+          "client_error_rate": 0.025,
+          "p95_ms": 170.0,
+          "baseline": {
+            "rps": 9.0,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 170
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 1.0,
+          "flags": [
+            "errors",
+            "client_call_errors"
+          ],
+          "criticality": "critical",
+          "evidence": "E4"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E5",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "frontend-proxy [errors] over 300s: error_rate 4.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 185.0ms (baseline 185ms) rps 9.6 (baseline 9.6)",
+      "ts": "2026-11-08T10:06:57+00:00",
+      "cited": true,
+      "data": {
+        "row": {
+          "service": "frontend-proxy",
+          "rps": 9.6,
+          "error_rate": 0.0396,
+          "client_error_rate": 0.0,
+          "p95_ms": 185.0,
+          "baseline": {
+            "rps": 9.6,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 185
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 1.0,
+          "flags": [
+            "errors"
+          ],
+          "criticality": "critical",
+          "evidence": "E5"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E6",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "observation": "all 1 containers running and healthy; none (re)started in the last 300s",
+      "ts": "2026-11-08T10:06:57+00:00",
+      "cited": true,
+      "data": {
+        "healthy": [
+          "payment"
+        ]
+      }
+    },
+    {
+      "id": "E7",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "observation": "6/6 traces: deepest failing span is payment 'oteldemo.PaymentService/Charge' msg='Payment request failed. Invalid token. app.loyalty.level=gold' chain=frontend>checkout>payment e.g. trace 5a1b0000000000000000000000000000",
+      "ts": "2026-11-08T10:06:58+00:00",
+      "cited": true,
+      "data": {
+        "origin_service": "payment",
+        "operation": "oteldemo.PaymentService/Charge",
+        "count": 6,
+        "message": "Payment request failed. Invalid token. app.loyalty.level=gold",
+        "chain": [
+          "frontend",
+          "checkout",
+          "payment"
+        ],
+        "example_trace": "5a1b0000000000000000000000000000",
+        "lookback_s": 300
+      }
+    },
+    {
+      "id": "E8",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "observation": "6/6 failing payment spans have app.payment.card_type=visa",
+      "ts": "2026-11-08T10:06:58+00:00",
+      "cited": true,
+      "data": {
+        "service": "payment",
+        "attribute": "app.payment.card_type",
+        "value": "visa",
+        "share": 1.0,
+        "count": 6,
+        "evidence": "E8"
+      }
+    },
+    {
+      "id": "E9",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "observation": "6/6 failing payment spans have app.payment.charged=False",
+      "ts": "2026-11-08T10:06:58+00:00",
+      "cited": true,
+      "data": {
+        "service": "payment",
+        "attribute": "app.payment.charged",
+        "value": "False",
+        "share": 1.0,
+        "count": 6,
+        "evidence": "E9"
+      }
+    },
+    {
+      "id": "E10",
+      "tool": "search_logs",
+      "kind": "log",
+      "observation": "payment logs (docker logs, 300s): 6x ERROR '{\"level\": 50, \"time\": 1792739880010, \"pid\": 1, \"hostname\": \"payment\", \"msg\": \"Payment request failed. Invalid token. app.loyalty.level=gold\", \"err\": {\"type\": \"E' first 2026-10-23T07:18:00.009999990Z last 2026-10-23T07:19:15.009999990Z",
+      "ts": "2026-11-08T10:07:28+00:00",
+      "cited": true,
+      "data": {
+        "service": "payment",
+        "log_source": "docker logs",
+        "level": "error",
+        "pattern": "Payment request failed. Invalid token. app.loyalty.level=gold",
+        "count": 6,
+        "first_seen": "2026-10-23T07:18:00.009999990Z",
+        "last_seen": "2026-10-23T07:19:15.009999990Z",
+        "example": "{\"level\": 50, \"time\": 1792739880010, \"pid\": 1, \"hostname\": \"payment\", \"msg\": \"Payment request failed. Invalid token. app.loyalty.level=gold\", \"err\": {\"type\": \"Error\", \"message\": \"Payment request failed. Invalid token. app.loyalty.level=gold\"}}"
+      }
+    }
+  ],
+  "diagnosis": {
+    "status": "diagnosed",
+    "headline": "High error rates in checkout and payment services caused by Invalid token errors from payment",
+    "confidence": 0.77,
+    "root_causes": [
+      {
+        "cause": "Payment service returns Invalid token errors for all checkout requests, causing downstream failures.",
+        "component": "payment",
+        "confidence": 0.77,
+        "evidence": [
+          "E7",
+          "E8",
+          "E9",
+          "E10"
+        ],
+        "fault_class": "service_error",
+        "status": "active",
+        "evidence_detail": {
+          "E7": "6/6 traces: deepest failing span is payment 'oteldemo.PaymentService/Charge' msg='Payment request failed. Invalid token. app.loyalty.level=gold' chain=frontend>checkout>payment e.g. trace 5a1b0000000000000000000000000000",
+          "E8": "6/6 failing payment spans have app.payment.card_type=visa",
+          "E9": "6/6 failing payment spans have app.payment.charged=False",
+          "E10": "payment logs (docker logs, 300s): 6x ERROR '{\"level\": 50, \"time\": 1792739880010, \"pid\": 1, \"hostname\": \"payment\", \"msg\": \"Payment request failed. Invalid token. app.loyalty.level=gold\", \"err\": {\"type\": \"E' first 2026-10-23T07:18:00.009999990Z last 2026-10-23T07:19:15.009999990Z"
+        }
+      }
+    ],
+    "suspected_origin": {
+      "confidence": 0.97,
+      "evidence": [
+        "E7"
+      ],
+      "reasoning": "Error traces show payment as the deepest failing span with Invalid token messages.",
+      "service": "payment",
+      "evidence_detail": {
+        "E7": "6/6 traces: deepest failing span is payment 'oteldemo.PaymentService/Charge' msg='Payment request failed. Invalid token. app.loyalty.level=gold' chain=frontend>checkout>payment e.g. trace 5a1b0000000000000000000000000000"
+      }
+    },
+    "affected_services": [
+      {
+        "evidence": [
+          "E1"
+        ],
+        "impact": "checkout API returns errors to users",
+        "service": "checkout"
+      },
+      {
+        "evidence": [
+          "E2"
+        ],
+        "impact": "payment service errors propagate to checkout",
+        "service": "payment"
+      },
+      {
+        "evidence": [
+          "E4"
+        ],
+        "impact": "frontend returns 5xx errors to users",
+        "service": "frontend"
+      },
+      {
+        "evidence": [
+          "E5"
+        ],
+        "impact": "frontend-proxy returns errors to callers",
+        "service": "frontend-proxy"
+      },
+      {
+        "evidence": [
+          "E3"
+        ],
+        "impact": "email traffic dropped, no emails sent",
+        "service": "email"
+      }
+    ],
+    "anomalies": [
+      {
+        "baseline": "0.0",
+        "evidence": [
+          "E1"
+        ],
+        "observed": "0.9268",
+        "service": "checkout",
+        "signal": "error_rate"
+      },
+      {
+        "baseline": "0.0",
+        "evidence": [
+          "E1"
+        ],
+        "observed": "0.148",
+        "service": "checkout",
+        "signal": "client_error_rate"
+      },
+      {
+        "baseline": "0.0",
+        "evidence": [
+          "E2"
+        ],
+        "observed": "0.925",
+        "service": "payment",
+        "signal": "error_rate"
+      },
+      {
+        "baseline": "0.0",
+        "evidence": [
+          "E4"
+        ],
+        "observed": "0.0422",
+        "service": "frontend",
+        "signal": "error_rate"
+      },
+      {
+        "baseline": "0.0",
+        "evidence": [
+          "E4"
+        ],
+        "observed": "0.025",
+        "service": "frontend",
+        "signal": "client_error_rate"
+      },
+      {
+        "baseline": "0.0",
+        "evidence": [
+          "E5"
+        ],
+        "observed": "0.0396",
+        "service": "frontend-proxy",
+        "signal": "error_rate"
+      },
+      {
+        "baseline": "0.38",
+        "evidence": [
+          "E3"
+        ],
+        "observed": "0.03",
+        "service": "email",
+        "signal": "traffic_drop"
+      }
+    ],
+    "ruled_out": [
+      {
+        "evidence": [
+          "E6"
+        ],
+        "reason": "Container is running and healthy; no restart or OOM events observed.",
+        "service": "payment"
+      }
+    ],
+    "open_questions": [
+      "Is the token validation service downstream of payment failing or misconfigured?",
+      "Why are all payment requests receiving Invalid token errors?"
+    ],
+    "prevention": [
+      "Fix the token validation configuration or upstream auth service causing Invalid token errors; add an alert on payment error_rate > 0.1; implement a circuit breaker to isolate payment failures."
+    ],
+    "proposed_action": {
+      "action": "escalate_to_human",
+      "target": "payment",
+      "fault_class": "service_error",
+      "reason": "payment [service_error]: flag toggling is disabled until the rules are confirmed; escalating with findings.",
+      "next_steps": [
+        "Read the failing operation's error message and the cited traces and logs for the cause.",
+        "If a failure switch is suspected, a human can toggle it through the Action API (automatic flag toggling is disabled)."
+      ]
+    },
+    "validation": {
+      "dropped_evidence_ids": [],
+      "notes": [
+        "reviewer doubt: confidence 0.97 -> 0.77"
+      ],
+      "overrides": []
+    }
+  },
+  "remediation_plan": {
+    "steps": [],
+    "resolved": [],
+    "client": "dry-run",
+    "live": false,
+    "not_run": [],
+    "stopped_reason": null,
+    "outcome": "escalated",
+    "escalate": true
+  },
+  "escalations": [
+    {
+      "target": "payment",
+      "fault_class": "service_error",
+      "reason": "payment [service_error]: flag toggling is disabled until the rules are confirmed; escalating with findings.",
+      "next_steps": [
+        "Read the failing operation's error message and the cited traces and logs for the cause.",
+        "If a failure switch is suspected, a human can toggle it through the Action API (automatic flag toggling is disabled)."
+      ],
+      "source": "no allowlisted fix"
+    }
+  ],
+  "manual_verifications": [],
+  "outcome": {
+    "status": "escalated",
+    "summary": "payment [service_error] diagnosed at 0.77; no allowlisted action, escalated to a human",
+    "prevention": [
+      "Fix the token validation configuration or upstream auth service causing Invalid token errors; add an alert on payment error_rate > 0.1; implement a circuit breaker to isolate payment failures."
+    ],
+    "investigation_outcome": "submitted",
+    "plan_outcome": "escalated"
+  },
+  "review": {
+    "status": "done",
+    "reason": null,
+    "verdict": "doubt",
+    "objections": [
+      {
+        "text": "Checkout service shows a high client_error_rate (14.8%) in the same window, indicating it is returning client\u2011side errors to its callers. This suggests checkout could be sending malformed or invalid authentication tokens to payment, making checkout a possible origin rather than payment being the sole root cause.",
+        "evidence": [
+          "E1"
+        ]
+      },
+      {
+        "text": "E7 only reports the *deepest* failing span (payment) in the trace. The deepest span being payment does not prove that payment generated the error; it could simply be the component that observed an upstream Invalid token condition. Therefore the trace does not definitively establish payment as the origin.",
+        "evidence": [
+          "E7"
+        ]
+      },
+      {
+        "text": "While E8\u2011E10 confirm that payment logs and spans contain \"Invalid token\" messages, they provide no insight into why the token is invalid. The evidence does not rule out an upstream token\u2011generation or authentication service failure, leaving an alternative root cause unexamined.",
+        "evidence": [
+          "E8",
+          "E9",
+          "E10"
+        ]
+      }
+    ],
+    "dropped_objections": 0,
+    "alternative_root_cause": {
+      "component": "checkout or upstream token provider",
+      "fault_class": "client_error",
+      "reason": "High client_error_rate in checkout and the fact that traces only show payment as the deepest failing span leave open the possibility that an upstream component is supplying an invalid token, making payment a victim rather than the origin.",
+      "evidence": [
+        "E1",
+        "E7"
+      ],
+      "note": "shown to the human only; never acted on"
+    },
+    "adjustment": -0.2,
+    "confidence_before": 0.97,
+    "confidence_after": 0.77,
+    "escalated": false,
+    "tokens_in": 1546,
+    "tokens_out": 1351,
+    "seconds": 3.26
+  },
+  "notifications": [
+    {
+      "at": "2026-11-08T10:08:33+00:00",
+      "event": "no_allowlisted_fix",
+      "channel": "log",
+      "recipients": [
+        "C:\\Placement\\hackathon\\runs\\notifications.jsonl"
+      ],
+      "status": "logged"
+    }
+  ],
+  "accounting": {
+    "tokens_in": 21440,
+    "tokens_out": 3815,
+    "estimated_cost_usd": null,
+    "reviewer_tokens": {
+      "in": 1546,
+      "out": 1351
+    },
+    "price_basis": "USD per 1M tokens, Anthropic first-party rates",
+    "phases": {
+      "investigation_s": 93.5,
+      "remediation_s": 3.3,
+      "verify_s": 0,
+      "total_s": 97.0
+    },
+    "steps_used": 5,
+    "step_budget": 10
+  },
+  "report_paths": {
+    "report": "C:\\Placement\\hackathon\\runs\\20261108-153656-test.report.md",
+    "actions_log": "C:\\Placement\\hackathon\\runs\\actions.jsonl",
+    "action_log_lines": []
+  },
+  "postmortem": {
+    "draft": true,
+    "times": {
+      "fault_started": "2026-10-23T07:18:00+00:00",
+      "fault_started_evidence": "E10",
+      "fault_started_what": "first error log line in payment",
+      "detected": "2026-10-23T07:20:00+00:00",
+      "investigation_started": "2026-11-08T10:06:56+00:00",
+      "diagnosed": "2026-11-08T10:08:29+00:00",
+      "approved": null,
+      "executed": null,
+      "recovery_verified": null,
+      "ended": "2026-11-08T10:08:33+00:00"
+    },
+    "durations": {
+      "time_to_detect_s": 120.0,
+      "time_to_diagnose_s": 1392509.0,
+      "time_to_recover_s": null,
+      "total_s": 1392633.0
+    },
+    "impact": {
+      "services": [
+        {
+          "service": "checkout",
+          "impact": "checkout API returns errors to users",
+          "evidence": [
+            "E1"
+          ]
+        },
+        {
+          "service": "payment",
+          "impact": "payment service errors propagate to checkout",
+          "evidence": [
+            "E2"
+          ]
+        },
+        {
+          "service": "frontend",
+          "impact": "frontend returns 5xx errors to users",
+          "evidence": [
+            "E4"
+          ]
+        },
+        {
+          "service": "frontend-proxy",
+          "impact": "frontend-proxy returns errors to callers",
+          "evidence": [
+            "E5"
+          ]
+        },
+        {
+          "service": "email",
+          "impact": "email traffic dropped, no emails sent",
+          "evidence": [
+            "E3"
+          ]
+        }
+      ],
+      "signals": [
+        {
+          "text": "checkout error_rate: 0.9268 (baseline 0.0)",
+          "evidence": [
+            "E1"
+          ]
+        },
+        {
+          "text": "checkout client_error_rate: 0.148 (baseline 0.0)",
+          "evidence": [
+            "E1"
+          ]
+        },
+        {
+          "text": "payment error_rate: 0.925 (baseline 0.0)",
+          "evidence": [
+            "E2"
+          ]
+        },
+        {
+          "text": "frontend error_rate: 0.0422 (baseline 0.0)",
+          "evidence": [
+            "E4"
+          ]
+        },
+        {
+          "text": "frontend client_error_rate: 0.025 (baseline 0.0)",
+          "evidence": [
+            "E4"
+          ]
+        },
+        {
+          "text": "frontend-proxy error_rate: 0.0396 (baseline 0.0)",
+          "evidence": [
+            "E5"
+          ]
+        },
+        {
+          "text": "email traffic_drop: 0.03 (baseline 0.38)",
+          "evidence": [
+            "E3"
+          ]
+        },
+        {
+          "text": "checkout: error rate 92.7% (baseline 0.0%); client-call error rate 14.8% (baseline 0.0%)",
+          "evidence": [
+            "E1"
+          ]
+        },
+        {
+          "text": "payment: error rate 92.5% (baseline 0.0%)",
+          "evidence": [
+            "E2"
+          ]
+        },
+        {
+          "text": "email: traffic 0.03 rps against a baseline of 0.38 rps (8%)",
+          "evidence": [
+            "E3"
+          ]
+        },
+        {
+          "text": "frontend: error rate 4.2% (baseline 0.0%); client-call error rate 2.5% (baseline 0.0%)",
+          "evidence": [
+            "E4"
+          ]
+        },
+        {
+          "text": "frontend-proxy: error rate 4.0% (baseline 0.0%)",
+          "evidence": [
+            "E5"
+          ]
+        }
+      ],
+      "failed_requests": [
+        {
+          "text": "6 failing trace(s) originating in payment 'oteldemo.PaymentService/Charge' (sampled traces, not all requests)",
+          "evidence": [
+            "E7"
+          ]
+        },
+        {
+          "text": "6 error log line(s) in payment",
+          "evidence": [
+            "E10"
+          ]
+        }
+      ],
+      "failed_requests_total": null,
+      "note": "Failed-request numbers are counts from sampled traces and log lines in the record; the total number of failed requests is unknown."
+    },
+    "five_whys": [
+      {
+        "why": "Why did the alert fire on checkout?",
+        "because": "checkout: checkout API returns errors to users",
+        "evidence": [
+          "E1"
+        ],
+        "source": "derived",
+        "n": 1
+      },
+      {
+        "why": "Why did checkout fail?",
+        "because": "payment [service_error]: Payment service returns Invalid token errors for all checkout requests, causing downstream failures.",
+        "evidence": [
+          "E7",
+          "E8",
+          "E9",
+          "E10"
+        ],
+        "source": "derived",
+        "n": 2
+      },
+      {
+        "why": "Why did payment fail that way?",
+        "because": "payment logs (docker logs, 300s): 6x ERROR '{\"level\": 50, \"time\": 1792739880010, \"pid\": 1, \"hostname\": \"payment\", \"msg\": \"Payment request failed. Invalid token. app.loyalty.level=gold\", \"err\": {\"type\": \"E' first 2026-10-23T07:18:00.00999999",
+        "evidence": [
+          "E10"
+        ],
+        "source": "derived",
+        "n": 3
+      },
+      {
+        "n": 4,
+        "why": "Why did that happen?",
+        "because": "unknown, needs human investigation",
+        "evidence": [],
+        "source": "unknown"
+      }
+    ],
+    "went_well": [
+      "Root cause found in 4 tool call(s), diagnosed 23208.5 minutes after detection.",
+      "The diagnosis cites 10 evidence item(s) from real telemetry.",
+      "Detection took 120 s after the first evidence of the fault."
+    ],
+    "could_be_better": [
+      "The reviewer said doubt (confidence 0.97 -> 0.77).",
+      "No allowlisted action fixes service_error on payment; escalated to a human."
+    ],
+    "action_items": [
+      {
+        "action": "Fix the token validation configuration or upstream auth service causing Invalid token errors; add an alert on payment error_rate > 0.1; implement a circuit breaker to isolate payment failures.",
+        "type": "detect",
+        "priority": "high",
+        "owner": "to assign"
+      }
+    ]
+  }
+}

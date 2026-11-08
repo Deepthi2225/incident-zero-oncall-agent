@@ -1,7 +1,8 @@
 # Evaluation note
 
 What we measured for Incident Zero, and what we did not. All live runs used the OpenTelemetry demo
-on one laptop, with Claude Opus 5.5 as the model, on 23 and 24 Oct 2026. Faults were injected with
+on one laptop, with Claude Opus 5.5 as the model, on 23 and 24 Oct 2026. Later offline runs on other
+models have their own section. Faults were injected with
 our own `faultctl`, because the organisers' ten practice incidents never reached us. Results from
 the organisers' hidden test are not available to us, so none are claimed here.
 
@@ -43,13 +44,33 @@ Action API's own audit log holds 5 applied `restart_service` calls in total, all
 ([results/day2/action_api.actions_only.jsonl](results/day2/action_api.actions_only.jsonl)). Two of
 those belong to runs that were interrupted and are not counted as recoveries above.
 
+## Other models (offline fixtures, 8 Nov 2026)
+
+These runs used synthetic fixtures, with nothing executed, and are a small sample. Saved outputs are
+in [results/groq_ollama/](results/groq_ollama/). Groq means `openai/gpt-oss-120b` on a tier limited
+to 8,000 tokens per minute; Ollama means `qwen3:8b` on the local GPU.
+
+| Run | Fixture (actual fault) | Model | Result | Time |
+|---|---|---|---|---|
+| 20261108-152959 | payment_down (container stopped) | Groq | Correct, 0.75 | 105 s |
+| 20261108-153656 | payment_app_error (Charge errors) | Groq | Correct, 0.77 | 97 s |
+| 20261108-153148 | product_one_item (one product fails) | Groq | No diagnosis: malformed tool-call JSON, since retried | 174 s |
+| 20261108-153455 | homepage_flood (traffic flood) | Groq | No diagnosis: request above the tier's limit | 112 s |
+| 20261108-161752 | homepage_flood | Groq and Ollama | Correct class, 0.5 after review, escalated | 531 s |
+| 20261108-162654 | product_one_item | Groq and Ollama | **Wrong**: `service_error` at 0.95, proposed restarting `astronomy-db` | 336 s |
+| 20261108-164552 | product_one_item | Ollama only | Correct class (`input_specific_error`), 0.95, no fix offered | 225 s |
+
+The wrong diagnosis led to a rule: a diagnosis the fallback helped produce keeps its findings but
+offers no fix, and goes to a human. Run 20261108-162654 predates that rule. The same fixture gave
+different answers on different runs, so these confidence numbers should not be read as reliable.
+
 ## Other checks
 
 - **Fault injection and reset:** all 26 `faultctl` faults were injected for 60 s and reset. Containers
   and shop APIs recovered 26 of 26. Telemetry returned near its healthy snapshot in 25 of 26; the
   exception was payment traffic after `stop-payment`, where the snapshot itself was a burst
   ([results/recovery_audit.json](results/recovery_audit.json)).
-- **Automated tests:** 409 pass, using no Docker or network. They cover the flag guards, evidence
+- **Automated tests:** 426 pass, using no Docker or network. They cover the flag guards, evidence
   validator, approval rules, kill switch, Action API refusals, rollback and verification.
 - **Rule compliance:** a guard blocks flag URLs, ports and files, and flag data is stripped from all
   telemetry. A test confirms the agent never issues state-changing docker commands.
@@ -64,6 +85,7 @@ those belong to runs that were interrupted and are not counted as recoveries abo
   the saved runs.
 - Diagnosis was measured on a small sample of faults we injected ourselves, so these numbers do not
   predict accuracy on unseen incidents.
-- Groq and Gemini support exist, but all results above come from Claude. Accuracy on other models has
-  not been measured.
+- All live results come from Claude. Groq and Ollama have only run on offline fixtures, and Gemini has
+  not been evaluated.
+- On Groq's 8,000 tokens-per-minute tier, some requests exceed the limit outright and need the fallback.
 - The incident schema is our own, as the organisers' schema was not available when it was written.

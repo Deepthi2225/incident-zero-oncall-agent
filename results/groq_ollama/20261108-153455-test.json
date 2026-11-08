@@ -1,0 +1,1906 @@
+{
+  "schema_version": 2,
+  "status": "complete",
+  "metadata": {
+    "run_id": "20261108-153455",
+    "incident_id": "INC-APP-FLOOD",
+    "started_at": "2026-11-08T10:04:55+00:00",
+    "ended_at": "2026-11-08T10:06:46+00:00",
+    "updated_at": "2026-11-08T10:06:46+00:00",
+    "mode": "test",
+    "source_detail": "fixtures tests/fixtures/homepage_flood",
+    "provider": "groq",
+    "model": "openai/gpt-oss-120b",
+    "git": {
+      "commit": "9763df448022e556a6ea367156aec7ce7aff56d4",
+      "dirty": true
+    }
+  },
+  "alert": {
+    "incident_id": "INC-APP-FLOOD",
+    "detected_at": "2026-10-23T07:20:00Z",
+    "alerting_services": [
+      "frontend",
+      "frontend-proxy"
+    ],
+    "trigger": [
+      {
+        "service": "frontend-proxy",
+        "signal": "p95_ms",
+        "value": 920.0,
+        "threshold": 500.0,
+        "window": "3m"
+      },
+      {
+        "service": "frontend",
+        "signal": "p95_ms",
+        "value": 880.0,
+        "threshold": 500.0,
+        "window": "3m"
+      }
+    ],
+    "note": "alerting service is a symptom, not necessarily the root cause"
+  },
+  "investigation": {
+    "steps": [
+      {
+        "step": 1,
+        "tool": "get_service_health",
+        "arguments": {
+          "window": "5m"
+        },
+        "result": {
+          "window_s": 300,
+          "baseline": "loaded",
+          "flagged": [
+            {
+              "service": "frontend",
+              "rps": 45.0,
+              "error_rate": 0.0022,
+              "client_error_rate": 0.0,
+              "p95_ms": 880.0,
+              "baseline": {
+                "rps": 9.0,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 170
+              },
+              "p95_ratio": 5.18,
+              "rps_ratio": 5.0,
+              "flags": [
+                "slow",
+                "traffic_spike"
+              ],
+              "criticality": "critical",
+              "evidence": "E1"
+            },
+            {
+              "service": "frontend-proxy",
+              "rps": 48.0,
+              "error_rate": 0.0025,
+              "client_error_rate": 0.0,
+              "p95_ms": 920.0,
+              "baseline": {
+                "rps": 9.6,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 185
+              },
+              "p95_ratio": 4.97,
+              "rps_ratio": 5.0,
+              "flags": [
+                "slow",
+                "traffic_spike"
+              ],
+              "criticality": "critical",
+              "evidence": "E2"
+            },
+            {
+              "service": "recommendation",
+              "rps": 6.0,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 140.0,
+              "baseline": {
+                "rps": 1.5,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 28
+              },
+              "p95_ratio": 5.0,
+              "rps_ratio": 4.0,
+              "flags": [
+                "slow",
+                "traffic_spike"
+              ],
+              "criticality": "medium",
+              "evidence": "E3"
+            },
+            {
+              "service": "product-catalog",
+              "rps": 24.0,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 22.0,
+              "baseline": {
+                "rps": 6.0,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 6
+              },
+              "p95_ratio": 3.67,
+              "rps_ratio": 4.0,
+              "flags": [
+                "traffic_spike"
+              ],
+              "criticality": "high",
+              "evidence": "E4"
+            },
+            {
+              "service": "ad",
+              "rps": 7.2,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 45.0,
+              "baseline": {
+                "rps": 1.8,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 12
+              },
+              "p95_ratio": 3.75,
+              "rps_ratio": 4.0,
+              "flags": [
+                "traffic_spike"
+              ],
+              "criticality": "medium",
+              "evidence": "E5"
+            },
+            {
+              "service": "currency",
+              "rps": 12.4,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 2.0,
+              "baseline": {
+                "rps": 3.1,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 2
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 4.0,
+              "flags": [
+                "traffic_spike"
+              ],
+              "criticality": "high",
+              "evidence": "E6"
+            }
+          ],
+          "healthy": [
+            "payment",
+            "checkout",
+            "shipping",
+            "cart",
+            "email",
+            "load-generator",
+            "quote"
+          ],
+          "truncated": true
+        },
+        "evidence_ids": [
+          "E1",
+          "E2",
+          "E3",
+          "E4",
+          "E5",
+          "E6",
+          "E7"
+        ],
+        "seconds": 0.02,
+        "at_s": 20.4,
+        "error": null
+      },
+      {
+        "step": 2,
+        "tool": "get_service_health",
+        "arguments": {
+          "window": "5m"
+        },
+        "result": {
+          "window_s": 300,
+          "baseline": "loaded",
+          "flagged": [
+            {
+              "service": "frontend",
+              "rps": 45.0,
+              "error_rate": 0.0022,
+              "client_error_rate": 0.0,
+              "p95_ms": 880.0,
+              "baseline": {
+                "rps": 9.0,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 170
+              },
+              "p95_ratio": 5.18,
+              "rps_ratio": 5.0,
+              "flags": [
+                "slow",
+                "traffic_spike"
+              ],
+              "criticality": "critical",
+              "evidence": "E8"
+            },
+            {
+              "service": "frontend-proxy",
+              "rps": 48.0,
+              "error_rate": 0.0025,
+              "client_error_rate": 0.0,
+              "p95_ms": 920.0,
+              "baseline": {
+                "rps": 9.6,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 185
+              },
+              "p95_ratio": 4.97,
+              "rps_ratio": 5.0,
+              "flags": [
+                "slow",
+                "traffic_spike"
+              ],
+              "criticality": "critical",
+              "evidence": "E9"
+            },
+            {
+              "service": "recommendation",
+              "rps": 6.0,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 140.0,
+              "baseline": {
+                "rps": 1.5,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 28
+              },
+              "p95_ratio": 5.0,
+              "rps_ratio": 4.0,
+              "flags": [
+                "slow",
+                "traffic_spike"
+              ],
+              "criticality": "medium",
+              "evidence": "E10"
+            },
+            {
+              "service": "product-catalog",
+              "rps": 24.0,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 22.0,
+              "baseline": {
+                "rps": 6.0,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 6
+              },
+              "p95_ratio": 3.67,
+              "rps_ratio": 4.0,
+              "flags": [
+                "traffic_spike"
+              ],
+              "criticality": "high",
+              "evidence": "E11"
+            },
+            {
+              "service": "ad",
+              "rps": 7.2,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 45.0,
+              "baseline": {
+                "rps": 1.8,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 12
+              },
+              "p95_ratio": 3.75,
+              "rps_ratio": 4.0,
+              "flags": [
+                "traffic_spike"
+              ],
+              "criticality": "medium",
+              "evidence": "E12"
+            },
+            {
+              "service": "currency",
+              "rps": 12.4,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 2.0,
+              "baseline": {
+                "rps": 3.1,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 2
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 4.0,
+              "flags": [
+                "traffic_spike"
+              ],
+              "criticality": "high",
+              "evidence": "E13"
+            }
+          ],
+          "healthy": [
+            "payment",
+            "checkout",
+            "shipping",
+            "cart",
+            "email",
+            "load-generator",
+            "quote"
+          ],
+          "truncated": true
+        },
+        "evidence_ids": [
+          "E8",
+          "E9",
+          "E10",
+          "E11",
+          "E12",
+          "E13",
+          "E14"
+        ],
+        "seconds": 0.01,
+        "at_s": 29.5,
+        "error": null
+      },
+      {
+        "step": 3,
+        "tool": "get_service_health",
+        "arguments": {
+          "window": "5m"
+        },
+        "result": {
+          "window_s": 300,
+          "baseline": "loaded",
+          "flagged": [
+            {
+              "service": "frontend",
+              "rps": 45.0,
+              "error_rate": 0.0022,
+              "client_error_rate": 0.0,
+              "p95_ms": 880.0,
+              "baseline": {
+                "rps": 9.0,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 170
+              },
+              "p95_ratio": 5.18,
+              "rps_ratio": 5.0,
+              "flags": [
+                "slow",
+                "traffic_spike"
+              ],
+              "criticality": "critical",
+              "evidence": "E15"
+            },
+            {
+              "service": "frontend-proxy",
+              "rps": 48.0,
+              "error_rate": 0.0025,
+              "client_error_rate": 0.0,
+              "p95_ms": 920.0,
+              "baseline": {
+                "rps": 9.6,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 185
+              },
+              "p95_ratio": 4.97,
+              "rps_ratio": 5.0,
+              "flags": [
+                "slow",
+                "traffic_spike"
+              ],
+              "criticality": "critical",
+              "evidence": "E16"
+            },
+            {
+              "service": "recommendation",
+              "rps": 6.0,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 140.0,
+              "baseline": {
+                "rps": 1.5,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 28
+              },
+              "p95_ratio": 5.0,
+              "rps_ratio": 4.0,
+              "flags": [
+                "slow",
+                "traffic_spike"
+              ],
+              "criticality": "medium",
+              "evidence": "E17"
+            },
+            {
+              "service": "product-catalog",
+              "rps": 24.0,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 22.0,
+              "baseline": {
+                "rps": 6.0,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 6
+              },
+              "p95_ratio": 3.67,
+              "rps_ratio": 4.0,
+              "flags": [
+                "traffic_spike"
+              ],
+              "criticality": "high",
+              "evidence": "E18"
+            },
+            {
+              "service": "ad",
+              "rps": 7.2,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 45.0,
+              "baseline": {
+                "rps": 1.8,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 12
+              },
+              "p95_ratio": 3.75,
+              "rps_ratio": 4.0,
+              "flags": [
+                "traffic_spike"
+              ],
+              "criticality": "medium",
+              "evidence": "E19"
+            },
+            {
+              "service": "currency",
+              "rps": 12.4,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 2.0,
+              "baseline": {
+                "rps": 3.1,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 2
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 4.0,
+              "flags": [
+                "traffic_spike"
+              ],
+              "criticality": "high",
+              "evidence": "E20"
+            }
+          ],
+          "healthy": [
+            "payment",
+            "checkout",
+            "shipping",
+            "cart",
+            "email",
+            "load-generator",
+            "quote"
+          ],
+          "truncated": true
+        },
+        "evidence_ids": [
+          "E15",
+          "E16",
+          "E17",
+          "E18",
+          "E19",
+          "E20",
+          "E21"
+        ],
+        "seconds": 0.01,
+        "at_s": 34.4,
+        "error": null
+      },
+      {
+        "step": 4,
+        "tool": "get_service_health",
+        "arguments": {
+          "window": "5m"
+        },
+        "result": {
+          "window_s": 300,
+          "baseline": "loaded",
+          "flagged": [
+            {
+              "service": "frontend",
+              "rps": 45.0,
+              "error_rate": 0.0022,
+              "client_error_rate": 0.0,
+              "p95_ms": 880.0,
+              "baseline": {
+                "rps": 9.0,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 170
+              },
+              "p95_ratio": 5.18,
+              "rps_ratio": 5.0,
+              "flags": [
+                "slow",
+                "traffic_spike"
+              ],
+              "criticality": "critical",
+              "evidence": "E22"
+            },
+            {
+              "service": "frontend-proxy",
+              "rps": 48.0,
+              "error_rate": 0.0025,
+              "client_error_rate": 0.0,
+              "p95_ms": 920.0,
+              "baseline": {
+                "rps": 9.6,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 185
+              },
+              "p95_ratio": 4.97,
+              "rps_ratio": 5.0,
+              "flags": [
+                "slow",
+                "traffic_spike"
+              ],
+              "criticality": "critical",
+              "evidence": "E23"
+            },
+            {
+              "service": "recommendation",
+              "rps": 6.0,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 140.0,
+              "baseline": {
+                "rps": 1.5,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 28
+              },
+              "p95_ratio": 5.0,
+              "rps_ratio": 4.0,
+              "flags": [
+                "slow",
+                "traffic_spike"
+              ],
+              "criticality": "medium",
+              "evidence": "E24"
+            },
+            {
+              "service": "product-catalog",
+              "rps": 24.0,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 22.0,
+              "baseline": {
+                "rps": 6.0,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 6
+              },
+              "p95_ratio": 3.67,
+              "rps_ratio": 4.0,
+              "flags": [
+                "traffic_spike"
+              ],
+              "criticality": "high",
+              "evidence": "E25"
+            },
+            {
+              "service": "ad",
+              "rps": 7.2,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 45.0,
+              "baseline": {
+                "rps": 1.8,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 12
+              },
+              "p95_ratio": 3.75,
+              "rps_ratio": 4.0,
+              "flags": [
+                "traffic_spike"
+              ],
+              "criticality": "medium",
+              "evidence": "E26"
+            },
+            {
+              "service": "currency",
+              "rps": 12.4,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 2.0,
+              "baseline": {
+                "rps": 3.1,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 2
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 4.0,
+              "flags": [
+                "traffic_spike"
+              ],
+              "criticality": "high",
+              "evidence": "E27"
+            }
+          ],
+          "healthy": [
+            "payment",
+            "checkout",
+            "shipping",
+            "cart",
+            "email",
+            "load-generator",
+            "quote"
+          ],
+          "truncated": true
+        },
+        "evidence_ids": [
+          "E22",
+          "E23",
+          "E24",
+          "E25",
+          "E26",
+          "E27",
+          "E28"
+        ],
+        "seconds": 0.01,
+        "at_s": 83.3,
+        "error": null
+      }
+    ],
+    "outcome": "llm_error",
+    "error": "APIStatusError: Error code: 413 - Request too large for model `openai/gpt-oss-120b` in organization `org_***` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Requested 8179, please reduce your message size and try again. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing",
+    "model_turns": 4,
+    "submitted_at_s": 111.5
+  },
+  "evidence": [
+    {
+      "id": "E1",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "frontend [slow,traffic_spike] over 300s: error_rate 0.2% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 880.0ms (baseline 170ms) rps 45.0 (baseline 9.0)",
+      "ts": "2026-11-08T10:05:15+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "frontend",
+          "rps": 45.0,
+          "error_rate": 0.0022,
+          "client_error_rate": 0.0,
+          "p95_ms": 880.0,
+          "baseline": {
+            "rps": 9.0,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 170
+          },
+          "p95_ratio": 5.18,
+          "rps_ratio": 5.0,
+          "flags": [
+            "slow",
+            "traffic_spike"
+          ],
+          "criticality": "critical",
+          "evidence": "E1"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E2",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "frontend-proxy [slow,traffic_spike] over 300s: error_rate 0.2% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 920.0ms (baseline 185ms) rps 48.0 (baseline 9.6)",
+      "ts": "2026-11-08T10:05:15+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "frontend-proxy",
+          "rps": 48.0,
+          "error_rate": 0.0025,
+          "client_error_rate": 0.0,
+          "p95_ms": 920.0,
+          "baseline": {
+            "rps": 9.6,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 185
+          },
+          "p95_ratio": 4.97,
+          "rps_ratio": 5.0,
+          "flags": [
+            "slow",
+            "traffic_spike"
+          ],
+          "criticality": "critical",
+          "evidence": "E2"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E3",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "recommendation [slow,traffic_spike] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 140.0ms (baseline 28ms) rps 6.0 (baseline 1.5)",
+      "ts": "2026-11-08T10:05:15+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "recommendation",
+          "rps": 6.0,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 140.0,
+          "baseline": {
+            "rps": 1.5,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 28
+          },
+          "p95_ratio": 5.0,
+          "rps_ratio": 4.0,
+          "flags": [
+            "slow",
+            "traffic_spike"
+          ],
+          "criticality": "medium",
+          "evidence": "E3"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E4",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "product-catalog [traffic_spike] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 22.0ms (baseline 6ms) rps 24.0 (baseline 6.0)",
+      "ts": "2026-11-08T10:05:15+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "product-catalog",
+          "rps": 24.0,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 22.0,
+          "baseline": {
+            "rps": 6.0,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 6
+          },
+          "p95_ratio": 3.67,
+          "rps_ratio": 4.0,
+          "flags": [
+            "traffic_spike"
+          ],
+          "criticality": "high",
+          "evidence": "E4"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E5",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "ad [traffic_spike] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 45.0ms (baseline 12ms) rps 7.2 (baseline 1.8)",
+      "ts": "2026-11-08T10:05:15+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "ad",
+          "rps": 7.2,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 45.0,
+          "baseline": {
+            "rps": 1.8,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 12
+          },
+          "p95_ratio": 3.75,
+          "rps_ratio": 4.0,
+          "flags": [
+            "traffic_spike"
+          ],
+          "criticality": "medium",
+          "evidence": "E5"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E6",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "currency [traffic_spike] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 2.0ms (baseline 2ms) rps 12.4 (baseline 3.1)",
+      "ts": "2026-11-08T10:05:15+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "currency",
+          "rps": 12.4,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 2.0,
+          "baseline": {
+            "rps": 3.1,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 2
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 4.0,
+          "flags": [
+            "traffic_spike"
+          ],
+          "criticality": "high",
+          "evidence": "E6"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E7",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "image-provider [traffic_spike] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 4.0ms (baseline 4ms) rps 18.9 (baseline 4.2)",
+      "ts": "2026-11-08T10:05:15+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "image-provider",
+          "rps": 18.9,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 4.0,
+          "baseline": {
+            "rps": 4.2,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 4
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 4.5,
+          "flags": [
+            "traffic_spike"
+          ],
+          "criticality": "low",
+          "evidence": "E7"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E8",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "frontend [slow,traffic_spike] over 300s: error_rate 0.2% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 880.0ms (baseline 170ms) rps 45.0 (baseline 9.0)",
+      "ts": "2026-11-08T10:05:24+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "frontend",
+          "rps": 45.0,
+          "error_rate": 0.0022,
+          "client_error_rate": 0.0,
+          "p95_ms": 880.0,
+          "baseline": {
+            "rps": 9.0,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 170
+          },
+          "p95_ratio": 5.18,
+          "rps_ratio": 5.0,
+          "flags": [
+            "slow",
+            "traffic_spike"
+          ],
+          "criticality": "critical",
+          "evidence": "E8"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E9",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "frontend-proxy [slow,traffic_spike] over 300s: error_rate 0.2% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 920.0ms (baseline 185ms) rps 48.0 (baseline 9.6)",
+      "ts": "2026-11-08T10:05:24+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "frontend-proxy",
+          "rps": 48.0,
+          "error_rate": 0.0025,
+          "client_error_rate": 0.0,
+          "p95_ms": 920.0,
+          "baseline": {
+            "rps": 9.6,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 185
+          },
+          "p95_ratio": 4.97,
+          "rps_ratio": 5.0,
+          "flags": [
+            "slow",
+            "traffic_spike"
+          ],
+          "criticality": "critical",
+          "evidence": "E9"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E10",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "recommendation [slow,traffic_spike] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 140.0ms (baseline 28ms) rps 6.0 (baseline 1.5)",
+      "ts": "2026-11-08T10:05:24+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "recommendation",
+          "rps": 6.0,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 140.0,
+          "baseline": {
+            "rps": 1.5,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 28
+          },
+          "p95_ratio": 5.0,
+          "rps_ratio": 4.0,
+          "flags": [
+            "slow",
+            "traffic_spike"
+          ],
+          "criticality": "medium",
+          "evidence": "E10"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E11",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "product-catalog [traffic_spike] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 22.0ms (baseline 6ms) rps 24.0 (baseline 6.0)",
+      "ts": "2026-11-08T10:05:24+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "product-catalog",
+          "rps": 24.0,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 22.0,
+          "baseline": {
+            "rps": 6.0,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 6
+          },
+          "p95_ratio": 3.67,
+          "rps_ratio": 4.0,
+          "flags": [
+            "traffic_spike"
+          ],
+          "criticality": "high",
+          "evidence": "E11"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E12",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "ad [traffic_spike] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 45.0ms (baseline 12ms) rps 7.2 (baseline 1.8)",
+      "ts": "2026-11-08T10:05:24+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "ad",
+          "rps": 7.2,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 45.0,
+          "baseline": {
+            "rps": 1.8,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 12
+          },
+          "p95_ratio": 3.75,
+          "rps_ratio": 4.0,
+          "flags": [
+            "traffic_spike"
+          ],
+          "criticality": "medium",
+          "evidence": "E12"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E13",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "currency [traffic_spike] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 2.0ms (baseline 2ms) rps 12.4 (baseline 3.1)",
+      "ts": "2026-11-08T10:05:24+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "currency",
+          "rps": 12.4,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 2.0,
+          "baseline": {
+            "rps": 3.1,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 2
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 4.0,
+          "flags": [
+            "traffic_spike"
+          ],
+          "criticality": "high",
+          "evidence": "E13"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E14",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "image-provider [traffic_spike] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 4.0ms (baseline 4ms) rps 18.9 (baseline 4.2)",
+      "ts": "2026-11-08T10:05:24+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "image-provider",
+          "rps": 18.9,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 4.0,
+          "baseline": {
+            "rps": 4.2,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 4
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 4.5,
+          "flags": [
+            "traffic_spike"
+          ],
+          "criticality": "low",
+          "evidence": "E14"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E15",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "frontend [slow,traffic_spike] over 300s: error_rate 0.2% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 880.0ms (baseline 170ms) rps 45.0 (baseline 9.0)",
+      "ts": "2026-11-08T10:05:29+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "frontend",
+          "rps": 45.0,
+          "error_rate": 0.0022,
+          "client_error_rate": 0.0,
+          "p95_ms": 880.0,
+          "baseline": {
+            "rps": 9.0,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 170
+          },
+          "p95_ratio": 5.18,
+          "rps_ratio": 5.0,
+          "flags": [
+            "slow",
+            "traffic_spike"
+          ],
+          "criticality": "critical",
+          "evidence": "E15"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E16",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "frontend-proxy [slow,traffic_spike] over 300s: error_rate 0.2% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 920.0ms (baseline 185ms) rps 48.0 (baseline 9.6)",
+      "ts": "2026-11-08T10:05:29+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "frontend-proxy",
+          "rps": 48.0,
+          "error_rate": 0.0025,
+          "client_error_rate": 0.0,
+          "p95_ms": 920.0,
+          "baseline": {
+            "rps": 9.6,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 185
+          },
+          "p95_ratio": 4.97,
+          "rps_ratio": 5.0,
+          "flags": [
+            "slow",
+            "traffic_spike"
+          ],
+          "criticality": "critical",
+          "evidence": "E16"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E17",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "recommendation [slow,traffic_spike] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 140.0ms (baseline 28ms) rps 6.0 (baseline 1.5)",
+      "ts": "2026-11-08T10:05:29+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "recommendation",
+          "rps": 6.0,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 140.0,
+          "baseline": {
+            "rps": 1.5,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 28
+          },
+          "p95_ratio": 5.0,
+          "rps_ratio": 4.0,
+          "flags": [
+            "slow",
+            "traffic_spike"
+          ],
+          "criticality": "medium",
+          "evidence": "E17"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E18",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "product-catalog [traffic_spike] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 22.0ms (baseline 6ms) rps 24.0 (baseline 6.0)",
+      "ts": "2026-11-08T10:05:29+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "product-catalog",
+          "rps": 24.0,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 22.0,
+          "baseline": {
+            "rps": 6.0,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 6
+          },
+          "p95_ratio": 3.67,
+          "rps_ratio": 4.0,
+          "flags": [
+            "traffic_spike"
+          ],
+          "criticality": "high",
+          "evidence": "E18"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E19",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "ad [traffic_spike] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 45.0ms (baseline 12ms) rps 7.2 (baseline 1.8)",
+      "ts": "2026-11-08T10:05:29+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "ad",
+          "rps": 7.2,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 45.0,
+          "baseline": {
+            "rps": 1.8,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 12
+          },
+          "p95_ratio": 3.75,
+          "rps_ratio": 4.0,
+          "flags": [
+            "traffic_spike"
+          ],
+          "criticality": "medium",
+          "evidence": "E19"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E20",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "currency [traffic_spike] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 2.0ms (baseline 2ms) rps 12.4 (baseline 3.1)",
+      "ts": "2026-11-08T10:05:29+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "currency",
+          "rps": 12.4,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 2.0,
+          "baseline": {
+            "rps": 3.1,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 2
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 4.0,
+          "flags": [
+            "traffic_spike"
+          ],
+          "criticality": "high",
+          "evidence": "E20"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E21",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "image-provider [traffic_spike] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 4.0ms (baseline 4ms) rps 18.9 (baseline 4.2)",
+      "ts": "2026-11-08T10:05:29+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "image-provider",
+          "rps": 18.9,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 4.0,
+          "baseline": {
+            "rps": 4.2,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 4
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 4.5,
+          "flags": [
+            "traffic_spike"
+          ],
+          "criticality": "low",
+          "evidence": "E21"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E22",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "frontend [slow,traffic_spike] over 300s: error_rate 0.2% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 880.0ms (baseline 170ms) rps 45.0 (baseline 9.0)",
+      "ts": "2026-11-08T10:06:18+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "frontend",
+          "rps": 45.0,
+          "error_rate": 0.0022,
+          "client_error_rate": 0.0,
+          "p95_ms": 880.0,
+          "baseline": {
+            "rps": 9.0,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 170
+          },
+          "p95_ratio": 5.18,
+          "rps_ratio": 5.0,
+          "flags": [
+            "slow",
+            "traffic_spike"
+          ],
+          "criticality": "critical",
+          "evidence": "E22"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E23",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "frontend-proxy [slow,traffic_spike] over 300s: error_rate 0.2% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 920.0ms (baseline 185ms) rps 48.0 (baseline 9.6)",
+      "ts": "2026-11-08T10:06:18+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "frontend-proxy",
+          "rps": 48.0,
+          "error_rate": 0.0025,
+          "client_error_rate": 0.0,
+          "p95_ms": 920.0,
+          "baseline": {
+            "rps": 9.6,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 185
+          },
+          "p95_ratio": 4.97,
+          "rps_ratio": 5.0,
+          "flags": [
+            "slow",
+            "traffic_spike"
+          ],
+          "criticality": "critical",
+          "evidence": "E23"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E24",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "recommendation [slow,traffic_spike] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 140.0ms (baseline 28ms) rps 6.0 (baseline 1.5)",
+      "ts": "2026-11-08T10:06:18+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "recommendation",
+          "rps": 6.0,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 140.0,
+          "baseline": {
+            "rps": 1.5,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 28
+          },
+          "p95_ratio": 5.0,
+          "rps_ratio": 4.0,
+          "flags": [
+            "slow",
+            "traffic_spike"
+          ],
+          "criticality": "medium",
+          "evidence": "E24"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E25",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "product-catalog [traffic_spike] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 22.0ms (baseline 6ms) rps 24.0 (baseline 6.0)",
+      "ts": "2026-11-08T10:06:18+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "product-catalog",
+          "rps": 24.0,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 22.0,
+          "baseline": {
+            "rps": 6.0,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 6
+          },
+          "p95_ratio": 3.67,
+          "rps_ratio": 4.0,
+          "flags": [
+            "traffic_spike"
+          ],
+          "criticality": "high",
+          "evidence": "E25"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E26",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "ad [traffic_spike] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 45.0ms (baseline 12ms) rps 7.2 (baseline 1.8)",
+      "ts": "2026-11-08T10:06:18+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "ad",
+          "rps": 7.2,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 45.0,
+          "baseline": {
+            "rps": 1.8,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 12
+          },
+          "p95_ratio": 3.75,
+          "rps_ratio": 4.0,
+          "flags": [
+            "traffic_spike"
+          ],
+          "criticality": "medium",
+          "evidence": "E26"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E27",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "currency [traffic_spike] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 2.0ms (baseline 2ms) rps 12.4 (baseline 3.1)",
+      "ts": "2026-11-08T10:06:18+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "currency",
+          "rps": 12.4,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 2.0,
+          "baseline": {
+            "rps": 3.1,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 2
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 4.0,
+          "flags": [
+            "traffic_spike"
+          ],
+          "criticality": "high",
+          "evidence": "E27"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E28",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "image-provider [traffic_spike] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 4.0ms (baseline 4ms) rps 18.9 (baseline 4.2)",
+      "ts": "2026-11-08T10:06:18+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "image-provider",
+          "rps": 18.9,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 4.0,
+          "baseline": {
+            "rps": 4.2,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 4
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 4.5,
+          "flags": [
+            "traffic_spike"
+          ],
+          "criticality": "low",
+          "evidence": "E28"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    }
+  ],
+  "diagnosis": {
+    "status": "escalate",
+    "headline": "Investigation ended without a diagnosis (agent outcome: llm_error).",
+    "confidence": 0.0,
+    "root_causes": [],
+    "suspected_origin": {
+      "service": "unknown",
+      "reasoning": "agent outcome: llm_error",
+      "confidence": 0.0,
+      "evidence": []
+    },
+    "affected_services": [],
+    "anomalies": [],
+    "ruled_out": [],
+    "open_questions": [],
+    "prevention": [
+      "Close the telemetry gaps that kept this diagnosis uncertain (logs, traces, metrics).",
+      "Write a runbook entry once the cause is known."
+    ],
+    "proposed_action": {
+      "action": "escalate_to_human",
+      "target": "unknown",
+      "fault_class": "unknown",
+      "reason": "Confidence below threshold or no root cause with valid evidence; a human must decide.",
+      "next_steps": [
+        "Review the cited evidence and the open questions.",
+        "Collect more telemetry: traces of the alerting service, logs, container state over time."
+      ]
+    },
+    "validation": {
+      "dropped_evidence_ids": [],
+      "notes": [
+        "no root cause with valid evidence; escalated to human"
+      ],
+      "overrides": []
+    }
+  },
+  "remediation_plan": {
+    "steps": []
+  },
+  "escalations": [
+    {
+      "target": "unknown",
+      "fault_class": "unknown",
+      "reason": "Confidence below threshold or no root cause with valid evidence; a human must decide.",
+      "next_steps": [
+        "Review the cited evidence and the open questions.",
+        "Collect more telemetry: traces of the alerting service, logs, container state over time."
+      ],
+      "source": "no allowlisted fix"
+    }
+  ],
+  "manual_verifications": [],
+  "outcome": {
+    "status": "escalated",
+    "summary": "investigation ended without a diagnosis (llm_error); escalated to a human",
+    "prevention": [
+      "Close the telemetry gaps that kept this diagnosis uncertain (logs, traces, metrics).",
+      "Write a runbook entry once the cause is known."
+    ],
+    "investigation_outcome": "llm_error",
+    "plan_outcome": null
+  },
+  "review": null,
+  "notifications": [],
+  "accounting": {
+    "tokens_in": 16802,
+    "tokens_out": 336,
+    "estimated_cost_usd": null,
+    "reviewer_tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "price_basis": "USD per 1M tokens, Anthropic first-party rates",
+    "phases": {
+      "investigation_s": 111.5,
+      "remediation_s": 0.1,
+      "verify_s": 0,
+      "total_s": 111.6
+    },
+    "steps_used": 4,
+    "step_budget": 10
+  },
+  "report_paths": {
+    "report": "C:\\Placement\\hackathon\\runs\\20261108-153455-test.report.md",
+    "actions_log": "C:\\Placement\\hackathon\\runs\\actions.jsonl",
+    "action_log_lines": []
+  },
+  "postmortem": {
+    "draft": true,
+    "times": {
+      "fault_started": null,
+      "fault_started_evidence": null,
+      "fault_started_what": null,
+      "detected": "2026-10-23T07:20:00+00:00",
+      "investigation_started": "2026-11-08T10:04:55+00:00",
+      "diagnosed": null,
+      "approved": null,
+      "executed": null,
+      "recovery_verified": null,
+      "ended": "2026-11-08T10:06:46+00:00"
+    },
+    "durations": {
+      "time_to_detect_s": null,
+      "time_to_diagnose_s": null,
+      "time_to_recover_s": null,
+      "total_s": 1392406.0
+    },
+    "impact": {
+      "services": [],
+      "signals": [],
+      "failed_requests": [],
+      "failed_requests_total": null,
+      "note": "Failed-request numbers are counts from sampled traces and log lines in the record; the total number of failed requests is unknown."
+    },
+    "five_whys": [
+      {
+        "n": 1,
+        "why": "Why did this incident happen?",
+        "because": "unknown, needs human investigation",
+        "evidence": [],
+        "source": "unknown"
+      }
+    ],
+    "went_well": [],
+    "could_be_better": [
+      "The investigation ended without a diagnosis (llm_error).",
+      "The reviewer did not run (ONCALL_REVIEWER off)."
+    ],
+    "action_items": [
+      {
+        "action": "Close the telemetry gaps that kept this diagnosis uncertain (logs, traces, metrics).",
+        "type": "prevent",
+        "priority": "medium",
+        "owner": "to assign"
+      },
+      {
+        "action": "Write a runbook entry once the cause is known.",
+        "type": "mitigate",
+        "priority": "medium",
+        "owner": "to assign"
+      }
+    ]
+  }
+}
