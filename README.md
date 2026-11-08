@@ -5,6 +5,10 @@ real telemetry, names the root cause with evidence, proposes a safe fix, waits f
 approve it, applies it, and checks that the system recovered. When it is not sure, it hands over to
 a human with what it found.
 
+Built for the Bosch AI hackathon at PES University (23 and 24 October 2026), on the theme of agentic
+AI for IT operations. It runs against the open-source
+[OpenTelemetry Demo](https://github.com/open-telemetry/opentelemetry-demo).
+
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the design and [EVALUATION.md](EVALUATION.md) for results.
 
 ## What you need
@@ -278,6 +282,13 @@ makes retries safe. A second change to the same service within 60 seconds is ref
 
 Status codes: 200 OK, 400 bad request, 401 bad token, 403 refused, 404/405 unknown route,
 409 conflict, 423 kill switch on, 429 cooldown, 501 not implemented, 502 Docker or load generator failed.
+
+## Contributors
+
+- Deepthi ([Deepthi-PES1UG23AM092](https://github.com/Deepthi-PES1UG23AM092))
+- Aniruddha Joshi ([aniruddhajoshi100](https://github.com/aniruddhajoshi100))
+- Shivakumar ([ShivakumarSK2005](https://github.com/ShivakumarSK2005))
+- Padmavasanti K
 
 ## Contributing
 
