@@ -291,6 +291,10 @@ Status codes: 200 OK, 400 bad request, 401 bad token, 403 refused, 404/405 unkno
 - Padmavasanti K
 - Nirupam
 
+## License
+
+[MIT](LICENSE)
+
 ## Contributing
 
 Create a branch from `main`, keep `python -m pytest -q` passing, add tests for what you change, and
