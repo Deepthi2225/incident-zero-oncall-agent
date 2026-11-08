@@ -3,14 +3,15 @@
 An AI on-call engineer for the OpenTelemetry demo. An alert starts an agent that chooses which
 read-only tool to call next. Every observation is registered as evidence with an ID. Checkpoint 1 delivered a validated **symptom summary**: affected services, anomalies with numbers, the suspected
 origin, and the evidence IDs behind each claim. Checkpoint 2 delivers the validated **diagnosis and remediation plan**:
-root causes, standard fault classification, confidence score, cited evidence details, allowlisted runbook remedies, and
-a human approval gate. Action execution, recovery verification, and final report come next in Day 2.
+root causes, standard fault classification, confidence score, cited evidence details and allowlisted runbook remedies.
+Day 2 adds the **human approval gate, execution through our Action API, recovery verification with rollback, and the
+incident report with a draft postmortem**.
 
 ```mermaid
 flowchart LR
     AL["Alert JSON<br/>detector.py: calibrated per-service limits (no LLM)<br/>or manual / organiser"] --> AG
 
-    subgraph AG["agent/run.py: tool-calling loop (Claude, max 10 steps, kill switch)"]
+    subgraph AG["agent/run.py: tool-calling loop (Claude, Gemini or Groq; max 10 steps, kill switch)"]
         direction TB
         LLM["LLM picks the next tool<br/>from what it has found so far"]
     end
@@ -26,11 +27,19 @@ flowchart LR
     REG --> VAL
     VAL --> DX["DIAGNOSIS & PLAN<br/>root causes, fault class, confidence,<br/>allowlisted action, human approval<br/>runs/&lt;timestamp&gt;.json"]
 
-    DX -.-> AP["approve<br/>human yes, dry run"]
-    AP -.->|Day 2| AC["act<br/>Action API only"] -.-> VE["verify<br/>metrics vs baseline,<br/>rollback + escalate"] -.-> RE["report<br/>timeline, evidence,<br/>prevention"]
-
-    classDef next stroke-dasharray: 5 5,color:#888
-    class AC,VE,RE next
+    DX --> RV["reviewer (optional, off by default)<br/>can only lower confidence"]
+    RV --> AP{"human approval per step<br/>dry run by default"}
+    AP -->|yes| KS{"kill switch<br/>checked by agent and API"}
+    KS -->|clear| AC["actionapi/: localhost, token,<br/>allowlist, cooldown, idempotency,<br/>audit log"]
+    AC --> DEMO[("OpenTelemetry demo<br/>restart or Locust throttle")]
+    DEMO --> VE["verify<br/>container, spans, metrics vs baseline"]
+    VE -->|recovered| RE["report + draft postmortem<br/>timeline, evidence, prevention"]
+    VE -->|not recovered| RB["rollback if the step has one,<br/>then escalate"]
+    AP -->|no| ESC["escalate to a human<br/>findings, optional email"]
+    KS -->|on| ESC
+    DX -->|low confidence or no allowlisted fix| ESC
+    RB --> ESC
+    ESC --> RE
 ```
 
 ## How it works
@@ -52,6 +61,13 @@ flowchart LR
   All tools are read-only. The `STOP` file halts the agent. The fault injector
   (`faultctl/`) lives outside the agent package, and a test ensures the agent never
   references it.
+- **Changing the system.** The agent has no write access of its own. An approved step becomes an
+  HTTP call to `actionapi/`, a separate localhost service. Restart and load-generator throttle work
+  today; `toggle_feature_flag` and `scale_service` return 501, so faults that need them escalate.
+- **Telemetry detail.** Traces come from Jaeger's v3 API and logs from OpenSearch with a docker logs
+  fallback. Flag data is stripped from every answer (`oncall/sources/sanitize.py`).
+- **Test harness.** `faultctl/` injects faults and `scripts/traffic.py` adds traffic for practice.
+  Neither is part of the agent.
 
 ## Running
 ```

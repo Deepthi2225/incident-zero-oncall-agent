@@ -47,6 +47,7 @@ for every provider, and the record's `metadata.provider` / `metadata.model` show
 |---|---|---|---|
 | `anthropic` (default) | `ONCALL_MODEL` (default `claude-opus-5-5`) | `ANTHROPIC_API_KEY` | Adaptive thinking, effort, refusal fallback; cost estimated in the record |
 | `gemini` | `GEMINI_MODEL` (default `gemini-3.5-flash-lite`) | `GEMINI_API_KEY` | Gemini's OpenAI-compatible endpoint; needs `pip install openai`; cost is null in the record |
+| `groq` | `GROQ_MODEL` (default `openai/gpt-oss-120b`) | `GROQ_API_KEY` | Groq's OpenAI-compatible endpoint; needs `pip install openai`; cost is null in the record. `python scripts/llm_check.py` confirms the key and tool calling |
 
 The provider is chosen only from `ONCALL_PROVIDER`, never from which keys happen to be set. Any
 provider failure becomes the run outcome `llm_error`. The Gemini provider is **based on Shivakumar's
@@ -267,9 +268,8 @@ send real email, even if your `.env` turns email on.
 
 ## Action API (our own)
 
-> **Confirmed by mentor `<name>` at `<time>`:** teams build their own Action API. Ours is a
-> separate local service. The agent stays read-only and changes the system only by calling this
-> API over HTTP.
+> We run our own Action API as a separate local service. The agent stays read-only and changes
+> the system only by calling this API over HTTP.
 
 The agent (`oncall/`) never imports this package. It never runs a state-changing docker command,
 and a test enforces that. Every change to the demo goes through this service, after a human

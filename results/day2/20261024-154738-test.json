@@ -1,0 +1,945 @@
+{
+  "schema_version": 2,
+  "status": "complete",
+  "metadata": {
+    "run_id": "20261024-154738",
+    "incident_id": "INC-APP-PRODUCT",
+    "started_at": "2026-10-24T10:17:38+00:00",
+    "ended_at": "2026-10-24T10:18:05+00:00",
+    "updated_at": "2026-10-24T10:18:05+00:00",
+    "mode": "test",
+    "source_detail": "fixtures tests/fixtures/product_one_item",
+    "provider": "anthropic",
+    "model": "claude-opus-5-5",
+    "git": {
+      "commit": "507546953775993699706d05347d0980b18a0d76",
+      "dirty": false
+    }
+  },
+  "alert": {
+    "incident_id": "INC-APP-PRODUCT",
+    "detected_at": "2026-10-23T07:20:00Z",
+    "alerting_services": [
+      "product-catalog"
+    ],
+    "trigger": [
+      {
+        "service": "product-catalog",
+        "signal": "error_rate",
+        "value": 0.097,
+        "threshold": 0.05,
+        "window": "3m"
+      }
+    ],
+    "note": "alerting service is a symptom, not necessarily the root cause"
+  },
+  "investigation": {
+    "steps": [
+      {
+        "step": 1,
+        "tool": "get_service_health",
+        "arguments": {
+          "window": "5m"
+        },
+        "result": {
+          "window_s": 300,
+          "baseline": "loaded",
+          "flagged": [
+            {
+              "service": "frontend",
+              "rps": 9.0,
+              "error_rate": 0.0344,
+              "client_error_rate": 0.0204,
+              "p95_ms": 170.0,
+              "baseline": {
+                "rps": 9.0,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 170
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 1.0,
+              "flags": [
+                "errors",
+                "client_call_errors"
+              ],
+              "criticality": "critical",
+              "evidence": "E1"
+            },
+            {
+              "service": "product-catalog",
+              "rps": 6.0,
+              "error_rate": 0.0967,
+              "client_error_rate": 0.0,
+              "p95_ms": 6.0,
+              "baseline": {
+                "rps": 6.0,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 6
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 1.0,
+              "flags": [
+                "errors"
+              ],
+              "criticality": "high",
+              "evidence": "E2"
+            },
+            {
+              "service": "frontend-proxy",
+              "rps": 9.6,
+              "error_rate": 0.0323,
+              "client_error_rate": 0.0,
+              "p95_ms": 185.0,
+              "baseline": {
+                "rps": 9.6,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 185
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 1.0,
+              "flags": [
+                "errors"
+              ],
+              "criticality": "critical",
+              "evidence": "E3"
+            },
+            {
+              "service": "recommendation",
+              "rps": 1.5,
+              "error_rate": 0.0,
+              "client_error_rate": 0.08,
+              "p95_ms": 28.0,
+              "baseline": {
+                "rps": 1.5,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 28
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 1.0,
+              "flags": [
+                "client_call_errors"
+              ],
+              "criticality": "medium",
+              "evidence": "E4"
+            }
+          ],
+          "healthy": [
+            "checkout",
+            "payment",
+            "currency",
+            "shipping",
+            "cart",
+            "email",
+            "ad",
+            "image-provider",
+            "quote"
+          ]
+        },
+        "evidence_ids": [
+          "E1",
+          "E2",
+          "E3",
+          "E4"
+        ],
+        "seconds": 0.06,
+        "at_s": 3.5,
+        "error": null
+      },
+      {
+        "step": 1,
+        "tool": "get_deploy_history",
+        "arguments": {
+          "lookback": "15m"
+        },
+        "result": {
+          "lookback_s": 900,
+          "containers": 19,
+          "stats_available": true,
+          "changed_or_unhealthy": [],
+          "healthy": [
+            "ad",
+            "astronomy-db",
+            "cart",
+            "checkout",
+            "currency",
+            "email",
+            "frontend",
+            "frontend-proxy",
+            "image-provider",
+            "jaeger",
+            "load-generator",
+            "otel-collector",
+            "payment",
+            "product-catalog",
+            "prometheus",
+            "quote",
+            "recommendation",
+            "shipping",
+            "valkey-cart"
+          ],
+          "top_memory": [
+            {
+              "name": "frontend-proxy",
+              "mem_pct": 30.0
+            },
+            {
+              "name": "frontend",
+              "mem_pct": 30.0
+            },
+            {
+              "name": "checkout",
+              "mem_pct": 30.0
+            },
+            {
+              "name": "payment",
+              "mem_pct": 30.0
+            },
+            {
+              "name": "cart",
+              "mem_pct": 30.0
+            }
+          ],
+          "organiser_history": "not configured",
+          "our_actions": [
+            {
+              "ts": "2026-10-24T04:18:17+00:00",
+              "run_id": "20261024-094121",
+              "event": "dry_run",
+              "step": 1,
+              "action": "restart_service",
+              "target": "valkey-cart",
+              "request": {
+                "method": "POST",
+                "url": "<ACTION_API_URL>/actions/restart_service",
+                "json": {
+                  "service": "valkey-cart"
+                }
+              },
+              "response": "dry run: nothing sent",
+              "approval": {
+                "status": "approved",
+                "approved_by": "human",
+                "decision_at": "2026-10-24T04:18:17+00:00",
+                "notes": "explicitly approved by the on-call engineer"
+              }
+            },
+            {
+              "ts": "2026-10-24T04:18:20+00:00",
+              "run_id": "20261024-094121",
+              "event": "dry_run",
+              "step": 2,
+              "action": "restart_service",
+              "target": "payment",
+              "request": {
+                "method": "POST",
+                "url": "<ACTION_API_URL>/actions/restart_service",
+                "json": {
+                  "service": "payment"
+                }
+              },
+              "response": "dry run: nothing sent",
+              "approval": {
+                "status": "approved",
+                "approved_by": "human",
+                "decision_at": "2026-10-24T04:18:20+00:00",
+                "notes": "explicitly approved by the on-call engineer"
+              }
+            }
+          ],
+          "evidence": "E5",
+          "truncated": true
+        },
+        "evidence_ids": [
+          "E5"
+        ],
+        "seconds": 0.06,
+        "at_s": 3.6,
+        "error": null
+      },
+      {
+        "step": 1,
+        "tool": "find_error_traces",
+        "arguments": {
+          "service": "product-catalog",
+          "lookback": "5m"
+        },
+        "result": {
+          "service": "product-catalog",
+          "lookback_s": 300,
+          "errors_only": true,
+          "traces_examined": 6,
+          "origins": [
+            {
+              "origin_service": "product-catalog",
+              "operation": "oteldemo.ProductCatalogService/GetProduct",
+              "count": 6,
+              "message": "Error: product OLJCESPC7Z could not be loaded: query returned an invalid row",
+              "chain": [
+                "frontend",
+                "product-catalog"
+              ],
+              "example_trace": "6c2d0000000000000000000000000000",
+              "evidence": "E6"
+            }
+          ],
+          "attribute_clusters": [
+            {
+              "service": "product-catalog",
+              "attribute": "app.product.id",
+              "value": "OLJCESPC7Z",
+              "share": 1.0,
+              "count": 6,
+              "evidence": "E7"
+            }
+          ],
+          "edges": [
+            {
+              "edge": "frontend->product-catalog",
+              "calls": 6,
+              "avg_client_ms": 9.0,
+              "avg_server_ms": 4.1,
+              "avg_gap_ms": 4.9
+            }
+          ],
+          "slowest": [
+            {
+              "trace_id": "6c2d0000000000000000000000000000",
+              "root": "frontend GET /api/products/OLJCESPC7Z",
+              "duration_ms": 21.0
+            },
+            {
+              "trace_id": "6c2d0000000000000000000000000001",
+              "root": "frontend GET /api/products/OLJCESPC7Z",
+              "duration_ms": 21.0
+            },
+            {
+              "trace_id": "6c2d0000000000000000000000000002",
+              "root": "frontend GET /api/products/OLJCESPC7Z",
+              "duration_ms": 21.0
+            }
+          ]
+        },
+        "evidence_ids": [
+          "E6",
+          "E7"
+        ],
+        "seconds": 0.02,
+        "at_s": 3.7,
+        "error": null
+      },
+      {
+        "step": 2,
+        "tool": "search_logs",
+        "arguments": {
+          "services": [
+            "product-catalog",
+            "astronomy-db",
+            "recommendation"
+          ],
+          "since": "5m"
+        },
+        "result": {
+          "since_s": 300,
+          "min_level": "warn",
+          "contains": null,
+          "services": {
+            "product-catalog": {
+              "log_source": "docker logs",
+              "matching_lines": 6
+            },
+            "astronomy-db": {
+              "log_source": "docker logs",
+              "matching_lines": 0,
+              "evidence": "E9"
+            },
+            "recommendation": {
+              "log_source": "docker logs",
+              "matching_lines": 0,
+              "evidence": "E10"
+            }
+          },
+          "patterns": [
+            {
+              "service": "product-catalog",
+              "level": "error",
+              "count": 6,
+              "first_seen": "2026-10-23T07:17:30.000000000Z",
+              "last_seen": "2026-10-23T07:19:10.000000000Z",
+              "example": "{\"level\": \"error\", \"msg\": \"failed to get product OLJCESPC7Z: query returned an invalid row\"}",
+              "evidence": "E8"
+            }
+          ]
+        },
+        "evidence_ids": [
+          "E8",
+          "E9",
+          "E10"
+        ],
+        "seconds": 0.02,
+        "at_s": 6.7,
+        "error": null
+      },
+      {
+        "step": 2,
+        "tool": "find_error_traces",
+        "arguments": {
+          "service": "recommendation",
+          "lookback": "5m"
+        },
+        "result": {
+          "service": "recommendation",
+          "lookback_s": 300,
+          "errors_only": true,
+          "traces_examined": 0,
+          "origins": [],
+          "attribute_clusters": [],
+          "edges": [],
+          "slowest": [],
+          "evidence": "E11"
+        },
+        "evidence_ids": [
+          "E11"
+        ],
+        "seconds": 0.0,
+        "at_s": 6.8,
+        "error": null
+      }
+    ],
+    "outcome": "submitted",
+    "error": null,
+    "model_turns": 3,
+    "submitted_at_s": 26.2
+  },
+  "evidence": [
+    {
+      "id": "E1",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "frontend [errors,client_call_errors] over 300s: error_rate 3.4% (baseline 0.0%) client_error_rate 2.0% (baseline 0.0%) p95 170.0ms (baseline 170ms) rps 9.0 (baseline 9.0)",
+      "ts": "2026-10-24T10:17:42+00:00",
+      "cited": true,
+      "data": {
+        "row": {
+          "service": "frontend",
+          "rps": 9.0,
+          "error_rate": 0.0344,
+          "client_error_rate": 0.0204,
+          "p95_ms": 170.0,
+          "baseline": {
+            "rps": 9.0,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 170
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 1.0,
+          "flags": [
+            "errors",
+            "client_call_errors"
+          ],
+          "criticality": "critical",
+          "evidence": "E1"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E2",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "product-catalog [errors] over 300s: error_rate 9.7% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 6.0ms (baseline 6ms) rps 6.0 (baseline 6.0)",
+      "ts": "2026-10-24T10:17:42+00:00",
+      "cited": true,
+      "data": {
+        "row": {
+          "service": "product-catalog",
+          "rps": 6.0,
+          "error_rate": 0.0967,
+          "client_error_rate": 0.0,
+          "p95_ms": 6.0,
+          "baseline": {
+            "rps": 6.0,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 6
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 1.0,
+          "flags": [
+            "errors"
+          ],
+          "criticality": "high",
+          "evidence": "E2"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E3",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "frontend-proxy [errors] over 300s: error_rate 3.2% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 185.0ms (baseline 185ms) rps 9.6 (baseline 9.6)",
+      "ts": "2026-10-24T10:17:42+00:00",
+      "cited": true,
+      "data": {
+        "row": {
+          "service": "frontend-proxy",
+          "rps": 9.6,
+          "error_rate": 0.0323,
+          "client_error_rate": 0.0,
+          "p95_ms": 185.0,
+          "baseline": {
+            "rps": 9.6,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 185
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 1.0,
+          "flags": [
+            "errors"
+          ],
+          "criticality": "critical",
+          "evidence": "E3"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E4",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "recommendation [client_call_errors] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 8.0% (baseline 0.0%) p95 28.0ms (baseline 28ms) rps 1.5 (baseline 1.5)",
+      "ts": "2026-10-24T10:17:42+00:00",
+      "cited": true,
+      "data": {
+        "row": {
+          "service": "recommendation",
+          "rps": 1.5,
+          "error_rate": 0.0,
+          "client_error_rate": 0.08,
+          "p95_ms": 28.0,
+          "baseline": {
+            "rps": 1.5,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 28
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 1.0,
+          "flags": [
+            "client_call_errors"
+          ],
+          "criticality": "medium",
+          "evidence": "E4"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E5",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "observation": "all 19 containers running and healthy; none (re)started in the last 900s",
+      "ts": "2026-10-24T10:17:42+00:00",
+      "cited": true,
+      "data": {
+        "healthy": [
+          "ad",
+          "astronomy-db",
+          "cart",
+          "checkout",
+          "currency",
+          "email",
+          "frontend",
+          "frontend-proxy",
+          "image-provider",
+          "jaeger",
+          "load-generator",
+          "otel-collector",
+          "payment",
+          "product-catalog",
+          "prometheus",
+          "quote",
+          "recommendation",
+          "shipping",
+          "valkey-cart"
+        ]
+      }
+    },
+    {
+      "id": "E6",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "observation": "6/6 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/GetProduct' msg='Error: product OLJCESPC7Z could not be loaded: query returned an invalid row' chain=frontend>product-catalog e.g. trace 6c2d0000000000000000000000000000",
+      "ts": "2026-10-24T10:17:42+00:00",
+      "cited": true,
+      "data": {
+        "origin_service": "product-catalog",
+        "operation": "oteldemo.ProductCatalogService/GetProduct",
+        "count": 6,
+        "message": "Error: product OLJCESPC7Z could not be loaded: query returned an invalid row",
+        "chain": [
+          "frontend",
+          "product-catalog"
+        ],
+        "example_trace": "6c2d0000000000000000000000000000",
+        "lookback_s": 300
+      }
+    },
+    {
+      "id": "E7",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "observation": "6/6 failing product-catalog spans have app.product.id=OLJCESPC7Z",
+      "ts": "2026-10-24T10:17:42+00:00",
+      "cited": true,
+      "data": {
+        "service": "product-catalog",
+        "attribute": "app.product.id",
+        "value": "OLJCESPC7Z",
+        "share": 1.0,
+        "count": 6,
+        "evidence": "E7"
+      }
+    },
+    {
+      "id": "E8",
+      "tool": "search_logs",
+      "kind": "log",
+      "observation": "product-catalog logs (docker logs, 300s): 6x ERROR '{\"level\": \"error\", \"msg\": \"failed to get product OLJCESPC7Z: query returned an invalid row\"}' first 2026-10-23T07:17:30.000000000Z last 2026-10-23T07:19:10.000000000Z",
+      "ts": "2026-10-24T10:17:45+00:00",
+      "cited": true,
+      "data": {
+        "service": "product-catalog",
+        "log_source": "docker logs",
+        "level": "error",
+        "pattern": "failed to get product OLJCESPC<n>Z: query returned an invalid row",
+        "count": 6,
+        "first_seen": "2026-10-23T07:17:30.000000000Z",
+        "last_seen": "2026-10-23T07:19:10.000000000Z",
+        "example": "{\"level\": \"error\", \"msg\": \"failed to get product OLJCESPC7Z: query returned an invalid row\"}"
+      }
+    },
+    {
+      "id": "E9",
+      "tool": "search_logs",
+      "kind": "log",
+      "observation": "astronomy-db: no warn+ log lines in last 300s (docker logs)",
+      "ts": "2026-10-24T10:17:45+00:00",
+      "cited": true,
+      "data": {
+        "service": "astronomy-db",
+        "since_s": 300,
+        "level": "warn",
+        "contains": null,
+        "log_source": "docker logs"
+      }
+    },
+    {
+      "id": "E10",
+      "tool": "search_logs",
+      "kind": "log",
+      "observation": "recommendation: no warn+ log lines in last 300s (docker logs)",
+      "ts": "2026-10-24T10:17:45+00:00",
+      "cited": true,
+      "data": {
+        "service": "recommendation",
+        "since_s": 300,
+        "level": "warn",
+        "contains": null,
+        "log_source": "docker logs"
+      }
+    },
+    {
+      "id": "E11",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "observation": "no error traces for service recommendation in last 300s",
+      "ts": "2026-10-24T10:17:45+00:00",
+      "cited": true,
+      "data": {
+        "service": "recommendation",
+        "lookback_s": 300
+      }
+    }
+  ],
+  "diagnosis": {
+    "status": "diagnosed",
+    "headline": "product-catalog GetProduct fails only for product OLJCESPC7Z (\"query returned an invalid row\"). The error is specific to that one input and passes through frontend and frontend-proxy as a ~3% error rate. Nothing has crashed or been redeployed, so this goes to a human.",
+    "confidence": 0.85,
+    "root_causes": [
+      {
+        "component": "product-catalog",
+        "fault_class": "input_specific_error",
+        "cause": "Every failing GetProduct span is for app.product.id=OLJCESPC7Z (share 1.0, 6/6). Each one fails inside product-catalog with 'product OLJCESPC7Z could not be loaded: query returned an invalid row'. This points to a bad or malformed record for that product, or a product-specific failure path in product-catalog. It is not a service-wide outage: latency, traffic and container health are normal and astronomy-db logs no errors.",
+        "confidence": 0.85,
+        "status": "active",
+        "evidence": [
+          "E6",
+          "E7",
+          "E8",
+          "E2",
+          "E9",
+          "E5"
+        ],
+        "evidence_detail": {
+          "E6": "6/6 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/GetProduct' msg='Error: product OLJCESPC7Z could not be loaded: query returned an invalid row' chain=frontend>product-catalog e.g. trace 6c2d0000000000000000000000000000",
+          "E7": "6/6 failing product-catalog spans have app.product.id=OLJCESPC7Z",
+          "E8": "product-catalog logs (docker logs, 300s): 6x ERROR '{\"level\": \"error\", \"msg\": \"failed to get product OLJCESPC7Z: query returned an invalid row\"}' first 2026-10-23T07:17:30.000000000Z last 2026-10-23T07:19:10.000000000Z",
+          "E2": "product-catalog [errors] over 300s: error_rate 9.7% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 6.0ms (baseline 6ms) rps 6.0 (baseline 6.0)",
+          "E9": "astronomy-db: no warn+ log lines in last 300s (docker logs)",
+          "E5": "all 19 containers running and healthy; none (re)started in the last 900s"
+        }
+      }
+    ],
+    "suspected_origin": {
+      "service": "product-catalog",
+      "reasoning": "The deepest failing span is product-catalog GetProduct on the chain frontend -> product-catalog. All failures share one product id, and the service's own logs show the matching error.",
+      "confidence": 0.85,
+      "evidence": [
+        "E6",
+        "E7",
+        "E8"
+      ],
+      "evidence_detail": {
+        "E6": "6/6 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/GetProduct' msg='Error: product OLJCESPC7Z could not be loaded: query returned an invalid row' chain=frontend>product-catalog e.g. trace 6c2d0000000000000000000000000000",
+        "E7": "6/6 failing product-catalog spans have app.product.id=OLJCESPC7Z",
+        "E8": "product-catalog logs (docker logs, 300s): 6x ERROR '{\"level\": \"error\", \"msg\": \"failed to get product OLJCESPC7Z: query returned an invalid row\"}' first 2026-10-23T07:17:30.000000000Z last 2026-10-23T07:19:10.000000000Z"
+      }
+    },
+    "affected_services": [
+      {
+        "service": "product-catalog",
+        "impact": "GetProduct returns an error for product OLJCESPC7Z (error_rate 0.0967 vs baseline 0.0); other products are served normally at p95 6ms.",
+        "evidence": [
+          "E2",
+          "E6",
+          "E7",
+          "E8"
+        ]
+      },
+      {
+        "service": "frontend",
+        "impact": "GET /api/products/OLJCESPC7Z fails; error_rate 0.0344 and client_error_rate 0.0204 (baseline 0.0).",
+        "evidence": [
+          "E1",
+          "E6"
+        ]
+      },
+      {
+        "service": "frontend-proxy",
+        "impact": "Users see errors when opening the OLJCESPC7Z product page; error_rate 0.0323 (baseline 0.0).",
+        "evidence": [
+          "E3"
+        ]
+      },
+      {
+        "service": "recommendation",
+        "impact": "Some calls to product-catalog fail (client_error_rate 0.08 vs 0.0), probably when OLJCESPC7Z is among the recommended products. Recommendation's own server error rate is 0.",
+        "evidence": [
+          "E4",
+          "E11"
+        ]
+      }
+    ],
+    "anomalies": [
+      {
+        "service": "product-catalog",
+        "signal": "error_rate",
+        "observed": "0.0967",
+        "baseline": "0.0",
+        "evidence": [
+          "E2"
+        ]
+      },
+      {
+        "service": "product-catalog",
+        "signal": "log_errors",
+        "observed": "6 x 'failed to get product OLJCESPC7Z: query returned an invalid row' (07:17:30-07:19:10)",
+        "baseline": "0",
+        "evidence": [
+          "E8"
+        ]
+      },
+      {
+        "service": "frontend",
+        "signal": "error_rate",
+        "observed": "0.0344",
+        "baseline": "0.0",
+        "evidence": [
+          "E1"
+        ]
+      },
+      {
+        "service": "frontend-proxy",
+        "signal": "error_rate",
+        "observed": "0.0323",
+        "baseline": "0.0",
+        "evidence": [
+          "E3"
+        ]
+      },
+      {
+        "service": "recommendation",
+        "signal": "client_error_rate",
+        "observed": "0.08",
+        "baseline": "0.0",
+        "evidence": [
+          "E4"
+        ]
+      }
+    ],
+    "ruled_out": [
+      {
+        "service": "astronomy-db",
+        "reason": "Container is healthy and has not restarted, and it logs no warnings or errors. Only one product fails, so the database is not down.",
+        "evidence": [
+          "E5",
+          "E9"
+        ]
+      },
+      {
+        "service": "recommendation",
+        "reason": "No error traces originate there and its server error rate is 0. It only sees product-catalog's errors on its outgoing calls.",
+        "evidence": [
+          "E4",
+          "E10",
+          "E11"
+        ]
+      },
+      {
+        "service": "frontend",
+        "reason": "Its errors trace back to the product-catalog span. Latency and traffic are at baseline.",
+        "evidence": [
+          "E1",
+          "E6"
+        ]
+      },
+      {
+        "service": "product-catalog (container)",
+        "reason": "No restarts, crashes or recent deploys, and p95 and rps are at baseline. This is not a container or resource fault.",
+        "evidence": [
+          "E5",
+          "E2"
+        ]
+      }
+    ],
+    "open_questions": [
+      "Is the OLJCESPC7Z row in astronomy-db actually malformed, or did a product-specific code path or feature flag in product-catalog cause this? Telemetry alone cannot tell these apart (flag config was not read, by policy).",
+      "What changed around 07:17:30, when the first error was logged? There was no container change, so check data changes.",
+      "Are any other product ids at risk with the same row shape?"
+    ],
+    "prevention": [
+      "Validate product rows when data is loaded or migrated into astronomy-db so malformed records are rejected before they are served.",
+      "Make product-catalog handle a single bad row gracefully (skip or 404 with a clear log) instead of returning an error, and add a test for malformed rows.",
+      "Alert on errors grouped by app.product.id so per-product faults are found quickly."
+    ],
+    "proposed_action": {
+      "action": "escalate_to_human",
+      "target": "product-catalog",
+      "fault_class": "input_specific_error",
+      "reason": "product-catalog [input_specific_error]: flag toggling is disabled until the rules are confirmed; escalating with findings.",
+      "next_steps": [
+        "Read the failing operation's error message and the cited traces and logs for the cause.",
+        "If a failure switch is suspected, a human can toggle it through the Action API (automatic flag toggling is disabled)."
+      ]
+    },
+    "validation": {
+      "dropped_evidence_ids": [],
+      "notes": [],
+      "overrides": []
+    }
+  },
+  "remediation_plan": {
+    "steps": [],
+    "resolved": [],
+    "client": "dry-run",
+    "live": false,
+    "not_run": [],
+    "stopped_reason": null,
+    "outcome": "escalated",
+    "escalate": true
+  },
+  "escalations": [
+    {
+      "target": "product-catalog",
+      "fault_class": "input_specific_error",
+      "reason": "product-catalog [input_specific_error]: flag toggling is disabled until the rules are confirmed; escalating with findings.",
+      "next_steps": [
+        "Read the failing operation's error message and the cited traces and logs for the cause.",
+        "If a failure switch is suspected, a human can toggle it through the Action API (automatic flag toggling is disabled)."
+      ],
+      "source": "no allowlisted fix"
+    }
+  ],
+  "manual_verifications": [],
+  "outcome": {
+    "status": "escalated",
+    "summary": "product-catalog [input_specific_error] diagnosed at 0.85; no allowlisted action, escalated to a human",
+    "prevention": [
+      "Validate product rows when data is loaded or migrated into astronomy-db so malformed records are rejected before they are served.",
+      "Make product-catalog handle a single bad row gracefully (skip or 404 with a clear log) instead of returning an error, and add a test for malformed rows.",
+      "Alert on errors grouped by app.product.id so per-product faults are found quickly."
+    ],
+    "investigation_outcome": "submitted",
+    "plan_outcome": "escalated"
+  },
+  "review": null,
+  "notifications": [],
+  "accounting": {
+    "tokens_in": 22360,
+    "tokens_out": 2449,
+    "estimated_cost_usd": 0.1384,
+    "reviewer_tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "price_basis": "USD per 1M tokens, Anthropic first-party rates",
+    "phases": {
+      "investigation_s": 26.2,
+      "remediation_s": 0.0,
+      "verify_s": 0,
+      "total_s": 26.2
+    },
+    "steps_used": 3,
+    "step_budget": 10
+  },
+  "report_paths": {
+    "report": "C:\\Placement\\hackathon\\runs\\20261024-154738-test.report.md",
+    "actions_log": "C:\\Placement\\hackathon\\runs\\actions.jsonl",
+    "action_log_lines": []
+  }
+}
