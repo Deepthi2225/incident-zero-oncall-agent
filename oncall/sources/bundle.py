@@ -34,7 +34,7 @@ class BundleSource:
         if not self.dir.is_dir():
             raise FileNotFoundError(f"bundle directory not found: {self.dir}")
         meta_file = self.dir / "meta.json"
-        self.meta = json.loads(meta_file.read_text()) if meta_file.exists() else {}
+        self.meta = json.loads(meta_file.read_text(encoding="utf-8")) if meta_file.exists() else {}
         self.detail = f"recorded bundle {self.dir}"
         self._cache = {}
 

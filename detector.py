@@ -108,7 +108,7 @@ def top_bucket_ms():
 def load_baseline():
     """{service: {"p95_ms": float | None, "rps": float | None}}. p95 None = unknown."""
     try:
-        with open(BASELINE_FILE) as f:
+        with open(BASELINE_FILE, encoding="utf-8") as f:
             data = json.load(f)
     except (FileNotFoundError, ValueError):
         return {}

@@ -1,368 +1,285 @@
 # Incident Zero: AI On-Call Engineer
 
-See [CLAUDE.md](CLAUDE.md) for the problem, the hard rules and the plan, and
-[ARCHITECTURE.md](ARCHITECTURE.md) for the design.
+An AI agent that responds to a production incident in a microservices shop. It investigates using
+real telemetry, names the root cause with evidence, proposes a safe fix, waits for a human to
+approve it, applies it, and checks that the system recovered. When it is not sure, it hands over to
+a human with what it found.
 
-## For teammates
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the design and [EVALUATION.md](EVALUATION.md) for results.
 
-### Get started
+## What you need
 
-1. Clone and install (Python 3.11 or newer):
-   ```
-   git clone https://github.com/aniruddhajoshi100/ocAgent.git
-   cd ocAgent
-   pip install -r requirements.txt
-   ```
-2. Copy `.env.example` to `.env` and fill in **your own** values: `ANTHROPIC_API_KEY` (or
-   `ONCALL_PROVIDER=gemini` with `GEMINI_API_KEY`), a long random `ACTION_API_TOKEN`, and
-   `ACTION_API_URL=http://127.0.0.1:8099`. `.env` is gitignored; never commit it.
-3. Start the OpenTelemetry demo in its own folder, without changing anything there:
-   `docker compose -f compose.yaml -f compose.full.yaml -f compose.observability.yaml up -d`.
-   Wait a few minutes for the load generator to produce traffic.
-4. Run the tests: `python -m pytest -q`. They need no Docker and no network.
-5. While the shop is healthy, capture the baselines: `python -m oncall baseline --window 5m` and
-   `python detector.py --calibrate 300`.
-6. Run each of these in its own terminal:
-   - `python -m actionapi`: our Action API, the only thing that changes the demo
-   - `python -m oncall.ui`: the read-only dashboard at http://127.0.0.1:8090
-   - `python -m oncall watch`: the detector, which starts an investigation when an alert fires.
-     Approve or reject each step in this terminal.
+| | Offline try-out | Full live demo |
+|---|---|---|
+| [Python](https://www.python.org/downloads/) 3.11 or newer, and Git | Yes | Yes |
+| An LLM API key (see step 3) | Yes | Yes |
+| [Docker](https://www.docker.com/products/docker-desktop/) with Compose v2 | No | Yes |
+| Free memory and disk | Very little | About 6 GB RAM (16 GB laptop recommended), 14 GB disk |
 
-### Contribute
+It runs on Windows, macOS and Linux. Commands below are the same on all three unless noted.
 
-- Start from an up-to-date `main`: `git switch main && git pull`, then
-  `git switch -c <name>/<feature>`.
-- Keep every test passing (`python -m pytest -q`) and add tests for what you change.
-- Open a pull request into `main` and ask a teammate to look before merging.
-- Follow the hard rules in [CLAUDE.md](CLAUDE.md): never edit the demo, never read feature flags,
-  change the system only through the Action API, and never commit `.env`, `runs/` or `STOP`.
+## Quick start (offline, about 5 minutes)
 
-## LLM providers
+This runs the agent on recorded data, so it needs no Docker and changes nothing.
 
-The agent loop is provider-independent ([oncall/agent/providers.py](oncall/agent/providers.py)).
-The guard, sanitiser, step cap, kill switch, evidence validator and incident record are the same
-for every provider, and the record's `metadata.provider` / `metadata.model` show what was used.
+**1. Get the code**
 
-| `ONCALL_PROVIDER` | Model setting | Key (in `.env` only) | Notes |
-|---|---|---|---|
-| `anthropic` (default) | `ONCALL_MODEL` (default `claude-opus-5-5`) | `ANTHROPIC_API_KEY` | Adaptive thinking, effort, refusal fallback; cost estimated in the record |
-| `gemini` | `GEMINI_MODEL` (default `gemini-3.5-flash-lite`) | `GEMINI_API_KEY` | Gemini's OpenAI-compatible endpoint; needs `pip install openai`; cost is null in the record |
-| `groq` | `GROQ_MODEL` (default `openai/gpt-oss-120b`) | `GROQ_API_KEY` | Groq's OpenAI-compatible endpoint; needs `pip install openai`; cost is null in the record. `python scripts/llm_check.py` confirms the key and tool calling. A rejected tool call is retried with the error, and per-minute rate limits are waited out |
-| `ollama` | `OLLAMA_MODEL` (default `qwen3:8b`) | none | A local model on `OLLAMA_URL`; needs `pip install openai`; the model must support tool calling |
+```
+git clone https://github.com/aniruddhajoshi100/ocAgent.git
+cd ocAgent
+```
 
-**Local fallback.** With `ONCALL_FALLBACK_PROVIDER=ollama`, any model call the main provider cannot
-complete is answered by the local Ollama model, and the main provider is tried again on the next
-call. If both fail, the run ends as `llm_error` and escalates. When the fallback answered, the
-terminal says so and the record has `metadata.fallback` (provider, model, number of calls). **A
-diagnosis the fallback helped produce never offers a fix**: its findings are kept, every planned step
-becomes an escalation, and the `fallback_model` notification goes out. In testing, the local model
-gave a confident wrong diagnosis, so a human must confirm it first. Set the server's `OLLAMA_CONTEXT_LENGTH` to at least
-16384: a smaller context silently cuts off the conversation.
+**2. Install it in a virtual environment**
 
-The provider is chosen only from `ONCALL_PROVIDER`, never from which keys happen to be set. Any
-provider failure becomes the run outcome `llm_error`. The Gemini provider is **based on Shivakumar's
-Day 1 Gemini adapter** (his reply-to-blocks conversion), rebuilt to translate our single
-conversation on every call instead of keeping a second history. Mentors confirmed any model or API
-key may be used.
+Windows (PowerShell):
+```
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
 
-The system prompt also includes three reasoning rules **based on Padma's checkpoint3 branch**:
-- keep service identities exact (a stopped container is evidence about that service, not its callers)
-- never claim OOM from an exit code alone (137 can be a SIGKILL from `docker stop`, 143 is SIGTERM)
-- query the alert's time window rather than arbitrary long windows
+macOS or Linux:
+```
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
-## Approval prompt
+If PowerShell blocks the activation script, run
+`Set-ExecutionPolicy -Scope Process RemoteSigned` and try again. With the environment active, `python`
+works on every system. Activate it again in each new terminal.
 
-Each plan step is approved separately. The approval box shows the diagnosis, root cause, action,
-reason, expected outcome, **risk** (the step's `risk_assessment`, or "not assessed") and the
-rollback. The risk shown is saved in the step's approval record and in the report. Showing the risk
-is **based on Shivakumar's Day 1 approval gate**.
+**3. Add an LLM key**
 
-The terminal bell rings just before each approval box, so someone at the laptop notices that a
-human is needed. `--execute` combined with `--auto-approve`/`--yes` is refused at startup
-("--execute requires a human approval; --auto-approve only works with dry runs."), in both
-`python -m oncall.agent.run` and `scripts/demo.py`. Both are **based on Aniruddha's aj_ck_3
-branch**.
+Copy the settings file: `copy .env.example .env` on Windows, `cp .env.example .env` on macOS or Linux.
+Then open `.env` and set one provider. [Groq](https://console.groq.com/keys) is the easiest way to start:
 
-## Reviewer agent (stretch goal 2, off by default)
+```
+ONCALL_PROVIDER=groq
+GROQ_API_KEY=your-key-here
+```
 
-With `ONCALL_REVIEWER=on`, one extra model call reviews the validated diagnosis before anything is
-shown for approval ([oncall/agent/reviewer.py](oncall/agent/reviewer.py)). It uses the same
-provider, with no investigation tools. It gets the alert, the diagnosis and the text of every
-registered evidence item, and acts as a skeptical senior SRE trying to disprove the diagnosis:
-victim versus origin, contradicting evidence, alternatives not ruled out, and claims their cited
-evidence does not support.
+`.env` is ignored by Git. Never commit it. Check the key with `python scripts/llm_check.py`.
+It should print a line starting with `OK`.
 
-**It can** return `agree`, `doubt` or `disagree` with objections, suggest an alternative root cause,
-and lower confidence by up to 0.3. If confidence then falls below 0.6, the affected steps are
-removed and escalated to a human, with the objections attached. The approval box shows a
-`Reviewer` line, and the report and incident JSON have a Review section (verdict, objections,
-confidence before and after, tokens, duration). Its tokens count towards the run's cost.
+**4. Run the tests** (optional; these need no key, Docker or network)
 
-**It cannot** (enforced in code): raise confidence (the adjustment is clamped to [-0.3, 0]); add,
-change or retarget a step; approve anything; or act on its suggested alternative, which is only
-shown to the human. Objections citing evidence IDs that are not in the registry are dropped. The
-kill switch is checked before the call. On any error or a timeout (`ONCALL_REVIEWER_TIMEOUT_S`,
-default 30 s), the run continues exactly as without a reviewer and records "review skipped:
-<reason>".
+```
+python -m pytest -q
+```
 
-## Live dashboard (read-only)
+**5. Run the agent on a recorded incident**
 
-`python -m oncall.ui` serves a page at http://127.0.0.1:8090 (`ONCALL_UI_PORT`) where people can
-watch the agent. It only reads: the incident records in `runs/`, `runs/actions.jsonl`,
-`runs/action_api.jsonl`, `runs/notifications.jsonl`, the `STOP` file, the Action API's
-`GET /health`, and the detector's own read-only Prometheus queries. It has no buttons that act; approvals stay in the terminal.
+```
+python -m oncall.agent.run tests/fixtures/payment_down/alert.json --test
+```
 
-It uses the standard library only, is a single page with no CDN (works offline), and listens on
-127.0.0.1 only. It never imports faultctl. Every response passes through the sanitiser (flag data
-removed, secrets redacted), and the page inserts all text with `textContent`, never as HTML.
+You will see each tool the agent calls, then its diagnosis and proposed fix. Nothing is really
+changed in this mode. The report is saved in `runs/`.
 
-| Panel | Shows |
+## Full live demo
+
+**1. Start the shop.** Clone it next to this project and keep the folder name
+`opentelemetry-demo`, because the agent uses it to recognise the shop's containers. This project was
+tested on commit `ad06a6f9`.
+
+```
+git clone https://github.com/open-telemetry/opentelemetry-demo.git
+cd opentelemetry-demo
+git checkout ad06a6f9
+docker compose -f compose.yaml -f compose.full.yaml -f compose.observability.yaml up -d
+cd ../ocAgent
+```
+
+Do not edit anything inside that folder. Wait about 5 minutes for traffic to build up, then open
+http://localhost:8080 to see the shop. If you did use another folder name, add
+`COMPOSE_PROJECT=<that folder name>` to `.env`.
+
+**2. Finish `.env`.** Add these two lines. Generate the token with
+`python -c "import secrets; print(secrets.token_urlsafe(32))"`.
+
+```
+ACTION_API_TOKEN=paste-the-generated-token
+ACTION_API_URL=http://127.0.0.1:8099
+```
+
+**3. Record what healthy looks like**, while the shop is running normally:
+
+```
+python -m oncall check
+python -m oncall baseline --window 5m
+python detector.py --calibrate 300
+```
+
+**4. Start the services**, each in its own terminal with the virtual environment active:
+
+```
+python -m actionapi
+python -m oncall.ui
+```
+
+The first is the only component allowed to change the shop. The second is a read-only dashboard at
+http://127.0.0.1:8090.
+
+**5. Break something and watch the agent respond.** In a third terminal:
+
+```
+python scripts/demo.py stop-payment --wait 180 --execute
+```
+
+This stops the payment service, waits for the alert, and starts the agent. When it asks, answer `y`
+to approve the fix or `n` to refuse. Without `--execute` it is a dry run.
+
+**6. Put everything back:**
+
+```
+python -m faultctl reset
+```
+
+To run it continuously instead, use `python -m oncall watch`. It starts an investigation whenever
+an alert fires. To see every fault you can practise on, use `python -m faultctl list`.
+
+## Stop the agent immediately
+
+```
+python -m oncall stop
+python -m oncall resume
+```
+
+`stop` blocks all further model calls, tool calls and actions, even ones already approved. `resume`
+turns the agent back on.
+
+## Common commands
+
+| Command | What it does |
 |---|---|
-| Status bar | Kill switch on/off, Action API reachable, reviewer on/off, and the agent when a run is in progress |
-| Shop health | Every service's rps, error % and p95, coloured against its detector limits (green / amber / red); refreshed every 15 s |
-| Incident | A timeline of the newest (or selected) run: alert; each tool call with arguments, duration, result size and evidence IDs; diagnosis with root causes (fault class, active or resolved, confidence, cited evidence); ruled-out suspects; reviewer verdict; each plan step with reason, expected outcome, risk, rollback, approval (**WAITING FOR HUMAN APPROVAL IN TERMINAL** while pending), result and each verify check; escalations; the notifications sent for the run; the outcome with tokens, cost and duration |
-| Evidence | Every evidence ID with its tool and text; cited ones highlighted; clicking an ID in the timeline scrolls to it |
-| Action logs | The latest lines of the agent's `actions.jsonl` and the Action API's `action_api.jsonl`, side by side |
-| Notifications | The latest lines of `runs/notifications.jsonl`: incident, event, channel, status, recipients or the error |
-| History | Past runs (time, incident, root cause, fault class, confidence, outcome, cost); click one to view it; the timeline links to its markdown report as plain text |
+| `python scripts/llm_check.py` | Checks the LLM key and tool calling |
+| `python -m oncall check` | Checks Prometheus, Jaeger and Docker can be reached |
+| `python -m oncall baseline --window 5m` | Saves healthy numbers to compare against |
+| `python -m oncall watch` | Watches for alerts and investigates them |
+| `python -m oncall investigate --service checkout --signal error_rate --value 0.3` | Investigates a manual alert |
+| `python -m oncall verify <run_id>` | Checks recovery after a human fixed something by hand |
+| `python -m oncall emailtest` | Sends one test email |
+| `python -m faultctl list` / `inject <id>` / `status` / `reset` | Practice faults |
 
-The page polls every 2.5 s and pauses while the tab is hidden. Missing fields show as "not
-recorded", so partial, interrupted and Day 1 records all render.
+## Troubleshooting
 
-## Postmortem (draft)
-
-Every incident report (`runs/<run_id>.report.md`) ends with a draft postmortem, also stored in the
-incident JSON under `postmortem` and shown in the dashboard's incident view. It is derived only
-from the record (`oncall/postmortem.py`); anything the record does not contain is "unknown":
-
-- Key times: fault started (earliest evidence, e.g. a container's stop time or the first error
-  log line), detected (the alert), diagnosed, approved, executed, recovery verified; time to
-  detect, diagnose and recover, and the total.
-- Impact: affected services and user flows from the diagnosis; error rates and traffic drops from
-  the metric evidence; failing traces and error log lines as counts. The total number of failed
-  requests is never estimated.
-- 5 Whys: each answer cites evidence IDs and the chain stops at "unknown, needs human
-  investigation" where the evidence runs out.
-- What went well / what could be better, from facts in the record.
-- Action items: the prevention recommendations as a table (type prevent / detect / mitigate,
-  priority from the service's criticality, owner "to assign").
-
-Records written before this feature get it computed when the report or dashboard shows them.
-
-## Email escalation (off by default)
-
-Based on our teammate's notification work, shared as `ocAgent-main.zip`. Only the email part is
-ported, rebuilt on this repo's incident record and scrubber (`oncall/notify.py`).
-
-When a run ends in an escalation, the agent tells a human. It notifies once per incident, event
-type and channel, and a restart that re-investigates the same incident does not repeat it. A
-failed send (or an event that was only logged while email was off) is sent by the next run of
-that incident. This applies to every way of running the agent: `oncall.agent.run` (also with
-`--test` and `--non-interactive`), `oncall investigate`, `oncall watch`, and `oncall verify`
-after a manual fix:
-
-| Event | When |
+| Problem | Fix |
 |---|---|
-| `low_confidence` | No root cause reached confidence 0.6, or the investigation ended without a diagnosis |
-| `no_allowlisted_fix` | A confident root cause, but no Action API action fixes its fault class |
-| `reviewer_objection` | The reviewer agent lowered confidence or removed steps |
-| `approval_needed` | A step was not run because nobody approved it (`--non-interactive`, or watch mode without a terminal) |
-| `verification_failed` | An executed step did not verify (after its rollback, if it had one), or `oncall verify` after a manual fix did not |
-| `kill_switch` | The kill switch stopped the agent or refused a step |
-| `human_rejected` | The on-call engineer said no at the approval prompt |
-| `recovered` | Optional short info email (`EMAIL_ON_RECOVERED=on`; off by default) |
+| `python` is not found (macOS or Linux) | Use `python3`, or activate the virtual environment |
+| `No module named ...` | Activate the virtual environment and run `pip install -r requirements.txt` |
+| Run ends with `llm_error` | Run `python scripts/llm_check.py`, then check the key and `ONCALL_PROVIDER` in `.env` |
+| Groq `Request too large` or repeated rate limits | Turn on the Ollama fallback below, or use a paid tier |
+| `python -m oncall check` fails | Make sure the shop is up and has run for a few minutes |
+| No metrics or an empty report | Metrics arrive about once a minute. Wait 2 to 3 minutes |
+| Actions are refused as outside the project | Set `COMPOSE_PROJECT` to the shop's folder name in `.env` |
+| Agent says the kill switch is on | Run `python -m oncall resume` |
+| Docker runs out of memory | Give Docker at least 6 GB in its settings |
 
-The email gives the incident ID, the severity (from the service's criticality: SEV1 critical to
-SEV4 low), affected services, root cause and confidence, why it escalated, the top evidence lines,
-open questions, next steps and the report path. It passes through the same scrubber as the
-incident record: no feature-flag data, no keys or passwords.
+## Settings
 
-**Format.** Each email has a formatted HTML version and a plain-text copy, and the finished run's
-report is attached as a `.txt` file so it can be read without access to this machine. Runs on
-fixtures or replayed data get `[TEST]` in the subject and a warning at the top. The emails contain
-no links to click: the dashboard is only reachable on the machine running the agent.
+All settings go in `.env`. [.env.example](.env.example) lists them.
 
-**Approval page.** While a run is in progress, the moment a plan step's approval box appears in
-the terminal, the agent also sends a page (on by default when email is on; `EMAIL_ON_APPROVAL=off`
-turns it off):
+### LLM providers
 
+| `ONCALL_PROVIDER` | Default model (setting) | Key |
+|---|---|---|
+| `anthropic` (default) | `claude-opus-5-5` (`ONCALL_MODEL`) | `ANTHROPIC_API_KEY` |
+| `groq` | `openai/gpt-oss-120b` (`GROQ_MODEL`) | `GROQ_API_KEY` |
+| `gemini` | `gemini-3.5-flash-lite` (`GEMINI_MODEL`) | `GEMINI_API_KEY` |
+| `ollama` | `qwen3:8b` (`OLLAMA_MODEL`) | None; runs on your machine |
+
+The provider comes only from `ONCALL_PROVIDER`, never from which keys are set. If a provider fails,
+the run ends as `llm_error` and escalates to a human. On Groq, rejected tool calls are retried and
+per-minute rate limits are waited out.
+
+### Local fallback with Ollama (optional)
+
+If the main provider fails, a local model can answer instead. It needs a GPU with about 8 GB of
+memory to run at a usable speed.
+
+1. Install [Ollama](https://ollama.com) and run `ollama pull qwen3:8b`.
+2. Set `OLLAMA_CONTEXT_LENGTH=16384` as an environment variable and restart Ollama. A smaller value
+   silently cuts off the conversation.
+3. Add `ONCALL_FALLBACK_PROVIDER=ollama` to `.env`.
+
+The record shows when the fallback answered. **A diagnosis the fallback helped produce never offers
+a fix**: the findings go to a human, because the smaller model is less reliable.
+
+### Reviewer (optional)
+
+`ONCALL_REVIEWER=on` adds one skeptical second opinion before anything is shown for approval. It can
+lower confidence and remove steps, but it can never raise confidence, add a step or approve anything.
+
+### Email alerts (optional, off by default)
+
+The agent emails a human when it escalates or needs approval. Each email has a formatted version, a
+plain-text copy and, once the run has ended, the report attached. Runs on recorded data are marked
+`[TEST]`. Email sends incident data off your machine.
+
+With [Resend](https://resend.com):
 ```
-[ON-CALL PAGE][SEV1] INC-20261024-101500 payment: approval needed — restart_service on payment
+EMAIL_ENABLED=on
+EMAIL_TRANSPORT=resend
+RESEND_API_KEY=your-key-here
+EMAIL_TO=you@example.com
 ```
 
-It says a fix is waiting for approval in the terminal, then gives the root cause and confidence,
-the reviewer's verdict and objections, the proposed action, reason, expected outcome, risk and
-rollback, the top evidence lines, and where to approve: the terminal running the agent (the
-dashboard at http://127.0.0.1:8090 shows the waiting step). **Approval is not possible by
-replying to the email.** One page per step (not repeated when the agent restarts on the same
-incident); it is sent in the background, so the prompt appears at once and a mail failure never
-blocks the approval. Its result goes into the incident record and `notifications.jsonl` like any
-other notification. No page is sent for dry-run auto-approval or without a terminal (those end in
-the `approval_needed` escalation instead).
+Without a verified domain, Resend only delivers to its account owner's own address. Set `EMAIL_FROM`
+once you have verified one.
 
-`runs/notifications.jsonl` always gets a line per event, even with email off. Every notification
-is also stored in the incident record under `notifications` (time, event, channel, recipients,
-status). The whole SMTP conversation has one deadline (`EMAIL_TIMEOUT_S`, default 10 s) and the run
-waits for it before it ends, so an email is never lost when the command exits, and a slow or
-broken mail server never blocks or crashes the agent. Every attempt prints one line:
-
-```
-[notify] no_allowlisted_fix: email sent to alice@example.com
-[notify] low_confidence: email failed: ConnectionRefusedError: ... (nothing is listening on 127.0.0.1:1025)
-[notify] low_confidence: logged to runs/notifications.jsonl (email off: EMAIL_ENABLED is not on)
-```
-
-Configure it in `.env` only (never commit real values). On/off settings accept on/off, true/false,
-1/0 or yes/no; anything else prints a warning. A trailing ` # comment` after a value is ignored.
-`SMTP_HOST` is used exactly as given. With `SMTP_STARTTLS=off` no STARTTLS is attempted, and
-without `SMTP_USER` no login is attempted.
-
+With SMTP:
 ```
 EMAIL_ENABLED=on
 SMTP_HOST=smtp.example.com
 SMTP_PORT=587
-SMTP_USER=...
-SMTP_PASSWORD=...
+SMTP_USER=your-user
+SMTP_PASSWORD=your-password
 SMTP_STARTTLS=on
 EMAIL_FROM=oncall-agent@example.com
-EMAIL_TO=alice@example.com,bob@example.com
-```
-
-### Resend instead of SMTP
-
-`EMAIL_TRANSPORT=resend` sends each email with one HTTPS POST to Resend's API
-(`https://api.resend.com/emails`, `Authorization: Bearer <RESEND_API_KEY>`, JSON with `from`, `to`,
-`subject`, `text`, `html` and the report under `attachments`). It uses the same deadline as SMTP (`EMAIL_TIMEOUT_S`, default 10 s) and prints
-`email sent (resend id ...) to ...` or `email failed: <reason>`. The API key is only ever put in that
-header: it is never printed or logged, and the scrubber redacts it anywhere it could appear.
-
-```
-EMAIL_ENABLED=on
-EMAIL_TRANSPORT=resend
-RESEND_API_KEY=re_...
-EMAIL_FROM=AI On-Call Agent <oncall@your-verified-domain.com>
 EMAIL_TO=you@example.com
 ```
 
-Without `EMAIL_FROM` it sends from Resend's shared test sender `onboarding@resend.dev`. **That sender
-only delivers to the Resend account owner's own address**; to email anyone else, verify a domain in
-Resend and send from an address on it (otherwise Resend answers HTTP 403). Resend delivers through
-its own servers, so this always sends incident data off the laptop.
+Check it with `python -m oncall emailtest`. You cannot approve a fix by replying to an email.
 
-Our teammate's `.env` names work too: `NOTIFICATION_FROM_EMAIL` (same as `EMAIL_FROM`),
-`ONCALL_PRIMARY_EMAIL` (added to the `EMAIL_TO` recipients), `SMTP_PASS` (same as `SMTP_PASSWORD`)
-and `ONCALL_PRIMARY_NAME` (used in a "Hello <name>," greeting). `ONCALL_PRIMARY_PHONE` and
-`NOTIFY_ALL_CHANNELS` are ignored: the agent makes no calls and sends no SMS. All values have
-surrounding whitespace removed. `python -m oncall emailtest` works with either transport.
+## How it stays safe
 
-### Testing locally
+- **The agent only reads.** Every change goes through the Action API, a separate local service that
+  needs a token and listens only on your own machine.
+- **Allowed actions only.** It can restart a shop service or throttle the load generator. Feature-flag
+  toggling and scaling return "not implemented", so those faults go to a human.
+- **It leaves its own monitoring alone.** Prometheus, Jaeger, the collector and other monitoring
+  containers cannot be restarted, and nothing outside the shop's Compose project can be touched.
+- **A human approves every step.** `--execute` cannot be combined with `--auto-approve`.
+- **Evidence is checked.** Any claim citing evidence the agent did not actually collect is dropped.
+- **Recovery is verified.** After a fix, the agent checks health against the baseline, then rolls back
+  and escalates if the system did not recover.
+- **No feature-flag data.** Flag settings are never read, and flag data is stripped from all telemetry.
+- **Everything is logged.** Results are in `runs/`, including each run's record and report, and the
+  Action API's audit log in `runs/action_api.jsonl`.
 
-**A real SMTP server sends incident data off this laptop.** To test locally without sending any
-real email, run a fake server that prints each message:
+## Action API reference
 
-```
-pip install aiosmtpd
-python -m aiosmtpd -n -l 127.0.0.1:1025
-```
-
-and set `EMAIL_ENABLED=on`, `SMTP_HOST=127.0.0.1`, `SMTP_PORT=1025`, `SMTP_STARTTLS=off` (leave
-`SMTP_USER` and `SMTP_PASSWORD` empty), and any `EMAIL_TO`. Use `127.0.0.1`, not `localhost`: on
-Windows `localhost` resolves to IPv6 `::1` first, which costs about 2 s per email before falling
-back to IPv4, and fails outright if `EMAIL_TIMEOUT_S` is short.
-
-Check the settings without running the agent:
-
-```
-python -m oncall emailtest
-```
-
-It prints the settings it loaded (the password only as present or absent), sends one email labelled
-`[on-call TEST]` with no incident data, and prints `sent to ...` or the exact error. The tests
-(`tests/test_notify.py`, `tests/test_notify_fixes.py`) use their own fake SMTP server and never
-send real email, even if your `.env` turns email on.
-
-## Action API (our own)
-
-> We run our own Action API as a separate local service. The agent stays read-only and changes
-> the system only by calling this API over HTTP.
-
-The agent (`oncall/`) never imports this package. It never runs a state-changing docker command,
-and a test enforces that. Every change to the demo goes through this service, after a human
-approves each step.
-
-### Start it
-
-```powershell
-# in .env (gitignored):  ACTION_API_TOKEN=<a long random string>
-#                        ACTION_API_URL=http://127.0.0.1:8099
-python -m actionapi               # listens on 127.0.0.1:8099 (ACTION_API_PORT), localhost only
-curl http://127.0.0.1:8099/health
-
-# the agent then executes approved steps through it:
-python scripts/demo.py stop-payment --wait 180 --execute
-```
-
-The service will not start without `ACTION_API_TOKEN`, and it refuses to bind anything but a
-loopback address.
-
-### Endpoints
+Runs at `http://127.0.0.1:8099`. Every call except `GET /health` needs
+`Authorization: Bearer <ACTION_API_TOKEN>`.
 
 | Method and path | Body | What it does |
 |---|---|---|
-| `GET /health` | | Liveness check (the only call that needs no token) |
-| `POST /actions/restart_service` | `{"service": "payment"}` | `docker restart` (which also starts a stopped container) of an allowlisted application container. Returns the container state before and after |
-| `POST /actions/throttle_load_generator` | `{"users": 2}` | Sets the Locust user count through Locust's own web API (`LOCUST_URL`, default `http://localhost:8080/loadgen`). Remembers the previous count |
-| `POST /actions/unthrottle_load_generator` | `{}` | The inverse: restores the remembered user count. This is the agent's rollback for a throttle |
-| `POST /actions/toggle_feature_flag` | | **501** "not implemented: pending mentor approval" |
-| `POST /actions/scale_service` | | **501** "not supported on Docker Compose" |
+| `GET /health` | | Liveness check |
+| `POST /actions/restart_service` | `{"service": "payment"}` | Restarts an allowed shop service |
+| `POST /actions/throttle_load_generator` | `{"users": 2}` | Lowers the simulated user count |
+| `POST /actions/unthrottle_load_generator` | `{}` | Restores the previous user count |
+| `POST /actions/toggle_feature_flag` | | 501, not implemented |
+| `POST /actions/scale_service` | | 501, needs Kubernetes |
 
-Every action call:
-- needs `Authorization: Bearer <ACTION_API_TOKEN>`
-- may send `Idempotency-Key: <key>`. A retry with the same key returns the first result (`"replayed": true`) without acting again. The same key with a different body gets 409. The agent sends `<run_id>:step<N>:<action>`.
-- may send `"dry_run": true`. The request is fully validated (allowlist, cooldown, container exists) and nothing is changed.
-- gets back only success/failure and container or user-count state. Responses never include flag values, tokens or other secrets.
+Add `"dry_run": true` to validate a request without changing anything. An `Idempotency-Key` header
+makes retries safe. A second change to the same service within 60 seconds is refused
+(`ACTION_API_COOLDOWN_S`).
 
-Status codes: 200 OK, 400 bad payload, 401 missing or wrong token, 403 refused, 404/405 unknown
-route, 409 idempotency conflict or nothing to restore, 423 kill switch is on, 429 cooldown (with
-`retry_after_s`), 501 not implemented, 502 docker or Locust failed.
+Status codes: 200 OK, 400 bad request, 401 bad token, 403 refused, 404/405 unknown route,
+409 conflict, 423 kill switch on, 429 cooldown, 501 not implemented, 502 Docker or load generator failed.
 
-### What it refuses, and why
+## Contributing
 
-| Refused | Why |
-|---|---|
-| Restarting anything not in `RESTART_ALLOWLIST` ([actionapi/config.py](actionapi/config.py)): only the shop's application services plus `valkey-cart` and `astronomy-db` | Only what a runbook may restart |
-| Restarting `prometheus`, `jaeger`, `opensearch`, `grafana`, `otel-collector`, `opamp-server` | They are our eyes. Restarting them would hide the incident and break verification |
-| Restarting `flagd`, `flagd-ui`, or any name containing `flagd` or `feature` | HARD RULE 2: feature-flag state is off-limits |
-| Restarting `load-generator` | Traffic is controlled by throttling, not by killing the generator |
-| Anything named like `faultctl` | Our fault injector is test harness only |
-| Containers outside the `opentelemetry-demo` compose project | Never touch anything else on this laptop |
-| A second change to the same service within `ACTION_API_COOLDOWN_S` (default 60 s) | Stops restart loops and flapping. The unthrottle (rollback) is exempt, so a rollback is never blocked |
-| Every action request (dry runs and idempotent replays included; not `GET /health`) while the kill switch is on: **423** "kill switch is on" | The API enforces the kill switch itself, using the agent's `STOP` file (`ONCALL_KILL_SWITCH`, default `<repo>/STOP`; set by `python -m oncall stop`). The agent records a 423 as a refusal, never retries it, and logs it. **Based on Padma's checkpoint3 branch** |
-| `toggle_feature_flag` | Until mentors confirm how flag names may be known; this API never reads or writes flag files or the flag API |
-| `scale_service` | Kubernetes only; the demo runs on Docker Compose |
-
-The service never edits any demo file. Locust is changed only through Locust's own HTTP
-control API.
-
-**How Locust is reached (verified 24 Oct 11:34 on the running demo).** The demo's Envoy proxy routes
-`/loadgen/` to the load generator's web port and rewrites the prefix to `/` (see
-`src/frontend-proxy/envoy.tmpl.yaml` in the demo, read only). Compose publishes Locust's own port
-(`LOCUST_WEB_PORT`, 8089) only to a random host port, so `127.0.0.1:8089` is not reachable.
-`GET http://localhost:8080/loadgen/stats/requests` returned 200 with `user_count` 5 and state
-`running`, so the default `LOCUST_URL` is `http://localhost:8080/loadgen`.
-
-### State across restarts
-
-After every applied action the service saves its state to `runs/action_api_state.json`
-(`ACTION_API_STATE`): the user count to restore after a throttle, the cooldowns and the idempotency
-results. It writes a temp file, then renames it. An unthrottle (rollback) therefore still works
-after the API is restarted, and a retried request is still not applied twice. An unreadable file is
-ignored, so the API starts clean rather than guessing. **Based on Padma's checkpoint3 branch.**
-
-### Audit log
-
-Every request is appended to `runs/action_api.jsonl` (`ACTION_API_LOG`), whether it was
-accepted, refused, a dry run or a failure. Each entry has the timestamp, caller (`X-Caller` or
-client address), method and path, action, params (service or users only), dry-run flag,
-idempotency key, HTTP status, result, replay flag and duration. This is the API's own record,
-separate from the agent's `runs/actions.jsonl`.
+Create a branch from `main`, keep `python -m pytest -q` passing, add tests for what you change, and
+open a pull request. Never edit the shop's code, read its feature flags, or commit `.env` or `runs/`.

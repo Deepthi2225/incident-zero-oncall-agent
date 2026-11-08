@@ -69,7 +69,7 @@ def cmd_baseline(args):
 
 def _alert_from_args(args):
     if args.alert_file:
-        return json.loads(Path(args.alert_file).read_text())
+        return json.loads(Path(args.alert_file).read_text(encoding="utf-8"))
     if not args.service:
         sys.exit("give --service (and optionally --signal/--value) or --alert-file")
     return {"source": "manual", "service": args.service, "signal": args.signal, "value": args.value}

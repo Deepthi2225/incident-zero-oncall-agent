@@ -114,7 +114,7 @@ def _organiser_events():
     path = os.getenv("DEPLOY_HISTORY_FILE")
     if not path or not Path(path).exists():
         return None
-    data = json.loads(Path(path).read_text())
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
     return data if isinstance(data, list) else data.get("events", [])
 
 

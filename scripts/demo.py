@@ -83,7 +83,7 @@ def main():
               f"the agent reads fixtures, not the demo")
         # detector.py reads live Prometheus, so test mode uses the scenario's own alert.
         fixture_dir = Path(source_info()["source_detail"].removeprefix("fixtures "))
-        alert = json.loads((HERE.parent / fixture_dir / "alert.json").read_text())
+        alert = json.loads((HERE.parent / fixture_dir / "alert.json").read_text(encoding="utf-8"))
         record = run_agent(alert, max_steps=args.max_steps, auto_approve=args.auto_approve,
                                action_client=client)
     else:

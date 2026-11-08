@@ -103,9 +103,9 @@ def load_baseline():
     src = get_source()
     if src.name in ("test", "bundle"):
         own = src.dir / "baseline.json"
-        return json.loads(own.read_text()) if own.exists() else None
+        return json.loads(own.read_text(encoding="utf-8")) if own.exists() else None
     if config.BASELINE_FILE.exists():
-        base = json.loads(config.BASELINE_FILE.read_text())
+        base = json.loads(config.BASELINE_FILE.read_text(encoding="utf-8"))
         if base.get("source", "live") == src.name:
             return base
     return None

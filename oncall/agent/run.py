@@ -297,7 +297,7 @@ def main():
     args = p.parse_args()
     check_execute_flags(p, args)
     apply_source_args(p, args)
-    alert = json.loads(Path(args.alert).read_text())
+    alert = json.loads(Path(args.alert).read_text(encoding="utf-8"))
     interactive = False if (args.auto_approve or args.non_interactive) else None
     record = run_agent(alert, model=args.model, max_steps=args.max_steps,
                        auto_approve=args.auto_approve, interactive=interactive,

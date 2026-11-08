@@ -9,6 +9,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
+# A Windows console or pipe may not be able to encode every character; never crash on printing one.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(errors="replace")
+
 
 def dotenv_value(raw):
     """The value of a .env line: surrounding quotes removed; for an unquoted value an inline
