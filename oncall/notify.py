@@ -377,9 +377,9 @@ class EmailNotifier(Notifier):
                 raise TimeoutError(f"the SMTP conversation took longer than {self.timeout:g}s")
             return remaining
 
-        smtp = smtplib.SMTP(timeout=left())
+        # Connect through the constructor: it records the host name that STARTTLS must verify.
+        smtp = smtplib.SMTP(self.host, self.port, timeout=left())
         try:
-            smtp.connect(self.host, self.port)
             smtp.sock.settimeout(left())
             smtp.ehlo()
             if self.starttls:  # SMTP_STARTTLS=off skips it entirely

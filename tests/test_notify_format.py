@@ -1,6 +1,7 @@
 """What an incident email looks like: [TEST] marking, HTML part, attached report, scrubbing."""
 import base64
 import email
+from types import SimpleNamespace
 
 from oncall import config, notify
 
@@ -75,3 +76,37 @@ def test_missing_report_says_where_it_is_and_still_sends(tmp_path):
     e = event(record(tmp_path, report=None))
     assert e["attachment"] is None
     assert any(line.startswith("Report: on the agent's machine") for line in e["lines"])
+
+
+def test_smtp_gives_the_host_name_that_starttls_verifies(tmp_path, monkeypatch):
+    seen = {}
+
+    class FakeSMTP:
+        def __init__(self, host="", port=0, timeout=None):
+            seen.update(host=host, port=port)
+            self.sock = SimpleNamespace(settimeout=lambda t: None)
+
+        def starttls(self, context=None):
+            seen["starttls"] = True
+
+        def ehlo(self):
+            pass
+
+        def login(self, user, password):
+            pass
+
+        def send_message(self, msg):
+            seen["sent"] = True
+
+        def quit(self):
+            pass
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(notify.smtplib, "SMTP", FakeSMTP)
+    for name, value in (("SMTP_HOST", "smtp.example.test"), ("SMTP_PORT", 587), ("SMTP_STARTTLS", True),
+                        ("SMTP_USER", "u"), ("SMTP_PASSWORD", "p"), ("EMAIL_TO", ["a@example.test"])):
+        monkeypatch.setattr(config, name, value)
+    assert notify.EmailNotifier().notify(event(record(tmp_path)))["status"] == "sent"
+    assert seen == {"host": "smtp.example.test", "port": 587, "starttls": True, "sent": True}
