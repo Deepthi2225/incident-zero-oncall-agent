@@ -9,6 +9,9 @@ Built for the Bosch AI hackathon at PES University (23 and 24 October 2026), on 
 AI for IT operations. It runs against the open-source
 [OpenTelemetry Demo](https://github.com/open-telemetry/opentelemetry-demo).
 
+This is a personal continuation of the team project at
+[aniruddhajoshi100/ocAgent](https://github.com/aniruddhajoshi100/ocAgent).
+
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the design and [EVALUATION.md](EVALUATION.md) for results.
 
 ## What you need
@@ -29,8 +32,8 @@ This runs the agent on recorded data, so it needs no Docker and changes nothing.
 **1. Get the code**
 
 ```
-git clone https://github.com/aniruddhajoshi100/ocAgent.git
-cd ocAgent
+git clone https://github.com/Deepthi2225/incident-zero-oncall-agent.git
+cd incident-zero-oncall-agent
 ```
 
 **2. Install it in a virtual environment**
@@ -92,7 +95,7 @@ git clone https://github.com/open-telemetry/opentelemetry-demo.git
 cd opentelemetry-demo
 git checkout ad06a6f9
 docker compose -f compose.yaml -f compose.full.yaml -f compose.observability.yaml up -d
-cd ../ocAgent
+cd ../incident-zero-oncall-agent
 ```
 
 Do not edit anything inside that folder. Wait about 5 minutes for traffic to build up, then open
