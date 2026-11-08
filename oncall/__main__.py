@@ -9,6 +9,7 @@
   python -m oncall verify <run_id>               verify-only, after a human fixed it by hand
   python -m oncall stop | resume                 kill switch on / off
   python -m oncall emailtest                     send one test email with the .env settings
+  python -m oncall calltest                      place one test phone call with the .env settings
 
 Source flags (before the command). Default is live. --source bundle --bundle DIR replays a recording;
 --record DIR saves one while live; --test [--fixtures DIR] uses fixtures under tests/fixtures/ and
@@ -139,6 +140,17 @@ def cmd_emailtest(_args):
     sys.exit(1)
 
 
+def cmd_calltest(_args):
+    """One clearly labelled test call. Does not run the agent."""
+    from oncall import notify
+    entry = notify.send_test_call()
+    if entry["status"] == "sent":
+        print(f"call placed to {', '.join(entry['recipients'])} (twilio id {entry['message_id']})")
+        return
+    print(entry.get("error") or "call failed: unknown reason")
+    sys.exit(1)
+
+
 def cmd_resume(_args):
     config.KILL_SWITCH_FILE.unlink(missing_ok=True)
     print("kill switch OFF")
@@ -169,12 +181,13 @@ def main():
     sub.add_parser("stop")
     sub.add_parser("resume")
     sub.add_parser("emailtest", help="send one test email with the email settings in .env")
+    sub.add_parser("calltest", help="place one test phone call with the Twilio settings in .env")
     args = p.parse_args()
-    if args.cmd not in ("stop", "resume", "emailtest"):
+    if args.cmd not in ("stop", "resume", "emailtest", "calltest"):
         apply_source_args(p, args)
     {"check": cmd_check, "baseline": cmd_baseline, "investigate": cmd_investigate,
      "watch": cmd_watch, "verify": cmd_verify, "stop": cmd_stop, "resume": cmd_resume,
-     "emailtest": cmd_emailtest}[args.cmd](args)
+     "emailtest": cmd_emailtest, "calltest": cmd_calltest}[args.cmd](args)
 
 
 if __name__ == "__main__":

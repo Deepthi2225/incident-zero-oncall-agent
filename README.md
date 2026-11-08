@@ -171,6 +171,7 @@ turns the agent back on.
 | `python -m oncall investigate --service checkout --signal error_rate --value 0.3` | Investigates a manual alert |
 | `python -m oncall verify <run_id>` | Checks recovery after a human fixed something by hand |
 | `python -m oncall emailtest` | Sends one test email |
+| `python -m oncall calltest` | Places one test phone call |
 | `python -m faultctl list` / `inject <id>` / `status` / `reset` | Practice faults |
 
 ## Troubleshooting
@@ -221,6 +222,24 @@ a fix**: the findings go to a human, because the smaller model is less reliable.
 
 `ONCALL_REVIEWER=on` adds one skeptical second opinion before anything is shown for approval. It can
 lower confidence and remove steps, but it can never raise confidence, add a step or approve anything.
+
+### Phone calls (optional, off by default)
+
+For live SEV1 and SEV2 incidents, P0ppy can phone the on-call engineer through
+[Twilio](https://www.twilio.com) and read a short summary. Runs on recorded data never ring. The call
+is one-way: it cannot acknowledge or approve anything. Add these to `.env`, using numbers with a
+country code, then check them with `python -m oncall calltest`.
+
+```
+CALLS_ENABLED=on
+TWILIO_ACCOUNT_SID=your-account-sid
+TWILIO_AUTH_TOKEN=your-auth-token
+TWILIO_FROM_NUMBER=+1xxxxxxxxxx
+ONCALL_PRIMARY_PHONE=+91xxxxxxxxxx
+```
+
+Trial accounts can usually only call numbers verified with Twilio, and calling a country may need
+enabling under Voice Geographic Permissions.
 
 ### Email alerts (optional, off by default)
 

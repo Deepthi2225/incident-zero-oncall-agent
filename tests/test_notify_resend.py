@@ -173,7 +173,8 @@ def test_teammate_names_are_aliases(monkeypatch):
     assert c["EMAIL_FROM"] == "Agent <a@example.test>" and c["EMAIL_TO"] == ["primary@example.test"]
     assert c["SMTP_PASSWORD"] == "pw-from-alias" and c["RESEND_API_KEY"] == "re_alias_key_000000000000"
     assert c["ONCALL_PRIMARY_NAME"] == "Alex" and c["EMAIL_TRANSPORT"] == "smtp"
-    assert "ONCALL_PRIMARY_PHONE" not in c and "NOTIFY_ALL_CHANNELS" not in c  # no calls, no SMS
+    assert c["ONCALL_PRIMARY_PHONE"] == "+15550000" and c["CALLS_ENABLED"] is False  # the phone rings only when chosen
+    assert "NOTIFY_ALL_CHANNELS" not in c
 
 
 def test_our_names_win_and_primary_email_is_added_once(monkeypatch):

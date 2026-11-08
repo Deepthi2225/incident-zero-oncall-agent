@@ -181,7 +181,7 @@ REVIEWER_TIMEOUT_S = float(os.getenv("ONCALL_REVIEWER_TIMEOUT_S", "30"))
 # written. Check the settings with: python -m oncall emailtest
 # EMAIL_TRANSPORT=resend sends through Resend's HTTPS API instead (RESEND_API_KEY). Our teammate's
 # .env names are accepted too: NOTIFICATION_FROM_EMAIL (= EMAIL_FROM), ONCALL_PRIMARY_EMAIL (added
-# to EMAIL_TO), SMTP_PASS (= SMTP_PASSWORD), ONCALL_PRIMARY_NAME (greeting). No calls or SMS.
+# to EMAIL_TO), SMTP_PASS (= SMTP_PASSWORD), ONCALL_PRIMARY_NAME (greeting).
 
 
 def _env(*names):
@@ -210,6 +210,12 @@ EMAIL_ON_RECOVERED = env_flag("EMAIL_ON_RECOVERED", False)
 # "Approval needed" page: one email per plan step the moment its approval box is shown in the
 # terminal. On by default whenever EMAIL_ENABLED=on; EMAIL_ON_APPROVAL=off turns just this off.
 EMAIL_ON_APPROVAL = env_flag("EMAIL_ON_APPROVAL", True)
+# Voice calls through Twilio: off unless CALLS_ENABLED=on. .env only.
+CALLS_ENABLED = env_flag("CALLS_ENABLED", False)
+TWILIO_ACCOUNT_SID = _env("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = _env("TWILIO_AUTH_TOKEN")
+TWILIO_FROM_NUMBER = _env("TWILIO_FROM_NUMBER")
+ONCALL_PRIMARY_PHONE = _env("ONCALL_PRIMARY_PHONE").replace(" ", "")
 UI_URL = f"http://127.0.0.1:{UI_PORT}"  # where the read-only dashboard shows the waiting step
 # Server-side refusal fallback. Disable if the organisers' key/proxy rejects the beta.
 USE_FALLBACKS = os.getenv("ONCALL_FALLBACKS", "1") == "1"

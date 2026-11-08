@@ -239,6 +239,9 @@ class Notifier:
     """notify(event) -> {"channel", "recipients", "status", "error"?}. Must not raise."""
     channel = "none"
 
+    def wants(self, event):
+        return True
+
     def notify(self, event):
         raise NotImplementedError
 
@@ -456,6 +459,80 @@ class ResendNotifier(Notifier):
         return {**result, "status": "failed", "error": f"email failed: Resend HTTP {resp.status_code}: {reason}{hint}"[:300]}
 
 
+CALL_SEVERITIES = ("SEV1", "SEV2")
+TWILIO_URL = "https://api.twilio.com/2010-04-01/Accounts/{sid}/Calls.json"
+
+
+def _masked(number):
+    return f"{number[:3]}******{number[-4:]}" if len(number) > 7 else "***"
+
+
+def spoken_summary(event):
+    """What the call says: short, no evidence detail. Built from the event's scrubbed lines."""
+    sev = str(event.get("severity") or "").split(" ")[0]
+    level = f"Severity {sev[3:]} incident. " if sev[3:].isdigit() else ""
+    affected = next((line.split(":", 1)[1].strip() for line in event["lines"]
+                     if line.startswith("Affected services:")), "")
+    where = f"Affected: {affected}. " if affected and affected != "not recorded" else ""
+    return (f"This is Poppy, your on-call agent. {level}{event.get('title')}. {where}"
+            "Details are in your email. Approve any fix in the terminal.")
+
+
+def twiml(text):
+    """Inline call instructions: the message, a pause, then the message again."""
+    say = f"<Say>{html.escape(text, quote=False)}</Say>"
+    return f'<Response>{say}<Pause length="2"/>{say}</Response>'
+
+
+class CallNotifier(Notifier):
+    """Voice call through Twilio: one HTTPS POST that places a call reading a short summary. One-way:
+    the call cannot acknowledge or approve anything. Only live SEV1 and SEV2 notifications ring."""
+    channel, transport = "call", "twilio"
+
+    def __init__(self, http=None):
+        import requests
+        self.http = http or requests  # tests pass a fake client
+        self.sid, self.token = config.TWILIO_ACCOUNT_SID, config.TWILIO_AUTH_TOKEN
+        self.sender, self.number = config.TWILIO_FROM_NUMBER, config.ONCALL_PRIMARY_PHONE
+        self.timeout = config.EMAIL_TIMEOUT_S
+        self.to = [_masked(self.number)] if self.number else []  # numbers are never recorded in full
+
+    def wants(self, event):
+        return (str(event.get("severity") or "").split(" ")[0] in CALL_SEVERITIES
+                and not str(event.get("subject") or "").startswith("[TEST]"))
+
+    def notify(self, event):
+        result = {"channel": self.channel, "transport": self.transport, "recipients": self.to}
+        missing = [n for n, v in (("TWILIO_ACCOUNT_SID", self.sid), ("TWILIO_AUTH_TOKEN", self.token),
+                                  ("TWILIO_FROM_NUMBER", self.sender), ("ONCALL_PRIMARY_PHONE", self.number)) if not v]
+        if missing:
+            return {**result, "status": "failed", "error": f"call failed: {' and '.join(missing)} not set"}
+        form = {"To": self.number, "From": self.sender, "Twiml": twiml(event.get("speech") or spoken_summary(event))}
+        try:
+            resp = self.http.post(TWILIO_URL.format(sid=self.sid), data=form, auth=(self.sid, self.token),
+                                  timeout=self.timeout)
+        except Exception as e:  # network errors: the message never names the token
+            return {**result, "status": "failed", "error": f"call failed: Twilio {type(e).__name__}"}
+        try:
+            data = resp.json()
+        except ValueError:
+            data = {}
+        data = data if isinstance(data, dict) else {}
+        if 200 <= resp.status_code < 300 and data.get("sid"):
+            return {**result, "status": "sent", "message_id": str(data["sid"])}
+        reason = data.get("message") or (getattr(resp, "text", "") or "")[:200] or "no details"
+        code = f" (Twilio error {data['code']})" if data.get("code") else ""
+        error = str(scrub(f"call failed: HTTP {resp.status_code}: {reason}{code}"))[:300]
+        return {**result, "status": "failed", "error": error.replace(self.number, _masked(self.number))}
+
+
+def send_test_call():
+    """One labelled test call; ignores CALLS_ENABLED so the setup can be checked first."""
+    return CallNotifier().notify({"subject": "[on-call TEST]", "severity": "test", "title": "test", "lines": [],
+                                  "speech": "This is Poppy, your on-call agent. This is only a test call. "
+                                            "Nothing is wrong."})
+
+
 def email_notifier():
     """The email transport chosen by EMAIL_TRANSPORT (smtp or resend)."""
     if config.EMAIL_TRANSPORT == "resend":
@@ -477,6 +554,8 @@ def notifiers():
     chans = [JsonlNotifier()]
     if config.EMAIL_ENABLED:
         chans.append(email_notifier())
+    if config.CALLS_ENABLED:
+        chans.append(CallNotifier())
     return chans
 
 
@@ -514,6 +593,10 @@ def _run(chan, message, box):
 
 def _line(event, entry):
     """The one terminal line for one attempt."""
+    if entry["channel"] == "call":
+        if entry["status"] == "sent":
+            return f"[notify] {event}: call placed to {', '.join(entry['recipients'])}"
+        return f"[notify] {event}: {entry.get('error') or 'call failed: unknown reason'}"
     if entry["channel"] == "email":
         if entry["status"] == "sent":
             via = f" (resend id {entry['message_id']})" if entry.get("message_id") else ""
@@ -537,7 +620,7 @@ def dispatch(record, chans=None, log=print):
             log(f"[notify] {event}: already notified for {meta.get('incident_id')}, not repeated")
             continue
         message = build_event(record, event, why)
-        for chan in todo:
+        for chan in (c for c in todo if c.wants(message)):
             box = {}
             t = threading.Thread(target=_run, args=(chan, message, box), name=f"notify-{event}-{chan.channel}")
             t.start()
@@ -679,7 +762,7 @@ def page(record, step, log=print):
         return None
     message = build_page(record, step)
     jobs = []
-    for chan in chans:
+    for chan in (c for c in chans if c.wants(message)):
         box = {}
         t = threading.Thread(target=_run, args=(chan, message, box), name=f"notify-page-{chan.channel}")
         t.start()
