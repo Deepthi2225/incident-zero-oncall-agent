@@ -289,6 +289,7 @@ Status codes: 200 OK, 400 bad request, 401 bad token, 403 refused, 404/405 unkno
 - Aniruddha Joshi ([aniruddhajoshi100](https://github.com/aniruddhajoshi100))
 - Shivakumar ([ShivakumarSK2005](https://github.com/ShivakumarSK2005))
 - Padmavasanti K
+- Nirupam
 
 ## Contributing
 
