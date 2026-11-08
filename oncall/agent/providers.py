@@ -76,7 +76,7 @@ class AnthropicProvider:
 GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 GROQ_TOOL_RETRIES = 2
-GROQ_TOOL_ERRORS = ("tool call validation failed", "tool_use_failed")
+GROQ_TOOL_ERRORS = ("tool call validation failed", "tool_use_failed", "failed to parse tool call")
 GROQ_RATE_WAITS = 6          # waits allowed for one model call
 GROQ_RATE_WAIT_MAX_S = 65    # a longer wait means a daily limit, which is not worth waiting out
 GROQ_RETRY_AFTER = re.compile(r"try again in (?:(\d+)h)?(?:(\d+)m(?!s))?(\d+(?:\.\d+)?)(ms|s)")

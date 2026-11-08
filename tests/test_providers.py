@@ -228,6 +228,13 @@ def test_groq_gives_up_after_the_retries_and_keeps_the_conversation():
     assert messages == [{"role": "user", "content": "hi"}]
 
 
+def test_groq_retries_malformed_tool_call_json():
+    bad_json = "BadRequestError: Error code: 400 - Failed to parse tool call arguments as JSON"
+    provider, fake = groq_with(lambda n, kw: FakeAPIError(bad_json) if n == 1 else reply(content="ok"))
+    assert provider.create("s", [], [{"role": "user", "content": "hi"}]).content[0].text == "ok"
+    assert len(fake.requests) == 2
+
+
 def test_groq_does_not_retry_other_errors():
     provider, fake = groq_with(lambda n, kw: FakeAPIError("503 overloaded"))
     with pytest.raises(LLMError, match="503"):
