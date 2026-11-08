@@ -8,7 +8,7 @@ import pytest
 
 from oncall import config
 from oncall.agent import run
-from oncall.agent.providers import (AnthropicProvider, GeminiProvider, GroqProvider, LLMError, NoCredentials,
+from oncall.agent.providers import (AnthropicProvider, GeminiProvider, GroqProvider, LLMError, NoCredentials, OllamaProvider,
                                     gemini_schema, groq_rate_limit_wait, to_openai_messages)
 
 
@@ -267,6 +267,53 @@ def test_groq_stops_waiting_after_the_limit_of_waits():
 @pytest.mark.parametrize("text,seconds", [("2.04s", 2.04), ("450ms", 0.45), ("1m30.5s", 90.5)])
 def test_groq_wait_parsing(text, seconds):
     assert groq_rate_limit_wait(f"rate limit: try again in {text}.") == pytest.approx(seconds)
+
+
+def fallback_agent(monkeypatch, groq_script, ollama_script):
+    groq, ollama = FakeOpenAI(groq_script), FakeOpenAI(ollama_script)
+    monkeypatch.setattr(config, "FALLBACK_PROVIDER", "ollama")
+    monkeypatch.setattr(run, "GroqProvider", lambda m, k: GroqProvider(m, client=groq, errors=(FakeAPIError,)))
+    monkeypatch.setattr(run, "OllamaProvider", lambda m: OllamaProvider(m, client=ollama, errors=(FakeAPIError,)))
+    return run.Agent(provider="groq", verbose=False), groq, ollama
+
+
+def test_ollama_answers_when_groq_fails_and_the_record_says_so(payment_down, monkeypatch):
+    agent, groq, ollama = fallback_agent(monkeypatch, lambda n, kw: FakeAPIError("503 overloaded"), diagnose_payment)
+    rec = agent.run({"service": "checkout"})
+    assert rec["investigation"]["outcome"] == "submitted"
+    assert rec["diagnosis"]["root_causes"][0]["component"] == "payment"
+    assert len(ollama.requests) == 2 and len(groq.requests) == 2  # groq is tried again on every call
+    assert rec["metadata"]["provider"] == "groq"
+    assert rec["metadata"]["fallback"] == {"provider": "ollama", "model": config.OLLAMA_MODEL, "model_calls": 2}
+
+
+def test_no_fallback_record_when_groq_is_healthy(payment_down, monkeypatch):
+    agent, _, ollama = fallback_agent(monkeypatch, diagnose_payment, lambda n, kw: pytest.fail("not needed"))
+    rec = agent.run({"service": "checkout"})
+    assert ollama.requests == [] and "fallback" not in rec["metadata"]
+
+
+def test_both_providers_failing_is_llm_error_and_escalates(payment_down, monkeypatch):
+    agent, _, _ = fallback_agent(monkeypatch, lambda n, kw: FakeAPIError("503 overloaded"),
+                                 lambda n, kw: FakeAPIError("connection refused"))
+    rec = agent.run({"service": "checkout"})
+    assert rec["investigation"]["outcome"] == "llm_error" and rec["outcome"]["status"] == "escalated"
+    assert "503 overloaded" in rec["investigation"]["error"] and "connection refused" in rec["investigation"]["error"]
+
+
+def test_fallback_is_off_unless_chosen_and_rejects_unknown_names(monkeypatch):
+    monkeypatch.setattr(run, "GroqProvider", lambda m, k: GroqProvider(m, client=FakeOpenAI(None)))
+    assert isinstance(run.Agent(provider="groq", verbose=False).llm, GroqProvider)
+    monkeypatch.setattr(config, "FALLBACK_PROVIDER", "gpt")
+    with pytest.raises(ValueError, match="ONCALL_FALLBACK_PROVIDER"):
+        run.Agent(provider="groq", verbose=False)
+
+
+def test_ollama_uses_the_local_endpoint_without_a_key(monkeypatch):
+    seen = {}
+    monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=lambda **kw: seen.update(kw), OpenAIError=FakeAPIError))
+    assert OllamaProvider("m").model == "m"
+    assert seen["base_url"] == "http://127.0.0.1:11434/v1"
 
 
 def test_groq_key_is_a_known_secret(monkeypatch):

@@ -13,6 +13,8 @@ outcome "llm_error".
     GeminiProvider     Gemini through its OpenAI-compatible endpoint. Rebuilt from Shivakumar's Day 1
                        Gemini adapter: his reply-to-blocks conversion, without the second history.
     GroqProvider       Open models on Groq, through the same OpenAI-compatible code.
+    OllamaProvider     A local model through Ollama, through the same code.
+    FallbackProvider   Wraps a primary and uses a fallback when the primary fails.
 """
 import json
 import re
@@ -200,6 +202,38 @@ class OpenAICompatibleProvider:
 
 class GeminiProvider(OpenAICompatibleProvider):
     name, base_url, key_setting = "gemini", GEMINI_BASE_URL, "GEMINI_API_KEY"
+
+
+class OllamaProvider(OpenAICompatibleProvider):
+    """A local model through Ollama's OpenAI-compatible endpoint. The model must support tools."""
+    name, base_url, key_setting = "ollama", None, "OLLAMA_URL"
+
+    def __init__(self, model, base_url=None, client=None, errors=None):
+        self.base_url = base_url or config.OLLAMA_URL
+        super().__init__(model, api_key="ollama", client=client, errors=errors)  # Ollama ignores the key
+
+
+class FallbackProvider:
+    """Tries the primary on every call and uses the fallback only when the primary raises LLMError.
+    The conversation is provider-neutral, so either can answer any turn."""
+
+    def __init__(self, primary, fallback, log=print):
+        self.primary, self.fallback, self.log = primary, fallback, log
+        self.name = primary.name
+        self.fallback_calls = 0
+
+    def create(self, system, tools, messages):
+        try:
+            return self.primary.create(system, tools, messages)
+        except LLMError as first:
+            self.log(f"!!! {self.primary.name} failed ({str(first)[:160]}); "
+                     f"using fallback {self.fallback.name} ({self.fallback.model})")
+            try:
+                response = self.fallback.create(system, tools, messages)
+            except LLMError as second:
+                raise LLMError(f"{self.primary.name}: {first}; fallback {self.fallback.name}: {second}") from second
+            self.fallback_calls += 1
+            return response
 
 
 class GroqProvider(OpenAICompatibleProvider):

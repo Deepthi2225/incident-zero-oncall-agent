@@ -47,7 +47,15 @@ for every provider, and the record's `metadata.provider` / `metadata.model` show
 |---|---|---|---|
 | `anthropic` (default) | `ONCALL_MODEL` (default `claude-opus-5-5`) | `ANTHROPIC_API_KEY` | Adaptive thinking, effort, refusal fallback; cost estimated in the record |
 | `gemini` | `GEMINI_MODEL` (default `gemini-3.5-flash-lite`) | `GEMINI_API_KEY` | Gemini's OpenAI-compatible endpoint; needs `pip install openai`; cost is null in the record |
-| `groq` | `GROQ_MODEL` (default `openai/gpt-oss-120b`) | `GROQ_API_KEY` | Groq's OpenAI-compatible endpoint; needs `pip install openai`; cost is null in the record. `python scripts/llm_check.py` confirms the key and tool calling |
+| `groq` | `GROQ_MODEL` (default `openai/gpt-oss-120b`) | `GROQ_API_KEY` | Groq's OpenAI-compatible endpoint; needs `pip install openai`; cost is null in the record. `python scripts/llm_check.py` confirms the key and tool calling. A rejected tool call is retried with the error, and per-minute rate limits are waited out |
+| `ollama` | `OLLAMA_MODEL` (default `qwen3:8b`) | none | A local model on `OLLAMA_URL`; needs `pip install openai`; the model must support tool calling |
+
+**Local fallback.** With `ONCALL_FALLBACK_PROVIDER=ollama`, any model call the main provider cannot
+complete is answered by the local Ollama model, and the main provider is tried again on the next
+call. If both fail, the run ends as `llm_error` and escalates. When the fallback answered, the
+terminal says so and the record has `metadata.fallback` (provider, model, number of calls). Approval
+and every other safety check are unchanged. Set the server's `OLLAMA_CONTEXT_LENGTH` to at least
+16384: a smaller context silently cuts off the conversation.
 
 The provider is chosen only from `ONCALL_PROVIDER`, never from which keys happen to be set. Any
 provider failure becomes the run outcome `llm_error`. The Gemini provider is **based on Shivakumar's

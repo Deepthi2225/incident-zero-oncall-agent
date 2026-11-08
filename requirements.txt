@@ -1,4 +1,4 @@
 anthropic>=0.96.0
 requests>=2.32
 pytest>=8.0
-openai>=1.40   # only for ONCALL_PROVIDER=gemini or groq
+openai>=1.40   # only for gemini, groq or ollama

@@ -20,7 +20,8 @@ from oncall import config
 from oncall.agent.prompt import alert_message, build_system_prompt
 from oncall.agent.diagnosis import CONFIDENT, SUBMIT_TOOL, empty_summary, validate
 from oncall.agent.reviewer import review_diagnosis
-from oncall.agent.providers import AnthropicProvider, GeminiProvider, GroqProvider, LLMError, NoCredentials
+from oncall.agent.providers import (AnthropicProvider, FallbackProvider, GeminiProvider, GroqProvider, LLMError,
+                                    NoCredentials, OllamaProvider)
 from oncall.action_api import DryRunClient
 from oncall.record import RunRecord, unique_run_id
 from oncall.remediate import make_approver, run_plan
@@ -89,8 +90,16 @@ class Agent:
         elif name == "groq":
             self.model = model or config.GROQ_MODEL
             self.llm = GroqProvider(self.model, config.GROQ_API_KEY)
+        elif name == "ollama":
+            self.model = model or config.OLLAMA_MODEL
+            self.llm = OllamaProvider(self.model)
         else:
-            raise ValueError(f"unknown ONCALL_PROVIDER {name!r}; use anthropic, gemini or groq")
+            raise ValueError(f"unknown ONCALL_PROVIDER {name!r}; use anthropic, gemini, groq or ollama")
+        fallback = config.FALLBACK_PROVIDER.strip().lower()
+        if fallback not in ("", "ollama"):
+            raise ValueError(f"unknown ONCALL_FALLBACK_PROVIDER {fallback!r}; use ollama or leave it empty")
+        if fallback == "ollama" and name != "ollama":
+            self.llm = FallbackProvider(self.llm, OllamaProvider(config.OLLAMA_MODEL), log=self.log)
         self.auto_approve = auto_approve
         self.interactive = (not auto_approve) if interactive is None else interactive
         # Dry run unless a live Action API client is passed in (--execute).
@@ -127,6 +136,8 @@ class Agent:
         """One incident: investigate -> diagnose -> plan step by step. Returns the incident record
         (exactly what is saved in runs/<run_id>.json) plus its "path"."""
         registry.reset()
+        if hasattr(self.llm, "fallback_calls"):  # counted per incident; `watch` reuses the agent
+            self.llm.fallback_calls = 0
         info = source_info()
         run_id = unique_run_id(datetime.now().strftime("%Y%m%d-%H%M%S"), info["source"])
         rec = RunRecord(run_id, alert, info, model=self.model, max_steps=self.max_steps,
@@ -212,6 +223,9 @@ class Agent:
             # optional second opinion before anything is shown for approval; it can only lower
             # confidence and remove steps (stretch goal 2, oncall/agent/reviewer.py)
             review_diagnosis(summary, alert, self.llm, CONFIDENT, on_tokens=rec.review_tokens, log=self.log)
+        if getattr(self.llm, "fallback_calls", 0):  # say so when another model produced part of this
+            rec.data["metadata"]["fallback"] = {"provider": self.llm.fallback.name, "model": self.llm.fallback.model,
+                                                "model_calls": self.llm.fallback_calls}
         rec.set_diagnosis(summary)  # phase: diagnosis
         self.log(render_diagnosis(rec.saved))
 
