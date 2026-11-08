@@ -291,7 +291,38 @@ def test_ollama_answers_when_groq_fails_and_the_record_says_so(payment_down, mon
     assert rec["diagnosis"]["root_causes"][0]["component"] == "payment"
     assert len(ollama.requests) == 2 and len(groq.requests) == 2  # groq is tried again on every call
     assert rec["metadata"]["provider"] == "groq"
-    assert rec["metadata"]["fallback"] == {"provider": "ollama", "model": config.OLLAMA_MODEL, "model_calls": 2}
+    assert rec["metadata"]["fallback"] == {"provider": "ollama", "model": config.OLLAMA_MODEL, "model_calls": 2,
+                                           "diagnosis_held": True}
+
+
+def test_a_fallback_diagnosis_offers_no_fix_and_tells_the_human(payment_down, monkeypatch):
+    agent, _, _ = fallback_agent(monkeypatch, lambda n, kw: FakeAPIError("503 overloaded"), diagnose_payment)
+    approvals = []
+    agent.approve = lambda *a, **kw: approvals.append(a) or pytest.fail("nothing may reach approval")
+    rec = agent.run({"service": "checkout"})
+    assert rec["remediation_plan"]["steps"] == [] and approvals == []
+    assert rec["diagnosis"]["status"] == "escalate"
+    assert rec["diagnosis"]["root_causes"][0]["confidence"] == 0.9  # the finding is kept for the human
+    held = rec["escalations"][0]
+    assert held["source"] == "fallback model" and "restart_service on payment" in held["reason"]
+    assert rec["outcome"]["status"] == "escalated" and "fallback model" in rec["outcome"]["summary"]
+    from oncall import notify
+    assert notify.events_for(rec)[0][0] == "fallback_model"
+
+
+def test_fallback_used_only_by_the_reviewer_does_not_hold_the_fix(payment_down, monkeypatch):
+    def groq(n, kwargs):
+        return FakeAPIError("503 overloaded") if n == 3 else diagnose_payment(n, kwargs)
+
+    def ollama(n, kwargs):
+        return reply(calls=[tool_call("r1", "submit_review",
+                                      {"verdict": "agree", "objections": [], "confidence_adjustment": 0})])
+
+    monkeypatch.setattr(run.config, "REVIEWER", True)
+    agent, _, _ = fallback_agent(monkeypatch, groq, ollama)
+    rec = agent.run({"service": "checkout"})
+    assert rec["remediation_plan"]["steps"][0]["target"] == "payment"
+    assert rec["metadata"]["fallback"]["diagnosis_held"] is False
 
 
 def test_no_fallback_record_when_groq_is_healthy(payment_down, monkeypatch):

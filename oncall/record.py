@@ -175,7 +175,7 @@ def escalations_view(plan):
     if not plan:
         return []
     out = [{"target": e.get("target"), "fault_class": e.get("fault_class"), "reason": e.get("reason"),
-            "next_steps": e.get("next_steps", []), "source": "no allowlisted fix"}
+            "next_steps": e.get("next_steps", []), "source": e.get("source", "no allowlisted fix")}
            for e in plan.get("escalations", [])]
     out += [{"target": n["target"], "fault_class": n.get("fault_class"), "reason": n["why"],
              "next_steps": [f"Decide on {n['action']} on {n['target']} by hand."], "source": "plan stopped"}
@@ -218,7 +218,7 @@ def compute_outcome(record):
         return status, f"{head}; {acted}; stopped: {plan.get('stopped_reason')}"
     if outcome == "partial":
         return "partial", f"{head}; {acted}"
-    return "escalated", f"{head}; no allowlisted action, escalated to a human"
+    return "escalated", f"{head}; {plan.get('hold_reason') or 'no allowlisted action'}, escalated to a human"
 
 
 def action_log_lines(run_id):

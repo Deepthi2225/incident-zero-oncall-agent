@@ -53,8 +53,10 @@ for every provider, and the record's `metadata.provider` / `metadata.model` show
 **Local fallback.** With `ONCALL_FALLBACK_PROVIDER=ollama`, any model call the main provider cannot
 complete is answered by the local Ollama model, and the main provider is tried again on the next
 call. If both fail, the run ends as `llm_error` and escalates. When the fallback answered, the
-terminal says so and the record has `metadata.fallback` (provider, model, number of calls). Approval
-and every other safety check are unchanged. Set the server's `OLLAMA_CONTEXT_LENGTH` to at least
+terminal says so and the record has `metadata.fallback` (provider, model, number of calls). **A
+diagnosis the fallback helped produce never offers a fix**: its findings are kept, every planned step
+becomes an escalation, and the `fallback_model` notification goes out. In testing, the local model
+gave a confident wrong diagnosis, so a human must confirm it first. Set the server's `OLLAMA_CONTEXT_LENGTH` to at least
 16384: a smaller context silently cuts off the conversation.
 
 The provider is chosen only from `ONCALL_PROVIDER`, never from which keys happen to be set. Any

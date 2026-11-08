@@ -194,6 +194,21 @@ def _escalation(component, fault_class, reason):
             "reason": reason, "next_steps": NEXT_STEPS.get(fault_class, NEXT_STEPS["unknown"])}
 
 
+def hold_for_human(diag, reason):
+    """Keep the diagnosis but offer no fix: every planned step becomes an escalation (in place)."""
+    plan = diag.get("remediation_plan") or {"steps": [], "escalations": []}
+    held = [dict(_escalation(s.get("component", s["target"]), s.get("fault_class"),
+                             f"{reason}; {s['action']} on {s['target']} was not offered for approval"),
+                 source="fallback model") for s in plan["steps"]]
+    plan["steps"], plan["escalations"] = [], held + list(plan.get("escalations", []))
+    plan["hold_reason"] = reason
+    diag["remediation_plan"] = plan
+    diag["status"] = "escalate"
+    if plan["escalations"]:
+        diag["proposed_action"] = dict(plan["escalations"][0])
+    diag.setdefault("validation", {}).setdefault("notes", []).append(reason)
+
+
 def _fix_for(rc, proposed):
     """(action, why_not): the allowlisted action for one root cause, or None and the reason."""
     fault_class = rc["fault_class"]

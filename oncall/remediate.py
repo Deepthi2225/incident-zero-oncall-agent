@@ -189,7 +189,7 @@ def run_plan(diag, client, approve, verifier, run_id="", log=print, on_update=No
     steps = plan["steps"]
     if not steps:
         plan["outcome"], plan["escalate"] = "escalated", True
-        log("[plan] no allowlisted action: escalating to a human")
+        log(f"[plan] {plan.get('hold_reason') or 'no allowlisted action'}: escalating to a human")
         update()
         return plan
 

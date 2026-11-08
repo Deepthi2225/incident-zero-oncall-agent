@@ -18,6 +18,7 @@ import anthropic
 
 from oncall import config
 from oncall.agent.prompt import alert_message, build_system_prompt
+from oncall.agent.actions import hold_for_human
 from oncall.agent.diagnosis import CONFIDENT, SUBMIT_TOOL, empty_summary, validate
 from oncall.agent.reviewer import review_diagnosis
 from oncall.agent.providers import (AnthropicProvider, FallbackProvider, GeminiProvider, GroqProvider, LLMError,
@@ -217,6 +218,8 @@ class Agent:
             self.log(f"!!! LLM error: {error[:300]}")
 
         rec.investigation_done(outcome, error)
+        # Counted before the reviewer's call: a review alone does not make it a fallback diagnosis.
+        diagnosed_on_fallback = outcome == "submitted" and getattr(self.llm, "fallback_calls", 0) > 0
         if summary is None:
             summary = empty_summary(f"agent outcome: {outcome}")
         elif outcome == "submitted" and config.REVIEWER:
@@ -225,7 +228,11 @@ class Agent:
             review_diagnosis(summary, alert, self.llm, CONFIDENT, on_tokens=rec.review_tokens, log=self.log)
         if getattr(self.llm, "fallback_calls", 0):  # say so when another model produced part of this
             rec.data["metadata"]["fallback"] = {"provider": self.llm.fallback.name, "model": self.llm.fallback.model,
-                                                "model_calls": self.llm.fallback_calls}
+                                                "model_calls": self.llm.fallback_calls,
+                                                "diagnosis_held": diagnosed_on_fallback}
+        if diagnosed_on_fallback:  # a weaker local model never puts a fix in front of the on-call engineer
+            hold_for_human(summary, f"the fallback model {self.llm.fallback.model} helped produce this diagnosis, "
+                                    "so no fix is offered; a human must confirm it")
         rec.set_diagnosis(summary)  # phase: diagnosis
         self.log(render_diagnosis(rec.saved))
 

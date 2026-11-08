@@ -39,10 +39,11 @@ from pathlib import Path
 from oncall import config
 from oncall.record import append_line, now_iso, record_path, scrub
 
-EVENTS = ["low_confidence", "no_allowlisted_fix", "reviewer_objection", "approval_needed",
+EVENTS = ["low_confidence", "no_allowlisted_fix", "reviewer_objection", "fallback_model", "approval_needed",
           "verification_failed", "kill_switch", "human_rejected", "recovered"]
 TITLES = {"low_confidence": "low confidence, needs a human", "no_allowlisted_fix": "no allowlisted fix",
-          "reviewer_objection": "reviewer objected", "approval_needed": "fix waiting for a human approval",
+          "reviewer_objection": "reviewer objected", "fallback_model": "diagnosed by the fallback model, needs a human",
+          "approval_needed": "fix waiting for a human approval",
           "verification_failed": "fix did not verify", "kill_switch": "stopped by the kill switch",
           "human_rejected": "fix rejected by the on-call engineer", "recovered": "recovered (info)"}
 SEVERITY = {"critical": "SEV1", "high": "SEV2", "medium": "SEV3", "low": "SEV4"}
@@ -100,7 +101,11 @@ def events_for(record):
         rb = (s.get("rollback_result") or {}).get("status", "none")
         out.append(("verification_failed", f"{_step(s)} verified as {s['outcome']}; rollback: {rb}"))
 
-    if review.get("status") == "done" and review.get("escalated"):
+    fallback = (record.get("metadata") or {}).get("fallback") or {}
+    if fallback.get("diagnosis_held"):
+        out.append(("fallback_model", f"the local fallback model {fallback.get('model')} helped produce this "
+                                      "diagnosis, so no fix was offered"))
+    elif review.get("status") == "done" and review.get("escalated"):
         out.append(("reviewer_objection", f"the reviewer said {review.get('verdict')}: confidence "
                                           f"{review.get('confidence_before')} -> {review.get('confidence_after')}"))
     elif inv not in ("submitted", "killed", None):
