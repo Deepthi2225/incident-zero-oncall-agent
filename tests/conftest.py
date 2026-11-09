@@ -155,6 +155,9 @@ def payment_down(monkeypatch, tmp_path):
 def _plan_tests_skip_the_evidence_kind_check(request, monkeypatch):
     """Plan and approval tests attach generic evidence to every fault class on purpose. The check
     that a label has the right kind of evidence is tested in test_multi_fault.py, where it stays on."""
+    if not request.module.__name__.endswith("test_suggested_fixes"):
+        from oncall.agent import run
+        monkeypatch.setattr(run, "_worth_asking", lambda diag: False)  # scripted models answer a fixed number of turns
     if not request.module.__name__.endswith("test_multi_fault"):
         from oncall.agent import diagnosis
         monkeypatch.setattr(diagnosis, "NEEDS_EVIDENCE", {})

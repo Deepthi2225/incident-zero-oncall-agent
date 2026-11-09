@@ -59,6 +59,10 @@ valid ID are deleted automatically, so never invent IDs, trace ids, log lines or
 - Copy numbers from the evidence; do not round them into something the data does not say.
 - Confidence is 0 to 1 and must reflect the evidence: one consistent, specific signal chain from \
 symptom to origin earns high confidence; conflicting or thin evidence earns low confidence.
+- Go above 0.9 only when the evidence directly shows both what failed and why, and the fault class fits \
+exactly. If the class is only the nearest fit, stay at or below 0.7.
+- Name services exactly as in the dependency map (currency, not CurrencyService). A caller that only fails \
+because of something it depends on is an affected service, not a root cause.
 - If you are not sure, say so: give the origin/root cause as "unknown" or with low confidence (< 0.6) and list what a \
 human should check. Escalating to human when uncertain is a correct outcome and scores higher than a confident wrong answer.
 

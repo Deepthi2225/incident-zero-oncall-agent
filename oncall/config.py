@@ -225,6 +225,8 @@ SLACK_WEBHOOK_URL = _env("SLACK_WEBHOOK_URL")
 UI_USERS_FILE = Path(os.getenv("ONCALL_UI_USERS", ROOT / "ui_users.json"))
 UI_APPROVALS = env_flag("UI_APPROVALS", False)
 APPROVAL_TIMEOUT_S = float(os.getenv("APPROVAL_TIMEOUT_S", "1800"))
+# When no approved fix applies, ask the model once more for its own suggestion.
+ASK_FOR_SUGGESTION = env_flag("ONCALL_ASK_FOR_SUGGESTION", True)
 # Telegram alerts through a bot: off unless TELEGRAM_ENABLED=on. .env only.
 TELEGRAM_ENABLED = env_flag("TELEGRAM_ENABLED", False)
 TELEGRAM_BOT_TOKEN = _env("TELEGRAM_BOT_TOKEN")

@@ -7,6 +7,9 @@ Checkpoint 2 output is a full DIAGNOSIS in JSON schema:
   - an ordered remediation plan; each step is approved and run by oncall/remediate.py
   - graceful escalation when confidence is low or evidence is insufficient
 """
+import re
+
+from oncall import config
 from oncall.agent.actions import AVAILABLE_ACTIONS, ESCALATE, _escalation, build_plan, depends_on, prevention_for
 from oncall.evidence import registry
 
@@ -39,6 +42,11 @@ NEEDS_EVIDENCE = {
 }
 UNEXPLAINED = "unexplained alert"
 MAX_SUGGESTIONS, MAX_FIX_STEPS = 5, 8
+# Classes a caller shows when the real failure is further down the call chain.
+PROPAGATED = ("service_error", "service_unreachable", "dependency_down", "unknown")
+# "Unreachable" without ever looking at the target's container state is only an inference.
+UNCONFIRMED = {"service_unreachable": ("container", "deploy")}
+UNCONFIRMED_CEILING = 0.75
 
 # What the model may propose: the available Action API actions, or escalation to a human.
 # The validator then enforces the fault-class mapping in oncall/agent/actions.py.
@@ -58,7 +66,7 @@ SUBMIT_TOOL = {
         "type": "object",
         "additionalProperties": False,
         "required": ["headline", "affected_services", "anomalies", "root_causes",
-                     "proposed_action", "prevention", "open_questions"],
+                     "proposed_action", "suggested_fixes", "prevention", "open_questions"],
         "properties": {
             "headline": {"type": "string", "description": "One sentence summary for the on-call human."},
             "affected_services": {
@@ -211,6 +219,36 @@ def _as_list(value, label, notes):
     return [value]
 
 
+def _key(name):
+    text = re.sub(r"[^a-z0-9]", "", name.lower().replace("oteldemo.", ""))
+    return text[:-7] if text.endswith("service") and len(text) > 7 else text
+
+
+def canonical(name):
+    """The shop's own name for a service: CurrencyService and "currency service" become currency."""
+    if not isinstance(name, str):
+        return name
+    known = set(config.CRITICALITY) | set(config.DEPENDENCIES) | {s for v in config.DEPENDENCIES.values() for s in v}
+    return {_key(s): s for s in known}.get(_key(name), name.strip())
+
+
+def _without_victims(causes, affected, notes):
+    """Drop a "root cause" that is only a caller of another one and shares its evidence."""
+    kept = []
+    for rc in causes:
+        name = rc.get("component")
+        origin = next((o for o in causes if o is not rc and o.get("status") == "active" and isinstance(name, str)
+                       and isinstance(o.get("component"), str) and depends_on(name, o["component"])
+                       and set(o["evidence"]) & set(rc["evidence"])), None)
+        if origin is None or rc.get("fault_class") not in PROPAGATED:
+            kept.append(rc)
+            continue
+        notes.append(f"{name} is a victim of {origin['component']}, not a separate root cause")
+        if name not in {a.get("service") for a in affected}:
+            affected.append({"service": name, "impact": f"fails because of {origin['component']}", "evidence": rc["evidence"]})
+    return kept
+
+
 def _text(value, limit=600):
     return value.strip()[:limit] if isinstance(value, str) else ""
 
@@ -254,7 +292,8 @@ def validate(diag):
             if not valid:
                 notes.append(f"dropped {label} without valid evidence: {item.get('service') or item.get('component')}")
                 continue
-            kept.append({**item, "evidence": valid})
+            names = {k: canonical(item[k]) for k in ("service", "component") if k in item}
+            kept.append({**item, **names, "evidence": valid})
         return kept
 
     diag["affected_services"] = keep_valid(diag.get("affected_services"), "affected service")
@@ -276,6 +315,7 @@ def validate(diag):
             notes.append(f"dropped root cause without valid evidence: {rc.get('component')}")
             continue
         rc_clean = dict(rc)
+        rc_clean["component"] = canonical(rc.get("component"))
         rc_clean["evidence"] = valid_ev
         rc_clean["confidence"] = round(_clamp(rc_clean.get("confidence", 0.0)), 2)
         rc_clean["evidence_detail"] = {e: registry.get(e)["summary"] for e in valid_ev if registry.get(e)}
@@ -287,6 +327,12 @@ def validate(diag):
             rc_clean["confidence"] = round(CONFIDENT - 0.01, 2)
             notes.append(f"root cause {rc_clean.get('component')}: {rc_clean['fault_class']} cites no "
                          f"{' or '.join(needed)} evidence; confidence capped below {CONFIDENT}")
+        unconfirmed = UNCONFIRMED.get(rc_clean["fault_class"])
+        if (unconfirmed and rc_clean["confidence"] > UNCONFIRMED_CEILING
+                and not any(registry.get(e)["kind"] in unconfirmed for e in valid_ev)):
+            rc_clean["confidence"] = UNCONFIRMED_CEILING
+            notes.append(f"root cause {rc_clean.get('component')}: its container state was not cited, "
+                         f"so confidence is limited to {UNCONFIRMED_CEILING}")
         if rc_clean.get("status") not in ROOT_CAUSE_STATUS:
             if rc_clean.get("status") is not None:
                 notes.append(f"root cause {rc_clean.get('component')}: status {rc_clean['status']!r} "
@@ -294,8 +340,12 @@ def validate(diag):
             rc_clean["status"] = "active"
         valid_rcs.append(rc_clean)
 
+    valid_rcs = _without_victims(valid_rcs, diag["affected_services"], notes)
+
     # Validate or synthesize suspected_origin
     origin = _as_dict(diag.get("suspected_origin"), "suspected_origin", notes, "service")
+    if "service" in origin:
+        origin["service"] = canonical(origin["service"])
     origin_ev, dropped = registry.validate(_ids(origin.get("evidence")))
     dropped_ids.extend(dropped)
 

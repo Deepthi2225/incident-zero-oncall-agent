@@ -73,6 +73,17 @@ def _add_user_text(messages, text):
         messages.append({"role": "user", "content": text})
 
 
+SUGGESTION_REQUEST = ("Your diagnosis is saved. Nothing on the approved list fixes it, so a person will have to. Call "
+                      "submit_diagnosis once more with suggested_fixes filled in: the specific fix you would make for "
+                      "this root cause, its steps, why, its risk and the evidence IDs. Leave it empty only if the "
+                      "evidence does not support a specific fix. Only suggested_fixes will be read.")
+
+
+def _worth_asking(diag):
+    return (config.ASK_FOR_SUGGESTION and diag["root_causes"] and not diag["suggested_fixes"]
+            and not (diag.get("remediation_plan") or {}).get("steps"))
+
+
 def step_budget(alert, base):
     """Turns for this alert: two more per extra alerting service, at most twice the base."""
     services = alert.get("alerting_services") if isinstance(alert, dict) else None
@@ -205,6 +216,8 @@ class Agent:
 
                 messages.append({"role": "assistant", "content": response.content})
                 tool_uses = [b for b in response.content if b.type == "tool_use"]
+                if not tool_uses and summary is not None:  # it had nothing to add
+                    break
                 if not tool_uses:
                     messages.append({"role": "user", "content":
                                      "Use the tools to continue, or call submit_diagnosis."})
@@ -212,9 +225,18 @@ class Agent:
 
                 submit = next((b for b in tool_uses if b.name == SUBMIT_TOOL["name"]), None)
                 if submit:
-                    summary = validate(submit.input)
-                    outcome = "submitted"
                     self.log(f"[{step}] -> {submit.name}")
+                    checked = validate(submit.input)
+                    if summary is not None:  # the answer to the request below: only its suggestions are used
+                        summary["suggested_fixes"] = checked["suggested_fixes"]
+                        break
+                    summary = checked
+                    if step < self.max_steps and _worth_asking(summary):
+                        self.log("[suggest] nothing on the approved list fits: asking for its own suggestion")
+                        messages.append({"role": "user", "content": [
+                            {"type": "tool_result", "tool_use_id": tu.id, "is_error": False, "content": SUGGESTION_REQUEST}
+                            for tu in tool_uses]})
+                        continue
                     break
 
                 results = []
@@ -240,6 +262,8 @@ class Agent:
             outcome, error = "llm_error", str(e)
             self.log(f"!!! LLM error: {error[:300]}")
 
+        if summary is not None and outcome != "killed":  # a failure while asking for a suggestion keeps the diagnosis
+            outcome, error = "submitted", None
         rec.investigation_done(outcome, error)
         # Counted before the reviewer's call: a review alone does not make it a fallback diagnosis.
         diagnosed_on_fallback = outcome == "submitted" and getattr(self.llm, "fallback_calls", 0) > 0
