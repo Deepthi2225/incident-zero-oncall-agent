@@ -194,6 +194,12 @@ def affected(record):
     return list(dict.fromkeys(n for n in names if n))
 
 
+def _suggested(diag):
+    from oncall.report import SUGGESTION_TITLE, suggestion_lines
+    found = suggestion_lines(diag, "  - ")
+    return ["", f"{SUGGESTION_TITLE}:"] + found if found else []
+
+
 def build_event(record, event, why):
     """The notification for one event: a dict with subject and body lines, already scrubbed."""
     meta = record.get("metadata") or {}
@@ -232,6 +238,7 @@ def build_event(record, event, why):
              f"Root cause: {root}",
              f"Diagnosis confidence: {diag.get('confidence', 'none')}",
              "", "Top evidence:"] + [f"  - {x}" for x in evidence or ["none recorded"]] + \
+            _suggested(diag) + \
             ["", "Open questions:"] + [f"  - {q}" for q in diag.get("open_questions") or ["none"]] + \
             ["", "Next steps:"] + [f"  - {s}" for s in next_steps] + \
             ["", report_line,
@@ -917,6 +924,7 @@ def build_page(record, step):
              f"Expected outcome: {step.get('expected_outcome') or 'not recorded'}",
              f"Risk: {(step.get('risk_assessment') or '').strip() or 'not assessed'}",
              f"Rollback: {rb['action']} ({rb.get('note')})" if rb else "Rollback: none (cannot be undone)",
+             *_suggested(diag),
              "", "Top evidence:", *top, "",
              "Where to approve: in the terminal running the agent (answer y or N at the prompt).",
              (f"You can also approve it on the dashboard: {config.UI_URL}" if config.UI_APPROVALS

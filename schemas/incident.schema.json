@@ -247,6 +247,7 @@
         },
         "open_questions": {"type": "array", "items": {"type": "string"}},
         "prevention": {"type": ["array", "null"], "items": {"type": "string"}},
+        "suggested_fixes": {"type": ["array", "null"], "items": {"type": "object"}},
         "proposed_action": {"type": ["object", "null"]},
         "validation": {
           "type": "object",

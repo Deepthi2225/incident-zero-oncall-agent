@@ -36,6 +36,19 @@ def _fmt(row):
 
 # --- terminal ----------------------------------------------------------------------------------------
 
+SUGGESTION_TITLE = "P0ppy's own suggestion (advice only, P0ppy will never run this)"
+
+
+def suggestion_lines(diag, bullet="- "):
+    """A person-readable list of the model's own suggested fixes; empty when there are none."""
+    lines = []
+    for s in diag.get("suggested_fixes") or []:
+        lines.append(f"{bullet}{s['component']}: {s['fix']} (confidence {s['confidence']}, evidence {', '.join(s['evidence'])})")
+        lines += [f"{bullet}  Step {i}: {step}" for i, step in enumerate(s.get("steps") or [], 1)]
+        lines += [f"{bullet}  Why it is better: {s['why_better']}", f"{bullet}  Risk: {s['risk']}"]
+    return lines
+
+
 def render_diagnosis(record):
     record = upgrade(record)
     meta, d = record["metadata"], record.get("diagnosis") or {}
@@ -68,6 +81,8 @@ def render_diagnosis(record):
     for e in record.get("escalations") or []:
         lines.append(f"\nEscalate to human: {e['target']} [{e.get('fault_class')}]: {e['reason']}")
         lines += [f"  Next step: {n}" for n in e.get("next_steps", [])]
+    if d.get("suggested_fixes"):
+        lines += [f"\n{SUGGESTION_TITLE}:"] + suggestion_lines(d, "  - ")
     if d.get("prevention"):
         lines += ["\nPrevention:"] + [f"  - {p}" for p in d["prevention"]]
     if d.get("open_questions"):
@@ -352,6 +367,8 @@ def build_report(record):
 
     out += ["", "## What would prevent a repeat", ""]
     out += [f"- {p}" for p in out_.get("prevention") or d.get("prevention") or ["(none recorded)"]]
+    if d.get("suggested_fixes"):
+        out += ["", f"## {SUGGESTION_TITLE}", ""] + suggestion_lines(d)
     if d.get("open_questions"):
         out += ["", "## Open questions", ""] + [f"- {q}" for q in d["open_questions"]]
     out += postmortem_section(record.get("postmortem") or build_postmortem(record))

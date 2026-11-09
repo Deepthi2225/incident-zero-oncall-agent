@@ -344,6 +344,8 @@ Check it with `python -m oncall emailtest`. You cannot approve a fix by replying
 
 - **The agent only reads.** Every change goes through the Action API, a separate local service that
   needs a token and listens only on your own machine.
+- **Its own ideas are only advice.** When P0ppy finds a better fix than its allowed actions, it shows it
+  separately as a suggestion for a person. Suggestions never enter the plan and can never be run.
 - **Allowed actions only.** It can restart a shop service or throttle the load generator. Feature-flag
   toggling and scaling return "not implemented", so those faults go to a human.
 - **It leaves its own monitoring alone.** Prometheus, Jaeger, the collector and other monitoring

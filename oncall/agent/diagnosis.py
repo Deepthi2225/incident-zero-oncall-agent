@@ -38,6 +38,7 @@ NEEDS_EVIDENCE = {
     "input_specific_error": ("trace", "log"),
 }
 UNEXPLAINED = "unexplained alert"
+MAX_SUGGESTIONS, MAX_FIX_STEPS = 5, 8
 
 # What the model may propose: the available Action API actions, or escalation to a human.
 # The validator then enforces the fault-class mapping in oncall/agent/actions.py.
@@ -133,6 +134,24 @@ SUBMIT_TOOL = {
                     "expected_outcome": {"type": "string", "description": "Expected metric recovery."},
                 },
             },
+            "suggested_fixes": {
+                "type": "array",
+                "description": "Your own better fix, as advice for a human. Never executed. Empty if the allowlisted remedy is best.",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": ["component", "fix", "why_better", "evidence"],
+                    "properties": {
+                        "component": {"type": "string", "description": "The root cause it fixes."},
+                        "fix": {"type": "string", "description": "The fix, in one sentence."},
+                        "steps": {"type": "array", "items": {"type": "string"}, "description": "What a person would do, in order."},
+                        "why_better": {"type": "string", "description": "Why this beats the allowlisted remedy."},
+                        "risk": {"type": "string", "description": "What could go wrong."},
+                        "confidence": {"type": "number", "description": "0 to 1, that this fix would work."},
+                        "evidence": _EVIDENCE,
+                    },
+                },
+            },
             "ruled_out": {
                 "type": "array",
                 "description": "Suspects you checked and cleared, each with the evidence that clears it.",
@@ -192,6 +211,19 @@ def _as_list(value, label, notes):
     return [value]
 
 
+def _text(value, limit=600):
+    return value.strip()[:limit] if isinstance(value, str) else ""
+
+
+def _suggestion(item):
+    """A suggested fix with only known fields, as plain text. It is never added to the plan."""
+    steps = item.get("steps") if isinstance(item.get("steps"), list) else []
+    return {"component": _text(item.get("component"), 80) or "unknown", "fix": _text(item.get("fix")),
+            "steps": [s for s in (_text(x) for x in steps[:MAX_FIX_STEPS]) if s],
+            "why_better": _text(item.get("why_better")), "risk": _text(item.get("risk")) or "not assessed",
+            "confidence": round(_clamp(item.get("confidence", 0.0)), 2), "evidence": item["evidence"]}
+
+
 def _ids(value):
     """Evidence IDs as a list of strings (a single ID string is accepted)."""
     if isinstance(value, str):
@@ -228,6 +260,8 @@ def validate(diag):
     diag["affected_services"] = keep_valid(diag.get("affected_services"), "affected service")
     diag["anomalies"] = keep_valid(diag.get("anomalies"), "anomaly")
     diag["ruled_out"] = keep_valid(diag.get("ruled_out"), "ruled-out suspect")
+    diag["suggested_fixes"] = [s for s in map(_suggestion, keep_valid(diag.get("suggested_fixes"), "suggested fix"))
+                               if s["fix"]][:MAX_SUGGESTIONS]
 
     # Validate root_causes
     raw_rcs = _as_list(diag.get("root_causes"), "root_causes", notes)

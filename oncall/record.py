@@ -157,7 +157,8 @@ def diagnosis_view(diag):
     if diag is None:
         return None
     keep = ("status", "headline", "confidence", "root_causes", "suspected_origin", "affected_services",
-            "anomalies", "ruled_out", "open_questions", "prevention", "proposed_action", "validation")
+            "anomalies", "ruled_out", "open_questions", "prevention", "proposed_action", "validation",
+            "suggested_fixes")
     d = {k: diag.get(k) for k in keep}
     d["ruled_out"] = d["ruled_out"] or []
     d["open_questions"] = d["open_questions"] or []
