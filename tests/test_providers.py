@@ -366,3 +366,13 @@ def test_anthropic_missing_credentials_is_llm_error():
     client = SimpleNamespace(beta=SimpleNamespace(messages=SimpleNamespace(create=no_key)))
     with pytest.raises(NoCredentials, match="ANTHROPIC_API_KEY"):
         AnthropicProvider(client, "claude-opus-5-5", use_fallbacks=False).create("s", [], [])
+
+
+def test_a_turn_with_only_tool_calls_never_sends_null_content():
+    """Ollama refuses an assistant message whose content is null."""
+    from types import SimpleNamespace as NS
+
+    from oncall.agent.providers import to_openai_messages
+    turn = [NS(type="tool_use", id="t1", name="get_metric", input={})]
+    out = to_openai_messages("s", [{"role": "user", "content": "go"}, {"role": "assistant", "content": turn}])
+    assert out[-1]["role"] == "assistant" and out[-1]["content"] == "" and out[-1]["tool_calls"]

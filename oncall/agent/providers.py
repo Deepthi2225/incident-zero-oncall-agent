@@ -143,7 +143,7 @@ def to_openai_messages(system, messages):
                     if _get(b, "extra_content"):  # Gemini's thought signature must be sent back
                         call["extra_content"] = _get(b, "extra_content")
                     calls.append(call)
-            msg = {"role": "assistant", "content": text or None}
+            msg = {"role": "assistant", "content": text or ""}  # Ollama rejects a null content
             if calls:
                 msg["tool_calls"] = calls
             out.append(msg)
