@@ -562,7 +562,7 @@ function stepView(s, ui) {
     el("div", { class: "title" }, "Step " + v(s.step) + ": " + pretty(s.action) + " on " + s.target, s.outcome ? el("span", { class: "pillet" + (s.outcome === "recovered" ? " ok" : "") }, pretty(s.outcome)) : null),
     kv([["Why", s.reason], ["Expected", s.expected_outcome], ["Risk", s.risk_assessment || a.risk || "not assessed"],
         ["Undo", s.rollback ? pretty(s.rollback.action) + " (" + s.rollback.note + ")" : "cannot be undone"],
-        ["Approval", waiting ? el("span", { class: "wait" }, "Waiting for you in the terminal") : v(a.status) + (a.approved_by ? " by " + a.approved_by : "")],
+        ["Approval", waiting ? el("span", { class: "wait" }, (me.ui_approvals ? "Waiting for your decision" : "Waiting for you in the terminal")) : v(a.status) + (a.approved_by ? " by " + a.approved_by : "")],
         ["Result", ex.status ? ex.status + (ex.reason || ex.error ? " (" + (ex.reason || ex.error) + ")" : "") : "not run"],
         ["Verified", vf.outcome ? vf.outcome + (vf.reason ? " (" + vf.reason + ")" : "") : "not yet"]]),
     (vf.checks || []).length ? el("details", {}, el("summary", { class: "note" }, "Recovery checks (" + vf.checks.length + ")"), vf.checks.map((c) => el("div", { class: "note" },
