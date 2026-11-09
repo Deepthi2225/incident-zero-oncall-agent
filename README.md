@@ -1,100 +1,80 @@
-# P0ppy 🐾
+# P0ppy
 
 **Your little buddy for big incidents.**
 
-DETECT · INVESTIGATE · RESOLVE
+P0ppy is an AI on-call engineer. When a production service breaks, it investigates using real
+telemetry, names the root cause with evidence, proposes a safe fix, waits for a person to approve it,
+applies it, and checks that the system really recovered. When it isn't sure, it says so and hands
+its findings to a person.
 
-An AI agent that responds to a production incident in a microservices shop. It investigates using
-real telemetry, names the root cause with evidence, proposes a safe fix, waits for a human to
-approve it, applies it, and checks that the system recovered. When it is not sure, it hands over to
-a human with what it found.
+It runs against the open-source [OpenTelemetry Demo](https://github.com/open-telemetry/opentelemetry-demo),
+a realistic microservices shop.
 
-Built for the Bosch AI hackathon at PES University (23 and 24 October 2026), on the theme of agentic
-AI for IT operations. It runs against the open-source
-[OpenTelemetry Demo](https://github.com/open-telemetry/opentelemetry-demo).
+![The P0ppy dashboard during a sample incident with two root causes](docs/dashboard.png)
 
-P0ppy began as Incident Zero, and this is a personal continuation of the team project at
-[aniruddhajoshi100/ocAgent](https://github.com/aniruddhajoshi100/ocAgent).
+*The dashboard, shown here with sample data.*
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the design and [EVALUATION.md](EVALUATION.md) for results.
+## What it does
 
-## What you need
+| | |
+|---|---|
+| **Detects** | Watches error rate, latency and silent services against a recorded healthy baseline |
+| **Investigates** | An LLM chooses which traces, metrics, logs and container checks to run next |
+| **Proves it** | Every claim must cite evidence P0ppy really collected; anything else is dropped |
+| **Handles the messy cases** | Several faults at once, faults it has never seen, and new alerts during a run |
+| **Suggests fixes** | Approved actions it can run, listed separately from its own advice, which it never runs |
+| **Asks first** | Nothing changes without a person's approval, from the dashboard or the terminal |
+| **Verifies** | Compares health against the baseline after a fix, and rolls back if it didn't work |
+| **Reports** | A report and draft postmortem for every incident |
+| **Alerts** | Email, phone call, Telegram or Slack, routed by severity |
 
-| | Offline try-out | Full live demo |
-|---|---|---|
-| [Python](https://www.python.org/downloads/) 3.11 or newer, and Git | Yes | Yes |
-| An LLM API key (see step 3) | Yes | Yes |
-| [Docker](https://www.docker.com/products/docker-desktop/) with Compose v2 | No | Yes |
-| Free memory and disk | Very little | About 6 GB RAM (16 GB laptop recommended), 14 GB disk |
+## Try it in 5 minutes (no Docker)
 
-It runs on Windows, macOS and Linux. Commands below are the same on all three unless noted.
-
-## Quick start (offline, about 5 minutes)
-
-This runs the agent on recorded data, so it needs no Docker and changes nothing.
-
-**1. Get the code**
+This runs P0ppy on recorded incident data, so nothing is changed. You need
+[Python 3.11+](https://www.python.org/downloads/), Git, and an LLM key.
+[Groq](https://console.groq.com/keys) has a free tier.
 
 ```
 git clone https://github.com/Deepthi2225/incident-zero-oncall-agent.git
 cd incident-zero-oncall-agent
+python scripts/bootstrap.py
 ```
 
-**2. Install it in a virtual environment**
-
-Windows (PowerShell):
-```
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-```
-
-macOS or Linux:
-```
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-If PowerShell blocks the activation script, run
-`Set-ExecutionPolicy -Scope Process RemoteSigned` and try again. With the environment active, `python`
-works on every system. Activate it again in each new terminal.
-
-**3. Add an LLM key**
-
-Copy the settings file: `copy .env.example .env` on Windows, `cp .env.example .env` on macOS or Linux.
-Then open `.env` and set one provider. [Groq](https://console.groq.com/keys) is the easiest way to start:
+On macOS or Linux, use `python3` for that last command. Then open `.env` and set your provider:
 
 ```
 ONCALL_PROVIDER=groq
 GROQ_API_KEY=your-key-here
 ```
 
-`.env` is ignored by Git. Never commit it. Check the key with `python scripts/llm_check.py`.
-It should print a line starting with `OK`.
+Activate the environment. You need to do this in each new terminal, and after it `python` works on every system.
 
-**4. Run the tests** (optional; these need no key, Docker or network)
+| System | Command |
+|---|---|
+| Windows (PowerShell) | `.venv\Scripts\Activate.ps1` |
+| macOS or Linux | `source .venv/bin/activate` |
 
-```
-python -m pytest -q
-```
+If PowerShell blocks the script, run `Set-ExecutionPolicy -Scope Process RemoteSigned` first.
 
-**5. Run the agent on a recorded incident**
+Now run an incident:
 
 ```
 python -m oncall.agent.run tests/fixtures/payment_down/alert.json --test
 ```
 
-You will see each tool the agent calls, then its diagnosis and proposed fix. Nothing is really
-changed in this mode. The report is saved in `runs/`.
+You'll see each tool it calls, then its diagnosis and proposed fix. The report is saved in `runs/`.
 
-## Full live demo
+## Run it for real
 
-**1. Start the shop.** Clone it next to this project and keep the folder name
-`opentelemetry-demo`, because the agent uses it to recognise the shop's containers. This project was
-tested on commit `ad06a6f9`.
+This needs [Docker](https://www.docker.com/products/docker-desktop/) with Compose v2, about 6 GB of free
+memory and 14 GB of disk. A 16 GB laptop is comfortable.
+
+**1. Start the shop.** Clone it next to this project and keep the folder name, because P0ppy uses it to
+recognise the shop's containers. Don't edit anything inside it. If you must use another folder name, add
+`COMPOSE_PROJECT=<folder name>` to `.env`.
 
 ```
+cd ..
 git clone https://github.com/open-telemetry/opentelemetry-demo.git
 cd opentelemetry-demo
 git checkout ad06a6f9
@@ -102,297 +82,182 @@ docker compose -f compose.yaml -f compose.full.yaml -f compose.observability.yam
 cd ../incident-zero-oncall-agent
 ```
 
-Do not edit anything inside that folder. Wait about 5 minutes for traffic to build up, then open
-http://localhost:8080 to see the shop. If you did use another folder name, add
-`COMPOSE_PROJECT=<that folder name>` to `.env`.
+Wait about 5 minutes for traffic to build up.
 
-**2. Finish `.env`.** Add these two lines. Generate the token with
-`python -c "import secrets; print(secrets.token_urlsafe(32))"`.
-
-```
-ACTION_API_TOKEN=paste-the-generated-token
-ACTION_API_URL=http://127.0.0.1:8099
-```
-
-**3. Record what healthy looks like**, while the shop is running normally:
-
-```
-python -m oncall check
-python -m oncall baseline --window 5m
-python detector.py --calibrate 300
-```
-
-**4. Start the services**, each in its own terminal with the virtual environment active:
-
-```
-python -m actionapi
-python -m oncall.ui
-```
-
-The first is the only component allowed to change the shop. The second is the sign-in dashboard (see Settings) at
-http://127.0.0.1:8090.
-
-**5. Break something and watch the agent respond.** In a third terminal:
-
-```
-python scripts/demo.py stop-payment --wait 180 --execute
-```
-
-This stops the payment service, waits for the alert, and starts the agent. When it asks, answer `y`
-to approve the fix or `n` to refuse. Without `--execute` it is a dry run.
-
-**6. Put everything back:**
-
-```
-python -m faultctl reset
-```
-
-To run it continuously instead, use `python -m oncall watch`. It starts an investigation whenever
-an alert fires. To see every fault you can practise on, use `python -m faultctl list`.
-
-## Stop the agent immediately
-
-```
-python -m oncall stop
-python -m oncall resume
-```
-
-`stop` blocks all further model calls, tool calls and actions, even ones already approved. `resume`
-turns the agent back on.
-
-## Common commands
-
-| Command | What it does |
-|---|---|
-| `python scripts/llm_check.py` | Checks the LLM key and tool calling |
-| `python -m oncall check` | Checks Prometheus, Jaeger and Docker can be reached |
-| `python -m oncall baseline --window 5m` | Saves healthy numbers to compare against |
-| `python -m oncall watch` | Watches for alerts and investigates them |
-| `python -m oncall investigate --service checkout --signal error_rate --value 0.3` | Investigates a manual alert |
-| `python -m oncall verify <run_id>` | Checks recovery after a human fixed something by hand |
-| `python -m oncall emailtest` | Sends one test email |
-| `python -m oncall calltest` | Places one test phone call |
-| `python -m oncall telegramtest` | Sends one test Telegram message |
-| `python -m oncall slacktest` | Sends one test Slack message |
-| `python -m oncall ack <incident>` | Acknowledges an incident; with no id, lists those waiting |
-| `python -m oncall whoison` | Shows who each rotation has on call today |
-| `python -m faultctl list` / `inject <id>` / `status` / `reset` | Practice faults |
-
-## Troubleshooting
-
-| Problem | Fix |
-|---|---|
-| `python` is not found (macOS or Linux) | Use `python3`, or activate the virtual environment |
-| `No module named ...` | Activate the virtual environment and run `pip install -r requirements.txt` |
-| Run ends with `llm_error` | Run `python scripts/llm_check.py`, then check the key and `ONCALL_PROVIDER` in `.env` |
-| Groq `Request too large` or repeated rate limits | Turn on the Ollama fallback below, or use a paid tier |
-| `python -m oncall check` fails | Make sure the shop is up and has run for a few minutes |
-| No metrics or an empty report | Metrics arrive about once a minute. Wait 2 to 3 minutes |
-| Actions are refused as outside the project | Set `COMPOSE_PROJECT` to the shop's folder name in `.env` |
-| Agent says the kill switch is on | Run `python -m oncall resume` |
-| Docker runs out of memory | Give Docker at least 6 GB in its settings |
-
-## Settings
-
-All settings go in `.env`. [.env.example](.env.example) lists them.
-
-### LLM providers
-
-| `ONCALL_PROVIDER` | Default model (setting) | Key |
-|---|---|---|
-| `anthropic` (default) | `claude-opus-5-5` (`ONCALL_MODEL`) | `ANTHROPIC_API_KEY` |
-| `groq` | `openai/gpt-oss-120b` (`GROQ_MODEL`) | `GROQ_API_KEY` |
-| `gemini` | `gemini-3.5-flash-lite` (`GEMINI_MODEL`) | `GEMINI_API_KEY` |
-| `ollama` | `qwen3:8b` (`OLLAMA_MODEL`) | None; runs on your machine |
-
-The provider comes only from `ONCALL_PROVIDER`, never from which keys are set. If a provider fails,
-the run ends as `llm_error` and escalates to a human. On Groq, rejected tool calls are retried and
-per-minute rate limits are waited out.
-
-### Local fallback with Ollama (optional)
-
-If the main provider fails, a local model can answer instead. It needs a GPU with about 8 GB of
-memory to run at a usable speed.
-
-1. Install [Ollama](https://ollama.com) and run `ollama pull qwen3:8b`.
-2. Set `OLLAMA_CONTEXT_LENGTH=16384` as an environment variable and restart Ollama. A smaller value
-   silently cuts off the conversation.
-3. Add `ONCALL_FALLBACK_PROVIDER=ollama` to `.env`.
-
-The record shows when the fallback answered. **A diagnosis the fallback helped produce never offers
-a fix**: the findings go to a human, because the smaller model is less reliable.
-
-### Reviewer (optional)
-
-`ONCALL_REVIEWER=on` adds one skeptical second opinion before anything is shown for approval. It can
-lower confidence and remove steps, but it can never raise confidence, add a step or approve anything.
-
-### Dashboard
-
-`python -m oncall.ui` serves the dashboard at http://127.0.0.1:8090, on your machine only. Everyone signs in.
-Create accounts in a terminal; the password is typed at a hidden prompt:
+**2. Create your account.** The password is typed at a hidden prompt and needs 12 or more characters.
 
 ```
 python -m oncall user add yourname --role admin
 ```
 
+**3. Record what healthy looks like,** while the shop is running normally. This takes about 5 minutes.
+
+```
+python -m oncall baseline --window 5m
+python detector.py --calibrate 300
+```
+
+**4. Check that everything is ready.** This tells you exactly what's missing and how to fix it.
+
+```
+python -m oncall doctor
+```
+
+**5. Turn on approvals from the dashboard** by adding `UI_APPROVALS=on` to `.env`.
+
+**6. Start P0ppy:**
+
+```
+python -m oncall up --watch --execute
+```
+
+Open http://127.0.0.1:8090 and sign in. Keep this terminal open; **Ctrl+C** stops everything.
+Without `--execute`, approved fixes are a dry run and nothing in the shop changes.
+
+## Test it with a practice incident
+
+With P0ppy running, break something from a second terminal (activate the environment first):
+
+```
+python -m faultctl inject stop-payment
+```
+
+1. Within about 3 minutes the alert fires. Metrics arrive once a minute, so this delay is normal.
+2. P0ppy investigates, and the banner changes to **P0ppy needs your yes**.
+3. Click **Review and approve**, check what it will do, and enter your password.
+4. P0ppy restarts the service and verifies that it recovered.
+5. Open **Investigate** to read the evidence and postmortem.
+
+Then put everything back with `python -m faultctl reset`. `python -m faultctl list` shows every practice fault.
+
+## Use it from your phone
+
+[Tailscale](https://tailscale.com) gives your own devices a private, encrypted way in, without putting the
+dashboard on the internet.
+
+1. Install Tailscale on your computer and phone, and sign in to both with the same account.
+2. In the [admin console](https://login.tailscale.com/admin/dns), turn on MagicDNS and HTTPS Certificates.
+3. Run `tailscale serve --bg 8090`. It prints an address like `https://your-laptop.your-tailnet.ts.net`.
+4. Add `UI_ALLOWED_HOSTS=your-laptop.your-tailnet.ts.net` to `.env`, then restart P0ppy.
+
+Your computer has to be on, with P0ppy running. Use 2-step verification on your Tailscale sign-in account,
+and never use `tailscale funnel`, which would make it public. To remove the link: `tailscale serve --https=443 off`.
+
+## The dashboard
+
+| Tab | What's there |
+|---|---|
+| **Overview** | The service map, what went wrong, how to fix it, team notes, shop health, who was told |
+| **Investigate** | Start a run, see each step P0ppy took, the evidence, the postmortem |
+| **History** | Search and filter past incidents |
+| **Settings and logs** | Setup check, alert channels, your account, team accounts, logs, the audit log |
+
 | Role | Can do |
 |---|---|
 | `viewer` | See everything |
-| `responder` | Also acknowledge, start dry-run investigations, and verify a manual fix |
-| `approver` | Also approve or reject fixes, start live runs, and use the kill switch |
-| `admin` | Also send test alerts |
+| `responder` | Also take ownership, hand over, add notes, start dry-run investigations, verify a manual fix |
+| `approver` | Also approve or reject fixes, start live runs, use the kill switch |
+| `admin` | Also manage accounts and send test alerts |
 
-To approve fixes on the dashboard as well as in the terminal, add `UI_APPROVALS=on` to `.env`. Approving
-asks for your password again. Fixes only really run if the agent was started with `--execute`.
-Every attempted action is logged in `runs/ui_audit.jsonl`.
+## Common commands
 
-### Sharing the dashboard with your team
+| Command | What it does |
+|---|---|
+| `python -m oncall doctor` | Checks setup and says what to fix |
+| `python -m oncall up [--watch] [--execute]` | Starts the Action API and dashboard, and optionally the watcher |
+| `python -m oncall stop` / `resume` | Kill switch: blocks all model calls, tools and fixes |
+| `python -m oncall investigate --service checkout --signal error_rate` | Investigates by hand (add `--execute` for real fixes) |
+| `python -m oncall verify <run_id>` | Checks recovery after you fixed something yourself |
+| `python -m oncall ack <incident>` | Acknowledges an incident; with no id, lists those waiting |
+| `python -m oncall user add\|list\|remove` | Manages accounts |
+| `python -m oncall whoison` | Shows who a rotation has on call today |
+| `python -m oncall emailtest` / `calltest` / `telegramtest` / `slacktest` | Sends one labelled test alert |
+| `python -m faultctl list` / `inject <id>` / `status` / `reset` | Practice faults |
+| `python -m pytest -q` | Runs the tests; they need no key, Docker or network |
 
-[Tailscale](https://tailscale.com) gives teammates a private, encrypted way in, without opening the dashboard to the internet.
+## Settings
 
-1. Install Tailscale on your machine, sign in, and enable HTTPS and MagicDNS in the Tailscale admin console.
-2. Run `tailscale serve --bg 8090`. It prints an address such as `https://poppy.your-tailnet.ts.net`.
-3. Add `UI_ALLOWED_HOSTS=poppy.your-tailnet.ts.net` to `.env` and restart the dashboard.
-4. In the Tailscale admin console, share this machine with each teammate, and create their dashboard account.
+All settings go in `.env`, which Git ignores. [.env.example](.env.example) lists them.
 
-Use `tailscale serve`, never `tailscale funnel`, which would put it on the public internet.
+### LLM providers
 
-### Who gets alerted
+| `ONCALL_PROVIDER` | Default model | Key |
+|---|---|---|
+| `anthropic` (default) | `claude-opus-5-5` | `ANTHROPIC_API_KEY` |
+| `groq` | `openai/gpt-oss-120b` | `GROQ_API_KEY` |
+| `gemini` | `gemini-3.5-flash-lite` | `GEMINI_API_KEY` |
+| `ollama` | `qwen3:8b` | None; runs on your machine |
 
-By default, alerts go to the contacts in `.env`. To alert different people by severity, copy
-`escalation.example.json` to `escalation.json` (ignored by Git) and fill in each person's contacts.
-`routes` lists who hears about each severity, and `unknown` covers services with no known severity.
-Anything missing falls back to `.env`, and test runs only ever reach the `.env` contacts.
+To use a local model if your main provider fails, install [Ollama](https://ollama.com), run `ollama pull qwen3:8b`,
+set the environment variable `OLLAMA_CONTEXT_LENGTH=16384`, and add `ONCALL_FALLBACK_PROVIDER=ollama`. It needs about
+8 GB of GPU memory. **A diagnosis the fallback helped produce never offers a fix**, because the smaller model is less reliable.
 
-`escalation.example.json` also shows two optional extras:
+`ONCALL_REVIEWER=on` adds a skeptical second opinion, which can lower confidence or remove steps but never add them.
 
-- **Rotation:** `rotations` takes turns between people, and `@weekly` in a route means whoever is on
-  call that week. `python -m oncall whoison` shows who it is.
-- **Acknowledge or escalate:** with `acknowledge`, `python -m oncall watch` alerts the `then` people
-  if nobody acknowledges a SEV1 or SEV2 in time. Run `python -m oncall ack <incident>` to acknowledge;
-  answering an approval prompt counts too.
+### Alerts
 
-### Slack alerts (optional, off by default)
+All alerts are off by default, and runs on recorded data never ring anyone.
 
-Create an [incoming webhook](https://api.slack.com/messaging/webhooks), add `SLACK_ENABLED=on` and
-`SLACK_WEBHOOK_URL=your-webhook-url` to `.env`, and check it with `python -m oncall slacktest`. Runs on
-recorded data are not sent.
+| Channel | Add to `.env` | Test |
+|---|---|---|
+| Email (SMTP) | `EMAIL_ENABLED=on`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_STARTTLS=on`, `EMAIL_FROM`, `EMAIL_TO` | `emailtest` |
+| Email (Resend) | `EMAIL_ENABLED=on`, `EMAIL_TRANSPORT=resend`, `RESEND_API_KEY`, `EMAIL_TO` | `emailtest` |
+| Phone (SEV1, SEV2) | `CALLS_ENABLED=on`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`, `ONCALL_PRIMARY_PHONE` | `calltest` |
+| Telegram | `TELEGRAM_ENABLED=on`, `TELEGRAM_BOT_TOKEN`, then message your bot and run `telegramtest` to get `TELEGRAM_CHAT_ID` | `telegramtest` |
+| Slack | `SLACK_ENABLED=on`, `SLACK_WEBHOOK_URL` | `slacktest` |
 
-### Telegram alerts (optional, off by default)
+Twilio trial accounts can only call verified numbers. The spoken summary passes through Twimlets, Twilio's free text-to-call page.
 
-P0ppy can message you from a Telegram bot during live incidents. It is free. Runs on recorded data are
-not sent, and nothing can be approved from Telegram.
-
-1. In Telegram, message [@BotFather](https://t.me/BotFather), send `/newbot`, and copy the token.
-2. Add `TELEGRAM_BOT_TOKEN=your-token` and `TELEGRAM_ENABLED=on` to `.env`.
-3. Send your new bot any message, then run `python -m oncall telegramtest`. It prints your chat id.
-4. Add `TELEGRAM_CHAT_ID=your-chat-id` to `.env` and run the same command to get a test message.
-
-### Phone calls (optional, off by default)
-
-For live SEV1 and SEV2 incidents, P0ppy can phone the on-call engineer through
-[Twilio](https://www.twilio.com) and read a short summary. Runs on recorded data never ring. The call
-is one-way: it cannot acknowledge or approve anything. The spoken summary passes through Twimlets,
-Twilio's free text-to-call page. Add these to `.env`, using numbers with a
-country code, then check them with `python -m oncall calltest`.
-
-```
-CALLS_ENABLED=on
-TWILIO_ACCOUNT_SID=your-account-sid
-TWILIO_AUTH_TOKEN=your-auth-token
-TWILIO_FROM_NUMBER=+1xxxxxxxxxx
-ONCALL_PRIMARY_PHONE=+91xxxxxxxxxx
-```
-
-Trial accounts can usually only call numbers verified with Twilio, and calling a country may need
-enabling under Voice Geographic Permissions.
-
-### Email alerts (optional, off by default)
-
-The agent emails a human when it escalates or needs approval. Each email has a formatted version, a
-plain-text copy and, once the run has ended, the report attached. Runs on recorded data are marked
-`[TEST]`. Email sends incident data off your machine.
-
-With [Resend](https://resend.com):
-```
-EMAIL_ENABLED=on
-EMAIL_TRANSPORT=resend
-RESEND_API_KEY=your-key-here
-EMAIL_TO=you@example.com
-```
-
-Without a verified domain, Resend only delivers to its account owner's own address. Set `EMAIL_FROM`
-once you have verified one.
-
-With SMTP:
-```
-EMAIL_ENABLED=on
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_USER=your-user
-SMTP_PASSWORD=your-password
-SMTP_STARTTLS=on
-EMAIL_FROM=oncall-agent@example.com
-EMAIL_TO=you@example.com
-```
-
-Check it with `python -m oncall emailtest`. You cannot approve a fix by replying to an email.
-
-## When there is more than one problem
-
-- **Several services alert:** P0ppy gets extra investigation turns, and reports each cause with its own evidence.
-- **Something stays unexplained:** any alerting service that is not a root cause, a victim of one, or
-  ruled out with evidence goes to a human as a possible second fault.
-- **A fault it does not recognise:** it can answer "unknown" and hand over its findings. A diagnosis
-  without the right kind of evidence for its label has its confidence capped, so no fix is offered.
-- **Seen something similar before:** P0ppy shares earlier live incidents on those services as a hint
-  on where to look. It still has to prove the cause from the current incident's evidence.
-- **A new alert during a run:** `python -m oncall watch` keeps watching, queues it, and investigates
-  everything still broken as one incident afterwards.
+To alert different people by severity, copy `escalation.example.json` to `escalation.json` and fill it in. It also
+supports on-call rotations and escalating when nobody acknowledges in time. Anything missing falls back to `.env`,
+and test runs only ever reach the `.env` contacts.
 
 ## How it stays safe
 
-- **The agent only reads.** Every change goes through the Action API, a separate local service that
-  needs a token and listens only on your own machine.
-- **Its own ideas are only advice.** When P0ppy finds a better fix than its allowed actions, it shows it
-  separately as a suggestion for a person. Suggestions never enter the plan and can never be run.
-- **Allowed actions only.** It can restart a shop service or throttle the load generator. Feature-flag
-  toggling and scaling return "not implemented", so those faults go to a human.
-- **It leaves its own monitoring alone.** Prometheus, Jaeger, the collector and other monitoring
-  containers cannot be restarted, and nothing outside the shop's Compose project can be touched.
-- **A human approves every step.** `--execute` cannot be combined with `--auto-approve`.
-- **Evidence is checked.** Any claim citing evidence the agent did not actually collect is dropped.
-- **Recovery is verified.** After a fix, the agent checks health against the baseline, then rolls back
-  and escalates if the system did not recover.
+- **The agent only reads.** Every change goes through the Action API, a separate local service that needs a token.
+- **Allowed actions only.** It can restart a shop service or throttle the load generator. Feature-flag toggling and
+  scaling aren't available, so those faults go to a person.
+- **Its own ideas are only advice.** Suggestions never enter the plan and can never run.
+- **A person approves every step,** and nobody answering means nothing happens. `--execute` can't be combined with `--auto-approve`.
+- **It leaves its monitoring alone,** and nothing outside the shop's Compose project can be touched.
+- **Evidence is checked,** and a label without the right kind of evidence has its confidence capped.
+- **Recovery is verified,** with rollback and escalation if it failed.
 - **No feature-flag data.** Flag settings are never read, and flag data is stripped from all telemetry.
-- **Everything is logged.** Results are in `runs/`, including each run's record and report, and the
-  Action API's audit log in `runs/action_api.jsonl`.
+- **The dashboard is locked down:** hashed passwords, roles, login throttling, protected sessions, your password again
+  before approving a fix, and an audit log of every attempt. It listens only on your own machine.
+- **Secrets stay out of Git.** `.env`, `escalation.json` and `ui_users.json` are ignored.
 
-## Action API reference
+## Troubleshooting
 
-Runs at `http://127.0.0.1:8099`. Every call except `GET /health` needs
-`Authorization: Bearer <ACTION_API_TOKEN>`.
+Start with `python -m oncall doctor`.
 
-| Method and path | Body | What it does |
-|---|---|---|
-| `GET /health` | | Liveness check |
-| `POST /actions/restart_service` | `{"service": "payment"}` | Restarts an allowed shop service |
-| `POST /actions/throttle_load_generator` | `{"users": 2}` | Lowers the simulated user count |
-| `POST /actions/unthrottle_load_generator` | `{}` | Restores the previous user count |
-| `POST /actions/toggle_feature_flag` | | 501, not implemented |
-| `POST /actions/scale_service` | | 501, needs Kubernetes |
+| Problem | Fix |
+|---|---|
+| `python` is not found (macOS or Linux) | Use `python3`, or activate the environment |
+| `No module named ...` | Activate the environment, or run `python scripts/bootstrap.py` |
+| Stuck on the sign-in page saying no accounts exist | Run `python -m oncall user add yourname --role admin` |
+| Run ends with `llm_error` | Run `python scripts/llm_check.py`, then check the key and `ONCALL_PROVIDER` |
+| Groq rate limits | The free tier is limited per day; add the Ollama fallback or wait |
+| No metrics or an empty report | Metrics arrive about once a minute, so wait 2 to 3 minutes |
+| A fix says "dry run" | Start with `--execute` |
+| Nothing to approve on the dashboard | Add `UI_APPROVALS=on` to `.env` and restart |
+| "Port is already in use" from `up` | P0ppy is already running; close the other terminal |
+| Actions refused as outside the project | Set `COMPOSE_PROJECT` to the shop's folder name |
+| Agent says the kill switch is on | Run `python -m oncall resume` |
+| Docker runs out of memory | Give Docker at least 6 GB in its settings |
 
-Add `"dry_run": true` to validate a request without changing anything. An `Idempotency-Key` header
-makes retries safe. A second change to the same service within 60 seconds is refused
-(`ACTION_API_COOLDOWN_S`).
+## Learn more
 
-Status codes: 200 OK, 400 bad request, 401 bad token, 403 refused, 404/405 unknown route,
-409 conflict, 423 kill switch on, 429 cooldown, 501 not implemented, 502 Docker or load generator failed.
+- [ARCHITECTURE.md](ARCHITECTURE.md): the design
+- [EVALUATION.md](EVALUATION.md): results
+- `results/`: saved runs, including several faults at once and unseen faults
 
 ## Contributors
 
-- Deepthi ([Deepthi-PES1UG23AM092](https://github.com/Deepthi-PES1UG23AM092))
+P0ppy began as Incident Zero, a team project at the Bosch AI hackathon at PES University in October 2026
+([original repository](https://github.com/aniruddhajoshi100/ocAgent)), and is now continued by Deepthi.
+
+- Deepthi ([Deepthi2225](https://github.com/Deepthi2225))
 - Aniruddha Joshi ([aniruddhajoshi100](https://github.com/aniruddhajoshi100))
 - Shivakumar ([ShivakumarSK2005](https://github.com/ShivakumarSK2005))
 - Padma
@@ -401,8 +266,3 @@ Status codes: 200 OK, 400 bad request, 401 bad token, 403 refused, 404/405 unkno
 ## License
 
 [MIT](LICENSE)
-
-## Contributing
-
-Create a branch from `main`, keep `python -m pytest -q` passing, add tests for what you change, and
-open a pull request. Never edit the shop's code, read its feature flags, or commit `.env` or `runs/`.

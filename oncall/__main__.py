@@ -14,6 +14,8 @@
   python -m oncall slacktest                     send one test Slack message with the .env settings
   python -m oncall ack [incident]                acknowledge an incident, or list those waiting
   python -m oncall whoison                       show who each rotation has on call today
+  python -m oncall doctor                        check setup and say what to fix
+  python -m oncall up [--watch] [--execute]      start the Action API and dashboard together
   python -m oncall user add <name> --role <role> create or update a dashboard account
   python -m oncall user list | remove <name>     list or remove dashboard accounts
 
@@ -23,6 +25,7 @@ is the ONLY way to run on fixture data. Every report records the source used.
 """
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -238,6 +241,65 @@ def cmd_user(args):
     print(f"saved {args.name} ({args.role})")
 
 
+def cmd_doctor(_args):
+    from oncall import doctor
+    lines, missing = doctor.report()
+    print("\n".join(lines))
+    sys.exit(1 if missing else 0)
+
+
+def up_services(args):
+    """[(name, arguments after python -m)] for the processes `up` starts."""
+    services = [("Action API", ["actionapi"]), ("dashboard", ["oncall.ui"])]
+    if args.watch:
+        services.append(("watcher", ["oncall", "watch", *(["--execute"] if args.execute else [])]))
+    return services
+
+
+def _port_in_use(port):
+    import socket
+    with socket.socket() as s:
+        s.settimeout(1)
+        return s.connect_ex(("127.0.0.1", port)) == 0
+
+
+def cmd_up(args):
+    """Everything P0ppy needs, in one terminal. Ctrl+C stops it all."""
+    import subprocess
+    import time
+    from oncall.ui import auth
+    if args.execute and not args.watch:
+        sys.exit("--execute only applies with --watch")
+    if not auth.users():
+        sys.exit("No dashboard accounts yet. Run: python -m oncall user add yourname --role admin")
+    if _port_in_use(config.UI_PORT) or _port_in_use(int(os.getenv("ACTION_API_PORT", "8099"))):
+        sys.exit("Port is already in use: P0ppy may already be running. Close it first.")
+    running = [(name, subprocess.Popen([sys.executable, "-m", *argv], cwd=config.ROOT)) for name, argv in up_services(args)]
+    print(f"\nP0ppy is running: {config.UI_URL}")
+    for host in config.UI_ALLOWED_HOSTS:
+        print(f"Private link: https://{host}")
+    print("Approved fixes really run." if args.execute else "Dry run: nothing in the shop will change.")
+    print("Press Ctrl+C to stop everything.\n", flush=True)
+    try:
+        while True:
+            for name, process in running:
+                if process.poll() is not None:
+                    print(f"The {name} stopped (exit code {process.returncode}), so P0ppy is shutting down.", flush=True)
+                    return
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\nStopping P0ppy...", flush=True)
+    finally:
+        for _, process in running:
+            if process.poll() is None:
+                process.terminate()
+        for _, process in running:
+            try:
+                process.wait(10)
+            except subprocess.TimeoutExpired:
+                process.kill()
+
+
 def cmd_resume(_args):
     config.KILL_SWITCH_FILE.unlink(missing_ok=True)
     print("kill switch OFF")
@@ -276,17 +338,21 @@ def main():
     a = sub.add_parser("ack", help="acknowledge an incident, or list the ones waiting")
     a.add_argument("incident", nargs="?")
     sub.add_parser("whoison", help="show who each rotation has on call today")
+    sub.add_parser("doctor", help="check setup and say what to fix")
+    up = sub.add_parser("up", help="start the Action API and dashboard together")
+    up.add_argument("--watch", action="store_true", help="also watch for alerts and investigate them")
+    up.add_argument("--execute", action="store_true", help="with --watch: approved fixes really run")
     u = sub.add_parser("user", help="manage dashboard accounts")
     u.add_argument("action", choices=["add", "list", "remove"])
     u.add_argument("name", nargs="?")
     u.add_argument("--role", default="viewer", choices=["viewer", "responder", "approver", "admin"])
     args = p.parse_args()
-    if args.cmd not in ("stop", "resume", "emailtest", "calltest", "telegramtest", "slacktest", "ack", "whoison", "user"):
+    if args.cmd not in ("stop", "resume", "emailtest", "calltest", "telegramtest", "slacktest", "ack", "whoison", "user", "doctor", "up"):
         apply_source_args(p, args)
     {"check": cmd_check, "baseline": cmd_baseline, "investigate": cmd_investigate,
      "watch": cmd_watch, "verify": cmd_verify, "stop": cmd_stop, "resume": cmd_resume,
      "emailtest": cmd_emailtest, "calltest": cmd_calltest, "telegramtest": cmd_telegramtest,
-     "slacktest": cmd_slacktest, "ack": cmd_ack, "whoison": cmd_whoison, "user": cmd_user}[args.cmd](args)
+     "slacktest": cmd_slacktest, "ack": cmd_ack, "whoison": cmd_whoison, "user": cmd_user, "doctor": cmd_doctor, "up": cmd_up}[args.cmd](args)
 
 
 if __name__ == "__main__":

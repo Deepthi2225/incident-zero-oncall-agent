@@ -41,6 +41,8 @@ def route(path, user=None):
         return _json(data.actions())
     if path == "/api/notifications":
         return _json(data.notifications())
+    if path == "/api/doctor":
+        return _json(data.doctor())
     if path == "/api/settings":
         return _json(data.settings())
     if path == "/api/users":
@@ -135,7 +137,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(*_json({"user": user["user"], "role": user["role"], "csrf": user["csrf"],
                                           "ui_approvals": config.UI_APPROVALS, "services": sorted(config.CRITICALITY),
                                           "signals": list(actions.SIGNALS), "people": auth.people(),
-                                          "roles": list(auth.ROLES)}))
+                                          "roles": list(auth.ROLES), "approval_timeout_s": config.APPROVAL_TIMEOUT_S}))
             self._send(*route(self.path, user))
         except Exception as e:  # never show a traceback; the page keeps polling
             self._send(*_json({"error": f"internal error: {type(e).__name__}"}, 500))

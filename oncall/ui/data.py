@@ -175,6 +175,11 @@ def settings():
                   "ui_approvals": config.UI_APPROVALS})
 
 
+def doctor():
+    from oncall import doctor as checks
+    return clean({"checks": checks.checks()})
+
+
 def audit(limit=40):
     return clean({"audit": _tail(config.RUNS_DIR / "ui_audit.jsonl", limit)})
 

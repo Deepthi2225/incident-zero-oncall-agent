@@ -332,6 +332,7 @@
       <section class="panel" data-v="overview"><h3>Shop health <span class="note" id="healthAt"></span></h3><div id="health"></div></section>
       <section class="panel" data-v="investigate"><h3>Evidence <span class="note">everything P0ppy actually saw</span></h3><div id="evidence" class="scroll"></div></section>
       <section class="panel" data-v="overview"><h3>Who was told</h3><div id="told"></div></section>
+      <section class="panel" data-v="settings"><h3>Setup check <span class="note">what is ready, and what to do about the rest</span></h3><div id="doctor"></div></section>
       <section class="panel" data-v="settings"><h3>Alerts and on-call</h3><div id="settings"></div></section>
       <section class="panel" data-v="settings"><h3>My account</h3>
         <div class="inline"><label class="field">Current password<input type="password" id="pwCur" autocomplete="current-password"></label>
@@ -504,6 +505,7 @@ function renderVerdict(r) {
   const meta = r.metadata || {}, alert = r.alert || {}, [tone, say, line] = verdictFor(r);
   $("verdict").className = "verdict " + tone;
   $("say").textContent = say;
+  document.title = ((r.ui || {}).awaiting_approval || []).length ? "(!) Needs your yes: P0ppy" : r.status === "running" ? "Investigating: P0ppy" : "P0ppy: On-call agent";
   $("line").textContent = line;
   const services = (alert.alerting_services || [alert.service]).filter(Boolean);
   const nonLive = meta.mode && meta.mode !== "live";
@@ -513,6 +515,7 @@ function renderVerdict(r) {
     services.length ? el("span", {}, "Alert on " + services.join(", ")) : null,
     meta.started_at ? el("span", {}, String(meta.started_at).replace("T", " ").slice(0, 19)) : null,
     nonLive ? el("span", { class: "tag" }, "Not live: " + meta.mode) : null,
+    r.status === "running" && r.remediation_plan && r.remediation_plan.live !== undefined ? el("span", { class: "tag" }, r.remediation_plan.live ? "Fixes really run" : "Dry run") : null,
     ((r.ui || {}).team || {}).owner ? el("span", { class: "tag" }, "Owner: " + r.ui.team.owner) : (r.ui || {}).acknowledged ? el("span", { class: "tag" }, "Acknowledged") : null,
     state.selected ? el("span", {}, "Viewing an older run") : null,
   ].filter(Boolean));
@@ -523,7 +526,8 @@ function button(text, cls, onclick) { return el("button", { class: "btn " + cls,
 async function decide(r, step, decision) {
   const yes = decision === "approved", vf = step.rollback;
   const answer = await ask({ title: (yes ? "Approve: " : "Reject: ") + pretty(step.action) + " on " + step.target, yes: yes ? "Approve this fix" : "Reject this fix", danger: !yes, password: true,
-    rows: [["Why", step.reason], ["Expected", step.expected_outcome], ["Risk", step.risk_assessment || "not assessed"], ["Undo", vf ? pretty(vf.action) + " (" + vf.note + ")" : "cannot be undone"]] });
+    rows: [["Effect", (r.remediation_plan || {}).live ? "LIVE: this really changes the shop" : "Dry run: nothing in the shop changes"],
+      ["Decide by", new Date(new Date((step.approval || {}).since).getTime() + me.approval_timeout_s * 1000).toLocaleTimeString() + " (after that, nothing runs)"], ["Why", step.reason], ["Expected", step.expected_outcome], ["Risk", step.risk_assessment || "not assessed"], ["Undo", vf ? pretty(vf.action) + " (" + vf.note + ")" : "cannot be undone"]] });
   if (answer) await act("decide", { run_id: r.metadata.run_id, step: step.step, action: step.action, target: step.target, decision, password: answer.password });
 }
 function bannerActions(r) {
@@ -754,6 +758,12 @@ $("pwGo").addEventListener("click", async () => {
   if (await post("/api/action/password", { password: $("pwCur").value, new_password: $("pwNew").value })) setTimeout(() => location.replace("/login"), 1200);
   $("pwCur").value = ""; $("pwNew").value = "";
 });
+async function refreshDoctor() {
+  const tones = { ok: ["ok", "ready"], fix: ["bad", "needs fixing"], optional: ["dim", "optional"] };
+  put($("doctor"), ((await get("/api/doctor")).checks || []).map((c) => el("div", { class: "row" },
+    el("span", {}, el("b", {}, c.name), c.fix ? el("span", { class: "note", style: "display:block" }, c.fix) : null),
+    el("span", { class: "pillet " + tones[c.state][0] }, tones[c.state][1]))));
+}
 async function refreshUsers() {
   const list = (await get("/api/users")).users || [];
   put($("users"), list.map((u) => el("div", { class: "row" }, el("span", {}, el("b", {}, u.name), " " + u.role),
@@ -786,6 +796,7 @@ go(["investigate", "history", "settings"].includes(location.hash.slice(1)) ? loc
 (async function start() {
   me = await get("/api/me");
   $("whoName").textContent = me.user; $("whoRole").textContent = me.role;
+  refreshDoctor().catch(() => {});
   $("teamCtl").hidden = !can("responder");
   put($("teamTo"), (me.people || []).map((s) => el("option", { value: s }, s)));
   put($("uRole"), (me.roles || []).map((s) => el("option", { value: s }, s)));
