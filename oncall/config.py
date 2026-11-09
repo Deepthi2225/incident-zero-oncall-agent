@@ -224,6 +224,8 @@ SLACK_WEBHOOK_URL = _env("SLACK_WEBHOOK_URL")
 # Dashboard sign-in and approvals. Off: fixes are approved in the terminal only.
 UI_USERS_FILE = Path(os.getenv("ONCALL_UI_USERS", ROOT / "ui_users.json"))
 UI_APPROVALS = env_flag("UI_APPROVALS", False)
+# Extra names the dashboard answers to, such as the machine's Tailscale name. .env only.
+UI_ALLOWED_HOSTS = [h.strip().lower() for h in _env("UI_ALLOWED_HOSTS").split(",") if h.strip()]
 APPROVAL_TIMEOUT_S = float(os.getenv("APPROVAL_TIMEOUT_S", "1800"))
 # When no approved fix applies, ask the model once more for its own suggestion.
 ASK_FOR_SUGGESTION = env_flag("ONCALL_ASK_FOR_SUGGESTION", True)

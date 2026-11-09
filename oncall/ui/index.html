@@ -121,6 +121,13 @@
   body[data-view="settings"] .cols { grid-template-columns:minmax(0,1fr); }
   body[data-view="history"] .cols { display:none; }
 
+  textarea { width:100%; min-height:74px; margin-top:4px; padding:9px 10px; border:1px solid var(--line); border-radius:8px; background:var(--paper); color:var(--ink); font:14px var(--body); resize:vertical; }
+  textarea:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+  .note-row { padding:9px 0; border-top:1px solid var(--line); font-size:14px; white-space:pre-wrap; word-break:break-word; }
+  .note-row .note { display:block; white-space:normal; }
+  .inline { display:flex; flex-wrap:wrap; align-items:flex-end; gap:8px; }
+  .inline .field { flex:1 1 150px; margin:0; }
+
   /* controls */
   .btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border:1px solid var(--line); border-radius:9px; background:var(--sunk); color:var(--ink); font:600 13.5px var(--body); cursor:pointer; transition:filter .12s, transform .06s; }
   .btn:hover { filter:brightness(1.15); } .btn:active { transform:translateY(1px); }
@@ -300,6 +307,14 @@
     <div class="stack">
       <section class="panel" data-v="overview"><h3>What went wrong</h3><div id="causes"></div></section>
       <section class="panel" data-v="overview"><h3>How to fix it</h3><div id="plan"></div></section>
+      <section class="panel" data-v="overview"><h3>Team <span class="note" id="teamOwner"></span></h3>
+        <div id="teamCtl" hidden>
+          <div class="inline" style="margin-bottom:12px"><label class="field">Hand over to<select id="teamTo"></select></label><button class="btn" id="teamAssign" type="button">Hand over</button></div>
+          <label class="field">Add a note for the team<textarea id="noteText" maxlength="2000" placeholder="What you tried, what you found, what's next"></textarea></label>
+          <button class="btn primary" id="notePost" type="button">Add note</button>
+        </div>
+        <div id="notes" style="margin-top:10px"></div>
+      </section>
       <section class="panel" data-v="investigate"><details id="trail" open>
         <summary class="head">How P0ppy investigated <span class="note" id="trailNote"></span></summary>
         <div id="feed"></div></details></section>
@@ -318,6 +333,18 @@
       <section class="panel" data-v="investigate"><h3>Evidence <span class="note">everything P0ppy actually saw</span></h3><div id="evidence" class="scroll"></div></section>
       <section class="panel" data-v="overview"><h3>Who was told</h3><div id="told"></div></section>
       <section class="panel" data-v="settings"><h3>Alerts and on-call</h3><div id="settings"></div></section>
+      <section class="panel" data-v="settings"><h3>My account</h3>
+        <div class="inline"><label class="field">Current password<input type="password" id="pwCur" autocomplete="current-password"></label>
+          <label class="field">New password (12+ characters)<input type="password" id="pwNew" autocomplete="new-password"></label>
+          <button class="btn" id="pwGo" type="button">Change password</button></div>
+      </section>
+      <section class="panel" data-v="settings" id="usersBox" hidden><h3>Team accounts</h3>
+        <div id="users"></div>
+        <div class="inline" style="margin-top:14px"><label class="field">Name<input type="text" id="uName" autocomplete="off"></label>
+          <label class="field">Role<select id="uRole"></select></label>
+          <label class="field">Password (blank keeps it)<input type="password" id="uPw" autocomplete="new-password"></label>
+          <button class="btn primary" id="uSave" type="button">Save account</button></div>
+      </section>
     </div>
   </div>
 
@@ -486,7 +513,7 @@ function renderVerdict(r) {
     services.length ? el("span", {}, "Alert on " + services.join(", ")) : null,
     meta.started_at ? el("span", {}, String(meta.started_at).replace("T", " ").slice(0, 19)) : null,
     nonLive ? el("span", { class: "tag" }, "Not live: " + meta.mode) : null,
-    (r.ui || {}).acknowledged ? el("span", { class: "tag" }, "Acknowledged") : null,
+    ((r.ui || {}).team || {}).owner ? el("span", { class: "tag" }, "Owner: " + r.ui.team.owner) : (r.ui || {}).acknowledged ? el("span", { class: "tag" }, "Acknowledged") : null,
     state.selected ? el("span", {}, "Viewing an older run") : null,
   ].filter(Boolean));
   put($("approve"), bannerActions(r));
@@ -504,7 +531,7 @@ function bannerActions(r) {
   const waiting = ((r.remediation_plan || {}).steps || []).find((s) => (ui.awaiting_approval || []).includes(s.step));
   if (waiting && me.ui_approvals && can("approver")) out.push(button("Review and approve", "primary", () => decide(r, waiting, "approved")), button("Reject", "danger", () => decide(r, waiting, "rejected")));
   else if (waiting) out.push(el("span", { class: "approve", style: "margin-top:0" }, me.ui_approvals ? "Waiting for an approver" : "Answer y or N in the terminal running P0ppy"));
-  if (live && meta.incident_id && !ui.acknowledged && r.status === "complete" && can("responder") && (r.escalations || []).length) out.push(button("I'm on it", "", () => act("ack", { incident: meta.incident_id })));
+  if (meta.incident_id && !(ui.team || {}).owner && can("responder")) out.push(button("I'm on it", "", () => act("claim", { incident: meta.incident_id })));
   if (live && r.status === "complete" && (r.outcome || {}).status !== "recovered" && can("responder")) out.push(button("I fixed it, verify", "", () => act("verify", { run_id: meta.run_id })));
   return out.length ? el("div", { class: "actions" }, out) : null;
 }
@@ -607,6 +634,13 @@ function renderEvidence(items) {
   box.replaceChildren(...(items.length ? items.map((e) => el("div", { class: "evi" + (e.cited ? " cited" : ""), "data-ev": e.id },
     el("code", {}, e.id), " ", el("span", { class: "src" }, pretty(e.tool) + ": "), v(e.observation))) : [empty("Nothing collected yet.")]));
 }
+function renderTeam(r) {
+  const team = (r.ui || {}).team || {}, rows = (team.timeline || []).slice().reverse();
+  state.incident = (r.metadata || {}).incident_id;
+  $("teamOwner").textContent = team.owner ? "Owned by " + team.owner : "Nobody owns this yet";
+  put($("notes"), rows.length ? rows.map((n) => el("div", { class: "note-row" },
+    el("span", { class: "note" }, n.by + ", " + String(n.ts).replace("T", " ").slice(0, 16)), n.kind === "note" ? n.text : "Made " + n.owner + " the owner")) : el("p", { class: "note" }, "No notes yet."));
+}
 function renderTold(r) {
   const notes = r.notifications || [];
   $("told").replaceChildren(...(notes.length ? notes.map((n) => el("div", { class: "step" }, el("div", { class: "title" }, pretty(n.channel) + ": " + pretty(n.event),
@@ -644,7 +678,7 @@ function renderStats(r) {
     [typeof total === "number" ? (total >= 60 ? Math.round(total / 60) + " min" : Math.round(total) + " s") : "-", "Time taken"]];
   $("stats").replaceChildren(...cells.map(([big, small]) => el("div", { class: "stat" }, el("b", {}, big), el("span", {}, small))));
 }
-function renderIncident(r) { state.record = r; paintMap(); renderStats(r); renderVerdict(r); renderCauses(r); renderPlan(r); renderTrail(r); renderEvidence(r.evidence || []); renderTold(r); postmortemView(r.postmortem); }
+function renderIncident(r) { state.record = r; paintMap(); renderStats(r); renderVerdict(r); renderCauses(r); renderPlan(r); renderTrail(r); renderEvidence(r.evidence || []); renderTold(r); renderTeam(r); postmortemView(r.postmortem); }
 function renderQuiet() {
   state.record = null; paintMap(); $("stats").replaceChildren();
   $("verdict").className = "verdict good"; $("eyebrow").replaceChildren(); $("approve").replaceChildren(); $("steps").replaceChildren();
@@ -687,10 +721,10 @@ function renderHistory() {
   const list = (state.history || []).filter((x) => (!q || [x.incident_id, x.root_cause, x.fault_class, x.outcome].join(" ").toLowerCase().includes(q))
     && (!mode || (mode === "live" ? x.mode === "live" : x.mode !== "live")) && (!outcome || x.outcome === outcome));
   if (!list.length) { $("history").replaceChildren(empty(state.history && state.history.length ? "Nothing matches those filters." : "No past incidents.")); return; }
-  $("history").replaceChildren(el("table", {}, el("tr", {}, ["When", "Incident", "Root cause", "Type", "Confidence", "Outcome"].map((c) => el("th", {}, c))),
+  $("history").replaceChildren(el("table", {}, el("tr", {}, ["When", "Incident", "Root cause", "Type", "Confidence", "Outcome", "Owner"].map((c) => el("th", {}, c))),
     list.map((x) => el("tr", { class: "click" + (state.selected === x.run_id ? " sel" : ""), tabindex: "0", onclick: () => select(x.run_id) },
       el("td", {}, String(v(x.time)).replace("T", " ").slice(0, 16)), el("td", {}, v(x.incident_id)), el("td", {}, v(x.root_cause)), el("td", {}, pretty(x.fault_class)),
-      el("td", {}, typeof x.confidence === "number" ? Math.round(x.confidence * 100) + "%" : NR), el("td", {}, el("span", { class: "pillet " + outcomeTone(x.outcome) }, pretty(x.outcome)))))));
+      el("td", {}, typeof x.confidence === "number" ? Math.round(x.confidence * 100) + "%" : NR), el("td", {}, el("span", { class: "pillet " + outcomeTone(x.outcome) }, pretty(x.outcome))), el("td", {}, x.owner || "-")))));
 }
 $("history").addEventListener("keydown", (ev) => { if (ev.key === "Enter" && ev.target.matches("tr.click")) ev.target.click(); });
 for (const id of ["fText", "fMode", "fOutcome"]) $(id).addEventListener("input", renderHistory);
@@ -714,6 +748,24 @@ $("startBtn").addEventListener("click", async () => {
   const answer = await ask({ title: "Investigate " + service + "?", text: live ? "This is a live run. Any fix still needs an approval, and then really runs." : "This is a dry run. Nothing in the shop will change.", yes: "Start", danger: live, password: live });
   if (answer) act("investigate", { service, signal, execute: live, password: answer.password });
 });
+$("teamAssign").addEventListener("click", () => { if (state.incident) act("assign", { incident: state.incident, to: $("teamTo").value }); });
+$("notePost").addEventListener("click", async () => { if (state.incident && await act("note", { incident: state.incident, text: $("noteText").value })) $("noteText").value = ""; });
+$("pwGo").addEventListener("click", async () => {
+  if (await post("/api/action/password", { password: $("pwCur").value, new_password: $("pwNew").value })) setTimeout(() => location.replace("/login"), 1200);
+  $("pwCur").value = ""; $("pwNew").value = "";
+});
+async function refreshUsers() {
+  const list = (await get("/api/users")).users || [];
+  put($("users"), list.map((u) => el("div", { class: "row" }, el("span", {}, el("b", {}, u.name), " " + u.role),
+    u.name === me.user ? el("span", { class: "note" }, "you") : button("Remove", "small", async () => {
+      const a = await ask({ title: "Remove " + u.name + "?", text: "They are signed out at once.", yes: "Remove", danger: true, password: true });
+      if (a && await post("/api/action/user_remove", { name: u.name, password: a.password })) refreshUsers();
+    }))));
+}
+$("uSave").addEventListener("click", async () => {
+  const a = await ask({ title: "Save " + ($("uName").value || "this account") + "?", text: "Confirm with your own password.", yes: "Save", password: true });
+  if (a && await post("/api/action/user_save", { name: $("uName").value, role: $("uRole").value, new_password: $("uPw").value, password: a.password })) { $("uName").value = ""; $("uPw").value = ""; refreshUsers(); }
+});
 $("logout").addEventListener("click", async (ev) => { ev.preventDefault(); await post("/api/logout", {}); location.replace("/login"); });
 $("follow").addEventListener("click", (ev) => { ev.preventDefault(); select(null); });
 
@@ -734,6 +786,10 @@ go(["investigate", "history", "settings"].includes(location.hash.slice(1)) ? loc
 (async function start() {
   me = await get("/api/me");
   $("whoName").textContent = me.user; $("whoRole").textContent = me.role;
+  $("teamCtl").hidden = !can("responder");
+  put($("teamTo"), (me.people || []).map((s) => el("option", { value: s }, s)));
+  put($("uRole"), (me.roles || []).map((s) => el("option", { value: s }, s)));
+  if (can("admin")) { $("usersBox").hidden = false; refreshUsers().catch(() => {}); }
   $("startBox").hidden = !can("responder"); $("startLiveBox").hidden = !can("approver");
   put($("startService"), me.services.map((s) => el("option", { value: s }, s)));
   put($("startSignal"), me.signals.map((s) => el("option", { value: s }, pretty(s))));

@@ -10,11 +10,12 @@ import sys
 
 from oncall import ack, approvals, config, notify
 from oncall.record import load as load_record
-from oncall.ui import auth, data
+from oncall.ui import auth, collab, data
 
 INCIDENT = re.compile(r"^[\w.-]{1,80}$")
 SIGNALS = ("error_rate", "p95_ms", "silent")
 LOG_NAME = "ui_started.log"
+MAX_NOTE = 2000
 TESTS = {"email": notify.send_test, "call": notify.send_test_call, "telegram": notify.send_test_telegram,
          "slack": notify.send_test_slack}
 
@@ -32,7 +33,7 @@ def _bad(message, status=400):
 
 
 def _password_ok(user, body):
-    return auth.check_password(user["user"], body.get("password"))
+    return auth.confirm_password(user["user"], body.get("password"))
 
 
 def acknowledge(user, body):
@@ -111,8 +112,82 @@ def send_test(user, body):
     return 502, {"error": str(entry.get("error") or "the test failed")[:300]}
 
 
+def _incident(body):
+    value = body.get("incident")
+    return value if isinstance(value, str) and INCIDENT.match(value) else None
+
+
+def claim(user, body):
+    incident = _incident(body)
+    if incident is None:
+        return _bad("that is not an incident id")
+    collab.set_owner(incident, user["user"], user["user"])
+    ack.acknowledge(incident, f"{user['user']} (dashboard)")
+    return 200, {"message": f"you own {incident}"}
+
+
+def assign(user, body):
+    incident, to = _incident(body), body.get("to")
+    if incident is None or to not in auth.people():
+        return _bad("choose an incident and a team member")
+    collab.set_owner(incident, to, user["user"])
+    ack.acknowledge(incident, f"{user['user']} (dashboard)")
+    return 200, {"message": f"{incident} handed to {to}"}
+
+
+def note(user, body):
+    incident, text = _incident(body), body.get("text")
+    if incident is None or not isinstance(text, str) or not text.strip() or len(text) > MAX_NOTE:
+        return _bad(f"a note needs some text, {MAX_NOTE} characters at most")
+    collab.add_note(incident, text.strip(), user["user"])
+    return 200, {"message": "note added"}
+
+
+def change_password(user, body):
+    if not _password_ok(user, body):
+        return _bad("your current password is not correct", 403)
+    try:
+        auth.set_password(user["user"], body.get("new_password") or "")
+    except ValueError as e:
+        return _bad(str(e))
+    return 200, {"message": "password changed, sign in again"}
+
+
+def _not_yourself(user, name):
+    return name == user["user"]
+
+
+def user_save(user, body):
+    name, role, new = body.get("name"), body.get("role"), body.get("new_password")
+    if not _password_ok(user, body):
+        return _bad("your password is not correct", 403)
+    if _not_yourself(user, name):
+        return _bad("another admin has to change your own account")
+    try:
+        if new:
+            auth.add_user(name, new, role)
+        elif name in auth.users():
+            auth.set_role(name, role)
+        else:
+            return _bad("a new account needs a password")
+    except ValueError as e:
+        return _bad(str(e))
+    return 200, {"message": f"saved {name}"}
+
+
+def user_remove(user, body):
+    if not _password_ok(user, body):
+        return _bad("your password is not correct", 403)
+    if _not_yourself(user, body.get("name")):
+        return _bad("another admin has to remove your own account")
+    return (200, {"message": f"removed {body.get('name')}"}) if auth.remove_user(body.get("name")) else _bad("no such account", 404)
+
+
 # path -> (function, the role it needs)
-ROUTES = {"/api/action/ack": (acknowledge, "responder"), "/api/action/investigate": (investigate, "responder"),
+ROUTES = {"/api/action/claim": (claim, "responder"), "/api/action/assign": (assign, "responder"),
+          "/api/action/note": (note, "responder"), "/api/action/password": (change_password, "viewer"),
+          "/api/action/user_save": (user_save, "admin"), "/api/action/user_remove": (user_remove, "admin"),
+          "/api/action/ack": (acknowledge, "responder"), "/api/action/investigate": (investigate, "responder"),
           "/api/action/verify": (verify, "responder"), "/api/action/decide": (decide, "approver"),
           "/api/action/stop": (stop, "approver"), "/api/action/resume": (resume, "approver"),
           "/api/action/test": (send_test, "admin")}

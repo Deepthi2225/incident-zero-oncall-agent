@@ -71,8 +71,25 @@ def add_user(name, password, role):
     if len(password) < MIN_PASSWORD:
         raise ValueError(f"passwords need at least {MIN_PASSWORD} characters")
     all_users = users()
-    all_users[name] = {"hash": hash_password(password), "role": role}
+    all_users[name] = {"hash": hash_password(password), "role": role, "v": secrets.token_hex(8)}
     _save(all_users)
+
+
+def set_password(name, password):
+    """A new password for an existing account. It signs that account out everywhere."""
+    add_user(name, password, role_of(name))
+
+
+def set_role(name, role):
+    if role not in ROLES:
+        raise ValueError(f"role must be one of {', '.join(ROLES)}")
+    all_users = users()
+    all_users[name]["role"] = role
+    _save(all_users)
+
+
+def people(needed="responder"):
+    return sorted(n for n in users() if can(role_of(n), needed))
 
 
 def remove_user(name):
@@ -119,6 +136,20 @@ class Throttle:
             self._seen.pop(name, None)
 
 
+step_up = Throttle()  # passwords typed again for sensitive actions
+
+
+def confirm_password(name, password):
+    """Check a password typed again, with the same lockout as signing in."""
+    if step_up.locked(name):
+        return False
+    if check_password(name, password):
+        step_up.passed(name)
+        return True
+    step_up.failed(name)
+    return False
+
+
 class Sessions:
     def __init__(self):
         self._lock, self._live = threading.Lock(), {}
@@ -126,7 +157,8 @@ class Sessions:
     def create(self, name):
         token, now = secrets.token_urlsafe(32), time.monotonic()
         with self._lock:
-            self._live[token] = {"user": name, "csrf": secrets.token_urlsafe(32), "created": now, "seen": now}
+            self._live[token] = {"user": name, "csrf": secrets.token_urlsafe(32), "created": now, "seen": now,
+                                 "v": (users().get(name) or {}).get("v")}
         return token
 
     def get(self, token):
@@ -142,7 +174,8 @@ class Sessions:
             session["seen"] = now
             found = dict(session)
         role = role_of(found["user"])  # a removed or changed account takes effect at once
-        return {**found, "role": role} if role else None
+        current = (users().get(found["user"]) or {}).get("v")
+        return {**found, "role": role} if role and current == found["v"] else None
 
     def drop(self, token):
         with self._lock:

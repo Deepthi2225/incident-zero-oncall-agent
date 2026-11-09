@@ -7,6 +7,7 @@ small JSON-only request bodies, role checks on every action, and an audit log of
 import hmac
 import ipaddress
 import json
+import re
 from http.cookies import CookieError, SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -21,7 +22,7 @@ LOGIN = Path(__file__).with_name("login.html")
 ICON = Path(__file__).with_name("favicon.svg")
 COOKIE = "poppy_session"
 MAX_BODY = 8192
-SECRET_FIELDS = ("password",)
+SECRET_FIELDS = ("password", "new_password")
 sessions, throttle = auth.Sessions(), auth.Throttle()
 
 
@@ -42,6 +43,10 @@ def route(path, user=None):
         return _json(data.notifications())
     if path == "/api/settings":
         return _json(data.settings())
+    if path == "/api/users":
+        if user is None or not auth.can(user["role"], "admin"):
+            return _json({"error": "not allowed"}, 403)
+        return _json({"users": [{"name": n, "role": auth.role_of(n)} for n in sorted(auth.users())]})
     if path == "/api/audit":
         if user is not None and not auth.can(user["role"], "approver"):
             return _json({"error": "not allowed"}, 403)
@@ -93,10 +98,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def _hosts(self):
         port = self.server.server_address[1]
-        return {f"127.0.0.1:{port}", f"localhost:{port}"}
+        return {f"127.0.0.1:{port}", f"localhost:{port}", *config.UI_ALLOWED_HOSTS}
 
     def _host_ok(self):
-        return self.headers.get("Host", "") in self._hosts()
+        return self.headers.get("Host", "").lower() in self._hosts()
 
     def _token(self):
         try:
@@ -129,7 +134,8 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/me":
                 return self._send(*_json({"user": user["user"], "role": user["role"], "csrf": user["csrf"],
                                           "ui_approvals": config.UI_APPROVALS, "services": sorted(config.CRITICALITY),
-                                          "signals": list(actions.SIGNALS)}))
+                                          "signals": list(actions.SIGNALS), "people": auth.people(),
+                                          "roles": list(auth.ROLES)}))
             self._send(*route(self.path, user))
         except Exception as e:  # never show a traceback; the page keeps polling
             self._send(*_json({"error": f"internal error: {type(e).__name__}"}, 500))
@@ -151,7 +157,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         self.extra_headers = ()
         origin = self.headers.get("Origin")
-        if not self._host_ok() or (origin is not None and origin.removeprefix("http://") not in self._hosts()):
+        if not self._host_ok() or (origin is not None and re.sub(r"^https?://", "", origin.lower()) not in self._hosts()):
             return self._send(*_json({"error": "bad origin"}, 403))
         body = self._body()
         if body is None:
@@ -196,8 +202,9 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(*_json({"error": "wrong name or password"}, 401))
         throttle.passed(key)
         audit(name, "login", 200)
+        secure = "; Secure" if self.headers.get("Host", "").lower() in config.UI_ALLOWED_HOSTS else ""  # reached over HTTPS
         self.extra_headers = (("Set-Cookie", f"{COOKIE}={sessions.create(name)}; HttpOnly; SameSite=Strict; Path=/; "
-                                             f"Max-Age={auth.SESSION_MAX_S}"),)
+                                             f"Max-Age={auth.SESSION_MAX_S}{secure}"),)
         return self._send(*_json({"ok": True}))
 
     def _refuse(self):

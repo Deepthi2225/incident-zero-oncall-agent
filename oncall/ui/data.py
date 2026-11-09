@@ -48,6 +48,8 @@ def _primary(record):
 
 
 def incidents(limit=50):
+    from oncall.ui import collab
+    owners = collab.all_owners()
     rows = []
     for path in run_files()[:limit]:
         r = _load(path)
@@ -58,7 +60,8 @@ def incidents(limit=50):
                      "root_cause": rc.get("component"), "fault_class": rc.get("fault_class"),
                      "confidence": (r.get("diagnosis") or {}).get("confidence"),
                      "outcome": (r.get("outcome") or {}).get("status") or r.get("status"),
-                     "cost_usd": (r.get("accounting") or {}).get("estimated_cost_usd")})
+                     "cost_usd": (r.get("accounting") or {}).get("estimated_cost_usd"),
+                     "owner": owners.get(meta.get("incident_id"))})
     return clean({"incidents": rows})
 
 
@@ -81,7 +84,8 @@ def incident(run_id=None):
     awaiting = [s.get("step") for s in steps if (s.get("approval") or {}).get("status") == "awaiting"]
     r["ui"] = {"file": path.name, "awaiting_approval": awaiting if r.get("status") == "running" else [],
                "in_progress": r.get("status") == "running",
-               "acknowledged": (r.get("metadata") or {}).get("incident_id") in _acknowledged()}
+               "acknowledged": (r.get("metadata") or {}).get("incident_id") in _acknowledged(),
+               "team": _team((r.get("metadata") or {}).get("incident_id"))}
     if r.get("status") in ("complete", "interrupted") and not r.get("postmortem"):
         try:  # older records: derived on the fly, the file is not changed
             from oncall.postmortem import build_postmortem
@@ -89,6 +93,11 @@ def incident(run_id=None):
         except Exception:  # an odd record must still render
             r["postmortem"] = None
     return clean(r)
+
+
+def _team(incident):
+    from oncall.ui import collab
+    return collab.state(incident)
 
 
 def _acknowledged():

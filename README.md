@@ -247,6 +247,17 @@ To approve fixes on the dashboard as well as in the terminal, add `UI_APPROVALS=
 asks for your password again. Fixes only really run if the agent was started with `--execute`.
 Every attempted action is logged in `runs/ui_audit.jsonl`.
 
+### Sharing the dashboard with your team
+
+[Tailscale](https://tailscale.com) gives teammates a private, encrypted way in, without opening the dashboard to the internet.
+
+1. Install Tailscale on your machine, sign in, and enable HTTPS and MagicDNS in the Tailscale admin console.
+2. Run `tailscale serve --bg 8090`. It prints an address such as `https://poppy.your-tailnet.ts.net`.
+3. Add `UI_ALLOWED_HOSTS=poppy.your-tailnet.ts.net` to `.env` and restart the dashboard.
+4. In the Tailscale admin console, share this machine with each teammate, and create their dashboard account.
+
+Use `tailscale serve`, never `tailscale funnel`, which would put it on the public internet.
+
 ### Who gets alerted
 
 By default, alerts go to the contacts in `.env`. To alert different people by severity, copy

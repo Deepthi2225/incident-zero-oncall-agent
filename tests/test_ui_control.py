@@ -19,6 +19,7 @@ def app(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "KILL_SWITCH_FILE", tmp_path / "STOP")
     monkeypatch.setattr(srv, "sessions", auth.Sessions())
     monkeypatch.setattr(srv, "throttle", auth.Throttle())
+    monkeypatch.setattr(auth, "step_up", auth.Throttle())
     spawned = []
     monkeypatch.setattr(actions, "_spawn", lambda *a: spawned.append(a))
     for name in auth.ROLES:
@@ -355,3 +356,109 @@ def test_a_dashboard_approval_reaches_a_running_agent(payment_down, app, monkeyp
     assert not worker.is_alive()
     approval = done["remediation_plan"]["steps"][0]["approval"]
     assert approval["status"] == "approved" and approval["approved_by"] == "human" and "approver" in approval["notes"]
+
+
+# --- working as a team --------------------------------------------------------------------------------------
+
+def team(client):
+    return client.call("GET", "/api/incident")[1]["ui"]["team"]
+
+
+def test_claiming_names_the_owner_and_acknowledges(app):
+    running_record(app)
+    client = signed_in(app, "responder")
+    assert client.call("POST", "/api/action/claim", {"incident": "INC-1"})[0] == 200
+    assert team(client)["owner"] == "responder" and "INC-1" in ack.acknowledged()
+
+
+def test_handing_over_only_to_someone_who_can_respond(app):
+    running_record(app)
+    client = signed_in(app, "responder")
+    assert client.call("POST", "/api/action/assign", {"incident": "INC-1", "to": "approver"})[0] == 200
+    assert team(client)["owner"] == "approver"
+    assert client.call("POST", "/api/action/assign", {"incident": "INC-1", "to": "viewer"})[0] == 400
+    assert client.call("POST", "/api/action/assign", {"incident": "INC-1", "to": "nobody"})[0] == 400
+
+
+def test_notes_are_shared_and_named_and_limited(app):
+    running_record(app)
+    client, other = signed_in(app, "responder"), signed_in(app, "approver")
+    assert client.call("POST", "/api/action/note", {"incident": "INC-1", "text": "  checked the cert  "})[0] == 200
+    row = team(other)["timeline"][0]
+    assert row["text"] == "checked the cert" and row["by"] == "responder"
+    assert client.call("POST", "/api/action/note", {"incident": "INC-1", "text": "   "})[0] == 400
+    assert client.call("POST", "/api/action/note", {"incident": "INC-1", "text": "x" * 2001})[0] == 400
+
+
+def test_a_viewer_can_read_but_not_write_team_notes(app):
+    running_record(app)
+    assert signed_in(app, "viewer").call("POST", "/api/action/note", {"incident": "INC-1", "text": "hi"})[0] == 403
+
+
+def test_changing_a_password_needs_the_old_one_and_signs_out_everywhere(app):
+    client, second = signed_in(app, "viewer"), signed_in(app, "viewer")
+    new = "a-brand-new-password"
+    assert client.call("POST", "/api/action/password", {"password": "wrong", "new_password": new})[0] == 403
+    assert client.call("POST", "/api/action/password", {"password": PASSWORD, "new_password": "short"})[0] == 400
+    assert client.call("POST", "/api/action/password", {"password": PASSWORD, "new_password": new})[0] == 200
+    assert second.call("GET", "/api/status")[0] == 401
+    assert Client(app).login("viewer") == 401 and Client(app).login("viewer", new) == 200
+
+
+def test_wrong_retyped_passwords_lock_out(app):
+    client = signed_in(app, "approver")
+    for _ in range(auth.MAX_FAILURES):
+        client.call("POST", "/api/action/resume", {"password": "wrong"})
+    config.KILL_SWITCH_FILE.write_text("stop")
+    assert client.call("POST", "/api/action/resume", {"password": PASSWORD})[0] == 403
+
+
+def test_admins_manage_accounts(app):
+    admin = signed_in(app, "admin")
+    body = {"name": "nirupam", "role": "responder", "new_password": "a-long-enough-password", "password": PASSWORD}
+    assert admin.call("POST", "/api/action/user_save", body)[0] == 200 and auth.role_of("nirupam") == "responder"
+    assert admin.call("POST", "/api/action/user_save", {"name": "nirupam", "role": "approver", "password": PASSWORD})[0] == 200
+    assert auth.role_of("nirupam") == "approver" and auth.check_password("nirupam", "a-long-enough-password")
+    assert "nirupam" in str(admin.call("GET", "/api/users")[1])
+    assert admin.call("POST", "/api/action/user_remove", {"name": "nirupam", "password": PASSWORD})[0] == 200
+
+
+def test_only_admins_see_accounts(app):
+    assert signed_in(app, "approver").call("GET", "/api/users")[0] == 403
+    assert signed_in(app, "approver").call("POST", "/api/action/user_save", {"name": "x"})[0] == 403
+
+
+def test_an_admin_cannot_lock_themselves_out(app):
+    admin = signed_in(app, "admin")
+    assert admin.call("POST", "/api/action/user_remove", {"name": "admin", "password": PASSWORD})[0] == 400
+    assert admin.call("POST", "/api/action/user_save", {"name": "admin", "role": "viewer", "password": PASSWORD})[0] == 400
+
+
+def test_new_passwords_never_reach_the_audit_log(app):
+    client = signed_in(app, "viewer")
+    client.call("POST", "/api/action/password", {"password": PASSWORD, "new_password": "a-secret-new-password"})
+    text = (app.dir / "ui_audit.jsonl").read_text()
+    assert "a-secret-new-password" not in text and PASSWORD not in text
+
+
+# --- reached through Tailscale ---------------------------------------------------------------------------------
+
+def test_the_tailscale_name_works_only_when_configured(app, monkeypatch):
+    name = "poppy.tail1234.ts.net"
+    assert Client(app, host=name).call("GET", "/login")[0] == 403
+    monkeypatch.setattr(config, "UI_ALLOWED_HOSTS", [name])
+    client = Client(app, host=name)
+    assert client.login("admin") == 200
+    assert client.call("POST", "/api/action/stop", headers={"Origin": f"https://{name}"})[0] == 200
+    assert client.call("POST", "/api/action/stop", headers={"Origin": "https://evil.test"})[0] == 403
+
+
+def test_the_cookie_is_https_only_through_tailscale(app, monkeypatch):
+    name = "poppy.tail1234.ts.net"
+    monkeypatch.setattr(config, "UI_ALLOWED_HOSTS", [name])
+    client = Client(app, host=name)
+    client.call("POST", "/api/login", {"name": "viewer", "password": PASSWORD})
+    assert "Secure" in client.last.getheader("Set-Cookie")
+    local = Client(app)
+    local.call("POST", "/api/login", {"name": "viewer", "password": PASSWORD})
+    assert "Secure" not in local.last.getheader("Set-Cookie")
