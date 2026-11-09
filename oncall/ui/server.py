@@ -18,6 +18,7 @@ from oncall.ui import actions, auth, data
 
 PAGE = Path(__file__).with_name("index.html")
 LOGIN = Path(__file__).with_name("login.html")
+ICON = Path(__file__).with_name("favicon.svg")
 COOKIE = "poppy_session"
 MAX_BODY = 8192
 SECRET_FIELDS = ("password",)
@@ -115,6 +116,8 @@ class Handler(BaseHTTPRequestHandler):
             path = unquote(urlsplit(self.path).path)
             if path == "/login":
                 return self._send(200, "text/html; charset=utf-8", LOGIN.read_bytes())
+            if path == "/favicon.svg":
+                return self._send(200, "image/svg+xml", ICON.read_bytes())
             if path == "/api/setup":
                 return self._send(*_json({"needs_account": not auth.users()}))
             user = self._session()

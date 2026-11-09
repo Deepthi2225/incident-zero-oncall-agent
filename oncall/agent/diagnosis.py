@@ -341,6 +341,9 @@ def validate(diag):
         valid_rcs.append(rc_clean)
 
     valid_rcs = _without_victims(valid_rcs, diag["affected_services"], notes)
+    for idea in diag["suggested_fixes"]:  # a fix cannot be surer than the diagnosis it rests on
+        ceiling = [rc["confidence"] for rc in valid_rcs if rc.get("component") == canonical(idea["component"])]
+        idea["confidence"] = min(idea["confidence"], max(ceiling or [rc["confidence"] for rc in valid_rcs] or [0.0]))
 
     # Validate or synthesize suspected_origin
     origin = _as_dict(diag.get("suspected_origin"), "suspected_origin", notes, "service")

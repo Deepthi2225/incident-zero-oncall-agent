@@ -156,3 +156,11 @@ def test_nothing_to_add_keeps_the_diagnosis(payment_down, monkeypatch):
     from tests.test_agent_loop import response
     record, _ = _run(monkeypatch, payment_down, lambda e: response(SimpleNamespace(type="text", text="nothing more"), stop="end_turn"))
     assert record["investigation"]["outcome"] == "submitted" and record["diagnosis"]["root_causes"]
+
+
+def test_a_suggestion_is_never_surer_than_its_diagnosis(mem):
+    e = registry.add("t", "container", "x")
+    diag = validate({"headline": "h", "affected_services": [], "anomalies": [], "open_questions": [], "prevention": [],
+                     "root_causes": [rc("payment", [e], "unknown", 0.7)], "proposed_action": {"action": "escalate_to_human", "target": "x", "reason": "r"},
+                     "suggested_fixes": [{**IDEA, "component": "PaymentService", "confidence": 0.95, "evidence": [e]}]})
+    assert diag["suggested_fixes"][0]["confidence"] == 0.7

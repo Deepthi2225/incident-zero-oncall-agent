@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>P0ppy: On-call agent</title>
+<link rel="icon" href="/favicon.svg">
 <style>
   :root {
     color-scheme: dark;
@@ -107,6 +108,18 @@
   .suggest header { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px; }
   .suggest p { margin:6px 0 8px; } .suggest ol { margin:0 0 8px; padding-left:20px; }
   .suggest .kv { margin:0 0 10px; }
+
+  /* tabs */
+  .tabs { display:flex; flex-wrap:wrap; gap:4px; margin-top:18px; border-bottom:1px solid var(--line); }
+  .tabs a { padding:10px 16px; border-bottom:2px solid transparent; color:var(--soft); font-weight:600; font-size:14.5px; text-decoration:none; }
+  .tabs a:hover { color:var(--ink); }
+  .tabs a[aria-current="page"] { border-bottom-color:var(--accent); color:var(--ink); }
+  body[data-view="overview"] [data-v]:not([data-v~="overview"]) { display:none; }
+  body[data-view="investigate"] [data-v]:not([data-v~="investigate"]) { display:none; }
+  body[data-view="history"] [data-v]:not([data-v~="history"]) { display:none; }
+  body[data-view="settings"] [data-v]:not([data-v~="settings"]) { display:none; }
+  body[data-view="settings"] .cols { grid-template-columns:minmax(0,1fr); }
+  body[data-view="history"] .cols { display:none; }
 
   /* controls */
   .btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border:1px solid var(--line); border-radius:9px; background:var(--sunk); color:var(--ink); font:600 13.5px var(--body); cursor:pointer; transition:filter .12s, transform .06s; }
@@ -242,11 +255,11 @@
   @media (prefers-reduced-motion: reduce) { * { animation:none !important; scroll-behavior:auto !important; } }
 </style>
 </head>
-<body>
+<body data-view="overview">
 <div class="wrap">
   <div class="top">
     <div class="brand">
-      <svg viewBox="0 0 48 48" aria-hidden="true"><g fill="#f2ab9f"><circle cx="39.0" cy="24.0" r="7.4"/><circle cx="34.6" cy="34.6" r="7.4"/><circle cx="24.0" cy="39.0" r="7.4"/><circle cx="13.4" cy="34.6" r="7.4"/><circle cx="9.0" cy="24.0" r="7.4"/><circle cx="13.4" cy="13.4" r="7.4"/><circle cx="24.0" cy="9.0" r="7.4"/><circle cx="34.6" cy="13.4" r="7.4"/><circle cx="24" cy="24" r="15"/></g><circle cx="24" cy="24" r="10.5" fill="#170a13"/><path d="M9 25h7l3-8 5 15 4-11 2 4h9" fill="none" stroke="#fff6f4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="13" fill="#f2ab9f"/><g fill="#2b1022"><path transform="rotate(0 24 24)" d="M24 24V6.5a8.75 8.75 0 0 1 0 17.5Z"/><path transform="rotate(90 24 24)" d="M24 24V6.5a8.75 8.75 0 0 1 0 17.5Z"/><path transform="rotate(180 24 24)" d="M24 24V6.5a8.75 8.75 0 0 1 0 17.5Z"/><path transform="rotate(270 24 24)" d="M24 24V6.5a8.75 8.75 0 0 1 0 17.5Z"/></g><circle cx="24" cy="24" r="5.6" fill="#f2ab9f"/><ellipse cx="24" cy="24" rx="2" ry="3.2" fill="#2b1022"/></svg>
       <div><h1>P<span>0</span>ppy</h1><p>Your little buddy for big incidents. On-call agent.</p></div>
     </div>
     <div class="chips">
@@ -275,42 +288,45 @@
     <ol class="steps" id="steps"></ol>
   </section>
 
-  <section class="panel mapbox"><h3>Where it hurts <span class="note">red is the cause, amber is what it reaches</span></h3>
+  <nav class="tabs" aria-label="Sections">
+    <a href="#overview" data-go="overview">Overview</a><a href="#investigate" data-go="investigate">Investigate</a><a href="#history" data-go="history">History</a><a href="#settings" data-go="settings">Settings and logs</a>
+  </nav>
+  <section class="panel mapbox" data-v="overview"><h3>Where it hurts <span class="note">red is the cause, amber is what it reaches</span></h3>
     <div class="mapscroll"><svg id="map" viewBox="0 0 1010 298" role="img" aria-label="Service map coloured by the current incident"><path class="e" data-from="frontend-proxy" data-to="frontend" d="M147 150C165 150 165 150 183 150"/><path class="e" data-from="frontend-proxy" data-to="image-provider" d="M147 150C275 150 275 265 403 265"/><path class="e" data-from="frontend" data-to="ad" d="M317 150C360 150 360 35 403 35"/><path class="e" data-from="frontend" data-to="cart" d="M317 150C475 150 475 210 633 210"/><path class="e" data-from="frontend" data-to="checkout" d="M317 150C360 150 360 110 403 110"/><path class="e" data-from="frontend" data-to="currency" d="M317 150C475 150 475 120 633 120"/><path class="e" data-from="frontend" data-to="product-catalog" d="M317 150C475 150 475 262 633 262"/><path class="e" data-from="frontend" data-to="quote" d="M317 150C590 150 590 165 863 165"/><path class="e" data-from="frontend" data-to="recommendation" d="M317 150C360 150 360 190 403 190"/><path class="e" data-from="frontend" data-to="shipping" d="M317 150C475 150 475 165 633 165"/><path class="e" data-from="frontend" data-to="image-provider" d="M317 150C360 150 360 265 403 265"/><path class="e" data-from="checkout" data-to="cart" d="M537 110C585 110 585 210 633 210"/><path class="e" data-from="checkout" data-to="currency" d="M537 110C585 110 585 120 633 120"/><path class="e" data-from="checkout" data-to="email" d="M537 110C585 110 585 75 633 75"/><path class="e" data-from="checkout" data-to="payment" d="M537 110C585 110 585 30 633 30"/><path class="e" data-from="checkout" data-to="product-catalog" d="M537 110C585 110 585 262 633 262"/><path class="e" data-from="checkout" data-to="shipping" d="M537 110C585 110 585 165 633 165"/><path class="e" data-from="cart" data-to="valkey-cart" d="M767 210C815 210 815 210 863 210"/><path class="e" data-from="product-catalog" data-to="astronomy-db" d="M767 262C815 262 815 262 863 262"/><path class="e" data-from="recommendation" data-to="product-catalog" d="M537 190C585 190 585 262 633 262"/><path class="e" data-from="shipping" data-to="quote" d="M767 165C815 165 815 165 863 165"/><g class="n" data-svc="frontend-proxy"><title>frontend-proxy</title><rect x="13" y="134" width="134" height="32" rx="9"/><text x="80" y="154.5" text-anchor="middle">frontend-proxy</text></g><g class="n" data-svc="frontend"><title>frontend</title><rect x="183" y="134" width="134" height="32" rx="9"/><text x="250" y="154.5" text-anchor="middle">frontend</text></g><g class="n" data-svc="ad"><title>ad</title><rect x="403" y="19" width="134" height="32" rx="9"/><text x="470" y="39.5" text-anchor="middle">ad</text></g><g class="n" data-svc="checkout"><title>checkout</title><rect x="403" y="94" width="134" height="32" rx="9"/><text x="470" y="114.5" text-anchor="middle">checkout</text></g><g class="n" data-svc="recommendation"><title>recommendation</title><rect x="403" y="174" width="134" height="32" rx="9"/><text x="470" y="194.5" text-anchor="middle">recommendation</text></g><g class="n" data-svc="image-provider"><title>image-provider</title><rect x="403" y="249" width="134" height="32" rx="9"/><text x="470" y="269.5" text-anchor="middle">image-provider</text></g><g class="n" data-svc="payment"><title>payment</title><rect x="633" y="14" width="134" height="32" rx="9"/><text x="700" y="34.5" text-anchor="middle">payment</text></g><g class="n" data-svc="email"><title>email</title><rect x="633" y="59" width="134" height="32" rx="9"/><text x="700" y="79.5" text-anchor="middle">email</text></g><g class="n" data-svc="currency"><title>currency</title><rect x="633" y="104" width="134" height="32" rx="9"/><text x="700" y="124.5" text-anchor="middle">currency</text></g><g class="n" data-svc="shipping"><title>shipping</title><rect x="633" y="149" width="134" height="32" rx="9"/><text x="700" y="169.5" text-anchor="middle">shipping</text></g><g class="n" data-svc="cart"><title>cart</title><rect x="633" y="194" width="134" height="32" rx="9"/><text x="700" y="214.5" text-anchor="middle">cart</text></g><g class="n" data-svc="product-catalog"><title>product-catalog</title><rect x="633" y="246" width="134" height="32" rx="9"/><text x="700" y="266.5" text-anchor="middle">product-catalog</text></g><g class="n" data-svc="quote"><title>quote</title><rect x="863" y="149" width="134" height="32" rx="9"/><text x="930" y="169.5" text-anchor="middle">quote</text></g><g class="n" data-svc="valkey-cart"><title>valkey-cart</title><rect x="863" y="194" width="134" height="32" rx="9"/><text x="930" y="214.5" text-anchor="middle">valkey-cart</text></g><g class="n" data-svc="astronomy-db"><title>astronomy-db</title><rect x="863" y="246" width="134" height="32" rx="9"/><text x="930" y="266.5" text-anchor="middle">astronomy-db</text></g></svg></div>
     <div class="legend"><span><i style="background:var(--poppy)"></i>Root cause</span><span><i style="background:var(--honey)"></i>Affected or alerting</span><span><i style="background:var(--sky)"></i>Unexplained</span><span><i style="background:var(--leaf)"></i>Healthy</span></div>
   </section>
 
   <div class="cols">
     <div class="stack">
-      <section class="panel"><h3>What went wrong</h3><div id="causes"></div></section>
-      <section class="panel"><h3>How to fix it</h3><div id="plan"></div></section>
-      <section class="panel"><details id="trail" open>
+      <section class="panel" data-v="overview"><h3>What went wrong</h3><div id="causes"></div></section>
+      <section class="panel" data-v="overview"><h3>How to fix it</h3><div id="plan"></div></section>
+      <section class="panel" data-v="investigate"><details id="trail" open>
         <summary class="head">How P0ppy investigated <span class="note" id="trailNote"></span></summary>
         <div id="feed"></div></details></section>
-      <section class="panel" id="pmBox" hidden><details>
+      <section class="panel" id="pmBox" data-v="investigate" hidden><details>
         <summary class="head">Postmortem <span class="note">draft, built only from the record</span></summary>
         <div id="pm"></div></details></section>
     </div>
     <div class="stack">
-      <section class="panel" id="startBox" hidden><h3>Start an investigation</h3>
+      <section class="panel" id="startBox" data-v="investigate" hidden><h3>Start an investigation</h3>
         <label class="field">Service<select id="startService"></select></label>
         <label class="field">What looks wrong<select id="startSignal"></select></label>
         <label class="check" id="startLiveBox" hidden><input type="checkbox" id="startLive"> Live run: approved fixes really execute</label>
         <button class="btn primary" id="startBtn">Investigate</button>
       </section>
-      <section class="panel"><h3>Shop health <span class="note" id="healthAt"></span></h3><div id="health"></div></section>
-      <section class="panel"><h3>Evidence <span class="note">everything P0ppy actually saw</span></h3><div id="evidence" class="scroll"></div></section>
-      <section class="panel"><h3>Who was told</h3><div id="told"></div></section>
-      <section class="panel"><h3>Alerts and on-call</h3><div id="settings"></div></section>
+      <section class="panel" data-v="overview"><h3>Shop health <span class="note" id="healthAt"></span></h3><div id="health"></div></section>
+      <section class="panel" data-v="investigate"><h3>Evidence <span class="note">everything P0ppy actually saw</span></h3><div id="evidence" class="scroll"></div></section>
+      <section class="panel" data-v="overview"><h3>Who was told</h3><div id="told"></div></section>
+      <section class="panel" data-v="settings"><h3>Alerts and on-call</h3><div id="settings"></div></section>
     </div>
   </div>
 
-  <section class="panel" style="margin-top:20px"><h3>Past incidents <span class="note"><a href="#" id="follow">follow the newest run</a></span></h3>
+  <section class="panel" data-v="history" style="margin-top:20px"><h3>Past incidents <span class="note"><a href="#" id="follow">follow the newest run</a></span></h3>
     <div class="filters"><input type="search" id="fText" placeholder="Search service, incident or type" aria-label="Search incidents">
       <select id="fMode" aria-label="Filter by source"><option value="">All runs</option><option value="live">Live only</option><option value="other">Tests only</option></select>
       <select id="fOutcome" aria-label="Filter by outcome"><option value="">Any outcome</option><option value="recovered">Recovered</option><option value="escalated">Escalated</option><option value="partial">Partial</option><option value="running">Running</option><option value="dry_run">Dry run</option></select></div>
     <div id="history" class="tw"></div></section>
-  <section class="panel" style="margin-top:20px"><details>
+  <section class="panel" data-v="settings" style="margin-top:20px"><details open>
     <summary class="head">Raw logs <span class="note">actions and notifications, newest first</span></summary>
     <div class="split">
       <div><p class="sublabel">Agent</p><div id="agentLog" class="log"></div></div>
@@ -381,7 +397,13 @@ function refs(ids) {
   if (!ids || !ids.length) return null;
   return el("div", { class: "refs" }, ids.map((id) => el("a", { class: "ev", title: "show this evidence", onclick: () => showEvidence(id) }, id)));
 }
+function go(view) {
+  document.body.dataset.view = view;
+  document.querySelectorAll(".tabs a").forEach((a) => { if (a.dataset.go === view) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+  if (location.hash !== "#" + view) history.replaceState(null, "", "#" + view);
+}
 function showEvidence(id) {
+  go("investigate");
   const target = document.querySelector('[data-ev="' + CSS.escape(String(id)) + '"]');
   if (!target) return;
   target.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -658,7 +680,7 @@ function outcomeTone(o) {
   if (["escalated", "partial", "running"].includes(o)) return "warn";
   return "dim";
 }
-function select(id) { state.selected = id; state.lastIncident = ""; window.scrollTo({ top: 0, behavior: "smooth" }); tick(); }
+function select(id) { go("overview"); state.selected = id; state.lastIncident = ""; window.scrollTo({ top: 0, behavior: "smooth" }); tick(); }
 async function refreshHistory() { state.history = (await get("/api/incidents")).incidents || []; renderHistory(); }
 function renderHistory() {
   const q = $("fText").value.trim().toLowerCase(), mode = $("fMode").value, outcome = $("fOutcome").value;
@@ -707,6 +729,8 @@ const noHealth = () => { $("healthAt").textContent = ""; $("health").replaceChil
 setInterval(tick, 2500);
 setInterval(() => { if (!document.hidden) refreshHealth().catch(noHealth); }, 15000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) tick(); });
+document.querySelectorAll(".tabs a").forEach((a) => a.addEventListener("click", (ev) => { ev.preventDefault(); go(a.dataset.go); }));
+go(["investigate", "history", "settings"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "overview");
 (async function start() {
   me = await get("/api/me");
   $("whoName").textContent = me.user; $("whoRole").textContent = me.role;
