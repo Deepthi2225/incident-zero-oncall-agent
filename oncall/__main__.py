@@ -14,6 +14,8 @@
   python -m oncall slacktest                     send one test Slack message with the .env settings
   python -m oncall ack [incident]                acknowledge an incident, or list those waiting
   python -m oncall whoison                       show who each rotation has on call today
+  python -m oncall user add <name> --role <role> create or update a dashboard account
+  python -m oncall user list | remove <name>     list or remove dashboard accounts
 
 Source flags (before the command). Default is live. --source bundle --bundle DIR replays a recording;
 --record DIR saves one while live; --test [--fixtures DIR] uses fixtures under tests/fixtures/ and
@@ -80,9 +82,20 @@ def _alert_from_args(args):
     return {"source": "manual", "service": args.service, "signal": args.signal, "value": args.value}
 
 
+def _live_client():
+    """The real Action API client (each fix still needs a human's yes), or exit with the reason."""
+    from oncall.action_api import ActionApiError
+    from oncall.agent.run import action_client_for
+    try:
+        return action_client_for(True)
+    except ActionApiError as e:
+        sys.exit(str(e))
+
+
 def cmd_investigate(args):
     from oncall.agent.run import run_agent
-    record = run_agent(_alert_from_args(args), model=args.model, max_steps=args.max_steps)
+    extra = {"action_client": _live_client()} if args.execute else {}
+    record = run_agent(_alert_from_args(args), model=args.model, max_steps=args.max_steps, **extra)
     if args.json:
         print(json.dumps({k: v for k, v in record.items() if k != "path"}, indent=2, default=str))
 
@@ -93,6 +106,9 @@ def cmd_watch(args):
     import detector
     from oncall import ack
     from oncall.agent.run import run_agent
+    if args.execute:
+        from functools import partial
+        run_agent = partial(run_agent, action_client=_live_client())
     detector.POLL_SECS = args.interval
     detector.run(on_incident=run_agent, once=args.once, on_tick=ack.escalate_overdue)
 
@@ -200,6 +216,28 @@ def cmd_whoison(_args):
           or "no rotations in escalation.json")
 
 
+def cmd_user(args):
+    """Dashboard accounts. The password is typed at a hidden prompt, never given on the command line."""
+    import getpass
+    from oncall.ui import auth
+    if args.action == "list":
+        print("\n".join(f"{n}: {u.get('role')}" for n, u in auth.users().items()) or "no accounts yet")
+        return
+    if not args.name:
+        sys.exit("give the account name")
+    if args.action == "remove":
+        print(f"removed {args.name}" if auth.remove_user(args.name) else f"no account called {args.name}")
+        return
+    first, second = getpass.getpass("Password: "), getpass.getpass("Same password again: ")
+    if first != second:
+        sys.exit("the passwords did not match")
+    try:
+        auth.add_user(args.name, first, args.role)
+    except ValueError as e:
+        sys.exit(str(e))
+    print(f"saved {args.name} ({args.role})")
+
+
 def cmd_resume(_args):
     config.KILL_SWITCH_FILE.unlink(missing_ok=True)
     print("kill switch OFF")
@@ -221,9 +259,11 @@ def main():
     inv.add_argument("--model")
     inv.add_argument("--max-steps", type=int)
     inv.add_argument("--json", action="store_true", help="print the summary JSON at the end")
+    inv.add_argument("--execute", action="store_true", help="approved fixes really run (default: dry run)")
     w = sub.add_parser("watch")
     w.add_argument("--interval", type=int, default=30, help="seconds between polls")
     w.add_argument("--once", action="store_true", help="exit after the first investigation")
+    w.add_argument("--execute", action="store_true", help="approved fixes really run (default: dry run)")
     v = sub.add_parser("verify", help="verify an existing run after a human fixed it by hand")
     v.add_argument("run", help="run id (e.g. 20261024-101500) or path to runs/<id>.json")
     v.add_argument("--timeout", type=float, help="seconds to keep checking (default VERIFY_TIMEOUT_S)")
@@ -236,13 +276,17 @@ def main():
     a = sub.add_parser("ack", help="acknowledge an incident, or list the ones waiting")
     a.add_argument("incident", nargs="?")
     sub.add_parser("whoison", help="show who each rotation has on call today")
+    u = sub.add_parser("user", help="manage dashboard accounts")
+    u.add_argument("action", choices=["add", "list", "remove"])
+    u.add_argument("name", nargs="?")
+    u.add_argument("--role", default="viewer", choices=["viewer", "responder", "approver", "admin"])
     args = p.parse_args()
-    if args.cmd not in ("stop", "resume", "emailtest", "calltest", "telegramtest", "slacktest", "ack", "whoison"):
+    if args.cmd not in ("stop", "resume", "emailtest", "calltest", "telegramtest", "slacktest", "ack", "whoison", "user"):
         apply_source_args(p, args)
     {"check": cmd_check, "baseline": cmd_baseline, "investigate": cmd_investigate,
      "watch": cmd_watch, "verify": cmd_verify, "stop": cmd_stop, "resume": cmd_resume,
      "emailtest": cmd_emailtest, "calltest": cmd_calltest, "telegramtest": cmd_telegramtest,
-     "slacktest": cmd_slacktest, "ack": cmd_ack, "whoison": cmd_whoison}[args.cmd](args)
+     "slacktest": cmd_slacktest, "ack": cmd_ack, "whoison": cmd_whoison, "user": cmd_user}[args.cmd](args)
 
 
 if __name__ == "__main__":

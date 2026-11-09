@@ -919,7 +919,8 @@ def build_page(record, step):
              f"Rollback: {rb['action']} ({rb.get('note')})" if rb else "Rollback: none (cannot be undone)",
              "", "Top evidence:", *top, "",
              "Where to approve: in the terminal running the agent (answer y or N at the prompt).",
-             f"The read-only dashboard at {config.UI_URL} shows the waiting step.",
+             (f"You can also approve it on the dashboard: {config.UI_URL}" if config.UI_APPROVALS
+              else f"The dashboard at {config.UI_URL} shows the waiting step."),
              "Approval is NOT possible by replying to this email. Replies are not read.",
              "", f"Report (when the run ends): {(record.get('report_paths') or {}).get('report') or 'not written'}"]
     subject = _tagged(f"[ON-CALL PAGE][{sev}] {incident} {service}: approval needed — "

@@ -1,4 +1,4 @@
-"""Read-only data for the live dashboard. Nothing here changes anything.
+"""Data shown on the dashboard. Nothing here changes anything.
 
 Sources: runs/<run_id>.json (incident records), runs/actions.jsonl (the agent's action log),
 runs/action_api.jsonl (the Action API's audit log), runs/notifications.jsonl (escalation
@@ -150,6 +150,24 @@ def status():
     return clean({"kill_switch": config.KILL_SWITCH_FILE.exists(), "action_api": _action_api_health(),
                   "reviewer": "on" if config.REVIEWER else "off", "agent": watch,
                   "time": time.strftime("%H:%M:%S")})
+
+
+def settings():
+    """Which alert channels are on and ready, and who is on call. Whether a secret is set, never its value."""
+    from oncall import notify
+    channels = [{"name": "email", "on": config.EMAIL_ENABLED, "ready": bool(config.EMAIL_TO)},
+                {"name": "call", "on": config.CALLS_ENABLED, "ready": bool(config.TWILIO_AUTH_TOKEN and config.ONCALL_PRIMARY_PHONE)},
+                {"name": "telegram", "on": config.TELEGRAM_ENABLED, "ready": bool(config.TELEGRAM_BOT_TOKEN and config.TELEGRAM_CHAT_ID)},
+                {"name": "slack", "on": config.SLACK_ENABLED, "ready": bool(config.SLACK_WEBHOOK_URL)}]
+    plan = notify._escalation()
+    rotations = plan.get("rotations") or {}
+    return clean({"channels": channels, "on_call": {n: notify.on_call(n, plan) for n in rotations},
+                  "routes": plan.get("routes") or {}, "acknowledge": plan.get("acknowledge"),
+                  "ui_approvals": config.UI_APPROVALS})
+
+
+def audit(limit=40):
+    return clean({"audit": _tail(config.RUNS_DIR / "ui_audit.jsonl", limit)})
 
 
 def _detector():

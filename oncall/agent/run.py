@@ -113,7 +113,8 @@ class Agent:
         # Dry run unless a live Action API client is passed in (--execute).
         self.action_client = action_client or DryRunClient()
         self._rec = None  # the run being recorded, for the "approval needed" page
-        ask = make_approver(auto_approve, self.interactive, on_prompt=self._page)
+        ask = make_approver(auto_approve, self.interactive, on_prompt=self._page,
+                            run_id=lambda: self._rec.data["metadata"]["run_id"])
 
         def approve(step, diag):  # a human answering the prompt has acknowledged the incident
             decision = ask(step, diag)

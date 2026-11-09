@@ -25,8 +25,9 @@
   /* top bar */
   .top { display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:18px 0 14px; }
   .brand { display:flex; align-items:center; gap:11px; margin-right:auto; }
-  .brand svg { width:40px; height:40px; flex:none; }
-  .brand h1 { color:var(--accent); margin:0; font:650 22px/1 var(--display); letter-spacing:-.02em; }
+  .brand svg { width:46px; height:46px; flex:none; }
+  .brand h1 { color:#fff6f4; margin:0; font:800 32px/1 var(--display); letter-spacing:-.045em; }
+  .brand h1 span { color:var(--accent); }
   .brand p { margin:4px 0 0; color:var(--soft); font-size:13px; }
   .chips { display:flex; flex-wrap:wrap; gap:6px; }
   .chip { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(--line); border-radius:99px; background:var(--card); color:var(--soft); font-size:12.5px; white-space:nowrap; }
@@ -100,6 +101,29 @@
   th { text-transform:none; letter-spacing:.01em; }
   tr.click td:first-child { color:var(--soft); white-space:nowrap; }
   footer { margin-top:32px; padding-top:18px; border-top:1px solid var(--line); }
+
+  /* controls */
+  .btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border:1px solid var(--line); border-radius:9px; background:var(--sunk); color:var(--ink); font:600 13.5px var(--body); cursor:pointer; transition:filter .12s, transform .06s; }
+  .btn:hover { filter:brightness(1.15); } .btn:active { transform:translateY(1px); }
+  .btn:disabled { opacity:.55; cursor:default; filter:none; }
+  .btn:focus-visible, input:focus-visible, select:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+  .btn.primary { background:var(--accent); border-color:var(--accent); color:#2b0509; }
+  .btn.danger { background:var(--poppy); border-color:var(--poppy); color:var(--on-cause); }
+  .btn.small { padding:4px 10px; font-size:12.5px; }
+  .actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:12px; }
+  .who { display:flex; align-items:center; gap:10px; color:var(--soft); font-size:13px; }
+  .who b { color:var(--ink); font-weight:600; }
+  .field { display:block; margin-bottom:10px; color:var(--soft); font-size:12.5px; }
+  input[type=text], input[type=search], input[type=password], select { width:100%; margin-top:4px; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--paper); color:var(--ink); font:14px var(--body); }
+  .check { display:flex; align-items:center; gap:8px; margin:0 0 12px; font-size:13.5px; }
+  .filters { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr); gap:10px; margin-bottom:10px; }
+  .row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 0; border-top:1px solid var(--line); font-size:13.5px; }
+  .row:first-child { border-top:0; }
+  dialog { width:min(480px,calc(100vw - 32px)); padding:22px 24px; border:1px solid #5e3752; border-radius:14px; background:var(--card); color:var(--ink); }
+  dialog::backdrop { background:rgba(10,2,8,.72); }
+  dialog h3 { margin:0 0 10px; font:650 20px/1.25 var(--display); letter-spacing:-.02em; }
+  #toast { position:fixed; right:20px; bottom:20px; z-index:9; max-width:min(420px,calc(100vw - 40px)); padding:11px 15px; border-radius:10px; background:var(--leaf-wash); border:1px solid var(--leaf); box-shadow:var(--shadow); }
+  #toast.bad { background:var(--poppy-wash); border-color:var(--poppy); }
 
   /* key numbers */
   .stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-top:18px; }
@@ -225,7 +249,7 @@
         </g>
         <circle cx="24" cy="19" r="6" fill="#26131f"/><circle cx="24" cy="19" r="2.2" fill="#f7bd78"/>
       </svg>
-      <div><h1>P0ppy</h1><p>Your little buddy for big incidents. On-call agent, read-only view.</p></div>
+      <div><h1>P<span>0</span>ppy</h1><p>Your little buddy for big incidents. On-call agent.</p></div>
     </div>
     <div class="chips">
       <span id="kill" class="chip">Kill switch</span>
@@ -234,6 +258,7 @@
       <span id="agent" class="chip">Agent</span>
       <span id="clock" class="chip plain mono">--:--:--</span>
     </div>
+    <div class="who"><button class="btn danger small" id="killBtn" hidden>Stop P0ppy</button><span><b id="whoName"></b> <span id="whoRole"></span></span><a href="#" id="logout">Sign out</a></div>
   </div>
 
   <section id="verdict" class="verdict" aria-live="polite">
@@ -269,13 +294,24 @@
         <div id="pm"></div></details></section>
     </div>
     <div class="stack">
+      <section class="panel" id="startBox" hidden><h3>Start an investigation</h3>
+        <label class="field">Service<select id="startService"></select></label>
+        <label class="field">What looks wrong<select id="startSignal"></select></label>
+        <label class="check" id="startLiveBox" hidden><input type="checkbox" id="startLive"> Live run: approved fixes really execute</label>
+        <button class="btn primary" id="startBtn">Investigate</button>
+      </section>
       <section class="panel"><h3>Shop health <span class="note" id="healthAt"></span></h3><div id="health"></div></section>
       <section class="panel"><h3>Evidence <span class="note">everything P0ppy actually saw</span></h3><div id="evidence" class="scroll"></div></section>
       <section class="panel"><h3>Who was told</h3><div id="told"></div></section>
+      <section class="panel"><h3>Alerts and on-call</h3><div id="settings"></div></section>
     </div>
   </div>
 
-  <section class="panel" style="margin-top:20px"><h3>Past incidents <span class="note"><a href="#" id="follow">follow the newest run</a></span></h3><div id="history" class="tw"></div></section>
+  <section class="panel" style="margin-top:20px"><h3>Past incidents <span class="note"><a href="#" id="follow">follow the newest run</a></span></h3>
+    <div class="filters"><input type="search" id="fText" placeholder="Search service, incident or type" aria-label="Search incidents">
+      <select id="fMode" aria-label="Filter by source"><option value="">All runs</option><option value="live">Live only</option><option value="other">Tests only</option></select>
+      <select id="fOutcome" aria-label="Filter by outcome"><option value="">Any outcome</option><option value="recovered">Recovered</option><option value="escalated">Escalated</option><option value="partial">Partial</option><option value="running">Running</option><option value="dry_run">Dry run</option></select></div>
+    <div id="history" class="tw"></div></section>
   <section class="panel" style="margin-top:20px"><details>
     <summary class="head">Raw logs <span class="note">actions and notifications, newest first</span></summary>
     <div class="split">
@@ -283,13 +319,35 @@
       <div><p class="sublabel">Action API</p><div id="apiLog" class="log"></div></div>
     </div>
     <h4>Notifications</h4><div id="notifyLog" class="log"></div>
+    <div id="auditBox" hidden><h4>Who did what on this dashboard</h4><div id="auditLog" class="log"></div></div>
   </details></section>
-  <footer>P0ppy never changes anything from this page. Every fix is approved by a human in the terminal.</footer>
+  <footer>P0ppy never fixes anything by itself. Every fix needs a person's approval.</footer>
+  <dialog id="dlg"><form method="dialog" id="dlgForm"><h3 id="dlgTitle"></h3><div id="dlgBody"></div>
+    <label class="field" id="dlgPwBox" hidden style="margin-top:12px">Your password<input type="password" id="dlgPw" autocomplete="current-password"></label>
+    <div class="actions" style="justify-content:flex-end"><button type="button" class="btn" id="dlgNo">Cancel</button><button type="submit" class="btn primary" id="dlgYes"></button></div></form></dialog>
+  <div id="toast" role="status" hidden></div>
 </div>
 <script>
 "use strict";
 // Everything is built with createElement/textContent: record text is never parsed as HTML.
 const NR = "not recorded";
+let me = { role: "viewer", csrf: "", ui_approvals: false, services: [], signals: [] };
+const RANKS = ["viewer", "responder", "approver", "admin"];
+const can = (role) => RANKS.indexOf(me.role) >= RANKS.indexOf(role);
+function toast(text, bad) {
+  const t = document.getElementById("toast"); t.textContent = text; t.className = bad ? "bad" : ""; t.hidden = false;
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => { t.hidden = true; }, 5000);
+}
+async function post(url, body) {
+  try {
+    const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": me.csrf }, body: JSON.stringify(body || {}) });
+    if (r.status === 401) { location.replace("/login"); return false; }
+    const found = await r.json();
+    toast(r.ok ? (found.message || "Done") : (found.error || "That did not work"), !r.ok);
+    return r.ok;
+  } catch (e) { toast("Could not reach P0ppy", true); return false; }
+}
+const act = (name, body) => post("/api/action/" + name, body).then((ok) => { state.lastIncident = ""; tick(); return ok; });
 const state = { selected: null, lastIncident: "" };
 const $ = (id) => document.getElementById(id);
 function el(tag, attrs, ...kids) {
@@ -306,7 +364,20 @@ const num = (x, d = 2) => (typeof x === "number") ? x.toFixed(d) : NR;
 const pretty = (x) => String(x === undefined || x === null ? "unknown" : x).replace(/_/g, " ");
 const empty = (text) => el("div", { class: "empty" }, text);
 function put(node, ...kids) { node.replaceChildren(...kids.flat(Infinity).filter((k) => k !== null && k !== undefined && k !== false)); }
-async function get(url) { const r = await fetch(url, { cache: "no-store" }); if (!r.ok) throw new Error(String(r.status)); return r.json(); }
+function ask(opts) {
+  const dlg = $("dlg");
+  $("dlgTitle").textContent = opts.title; $("dlgYes").textContent = opts.yes; $("dlgYes").className = "btn " + (opts.danger ? "danger" : "primary");
+  put($("dlgBody"), opts.rows ? kv(opts.rows) : null, opts.text ? el("p", {}, opts.text) : null);
+  $("dlgPwBox").hidden = !opts.password; $("dlgPw").value = ""; $("dlgPw").required = !!opts.password;
+  return new Promise((resolve) => {
+    const finish = (value) => { $("dlgForm").onsubmit = null; $("dlgNo").onclick = null; dlg.oncancel = null; dlg.close(); resolve(value); };
+    $("dlgForm").onsubmit = (ev) => { ev.preventDefault(); finish({ password: $("dlgPw").value }); };
+    $("dlgNo").onclick = () => finish(null);
+    dlg.oncancel = () => finish(null);
+    dlg.showModal();
+  });
+}
+async function get(url) { const r = await fetch(url, { cache: "no-store" }); if (r.status === 401) location.replace("/login"); if (!r.ok) throw new Error(String(r.status)); return r.json(); }
 function kv(pairs) { return el("div", { class: "kv" }, pairs.map(([k, val]) => [el("span", {}, k), el("span", {}, val instanceof Node ? val : v(val))])); }
 function refs(ids) {
   if (!ids || !ids.length) return null;
@@ -324,6 +395,9 @@ function setChip(id, text, cls) { $(id).textContent = text; $(id).className = "c
 async function refreshStatus() {
   const s = await get("/api/status");
   setChip("kill", s.kill_switch ? "Kill switch ON" : "Kill switch off", s.kill_switch ? "bad" : "good");
+  state.killed = !!s.kill_switch;
+  $("killBtn").hidden = !can("approver"); $("killBtn").textContent = s.kill_switch ? "Resume P0ppy" : "Stop P0ppy";
+  $("killBtn").className = "btn small " + (s.kill_switch ? "primary" : "danger");
   const api = s.action_api || {};
   setChip("api", api.reachable ? "Action API up" : "Action API down", api.reachable ? "good" : "warn");
   setChip("reviewer", "Reviewer " + v(s.reviewer), s.reviewer === "on" ? "good" : "");
@@ -395,8 +469,24 @@ function renderVerdict(r) {
     (r.ui || {}).acknowledged ? el("span", { class: "tag" }, "Acknowledged") : null,
     state.selected ? el("span", {}, "Viewing an older run") : null,
   ].filter(Boolean));
-  $("approve").replaceChildren(...((r.ui || {}).awaiting_approval || []).length ? [el("span", { class: "approve" }, "Answer y or N in the terminal running P0ppy")] : []);
+  put($("approve"), bannerActions(r));
   $("steps").replaceChildren(...stages(r).map(([name, cls]) => el("li", { class: cls }, name)));
+}
+function button(text, cls, onclick) { return el("button", { class: "btn " + cls, type: "button", onclick }, text); }
+async function decide(r, step, decision) {
+  const yes = decision === "approved", vf = step.rollback;
+  const answer = await ask({ title: (yes ? "Approve: " : "Reject: ") + pretty(step.action) + " on " + step.target, yes: yes ? "Approve this fix" : "Reject this fix", danger: !yes, password: true,
+    rows: [["Why", step.reason], ["Expected", step.expected_outcome], ["Risk", step.risk_assessment || "not assessed"], ["Undo", vf ? pretty(vf.action) + " (" + vf.note + ")" : "cannot be undone"]] });
+  if (answer) await act("decide", { run_id: r.metadata.run_id, step: step.step, action: step.action, target: step.target, decision, password: answer.password });
+}
+function bannerActions(r) {
+  const meta = r.metadata || {}, ui = r.ui || {}, live = meta.mode === "live", out = [];
+  const waiting = ((r.remediation_plan || {}).steps || []).find((s) => (ui.awaiting_approval || []).includes(s.step));
+  if (waiting && me.ui_approvals && can("approver")) out.push(button("Review and approve", "primary", () => decide(r, waiting, "approved")), button("Reject", "danger", () => decide(r, waiting, "rejected")));
+  else if (waiting) out.push(el("span", { class: "approve", style: "margin-top:0" }, me.ui_approvals ? "Waiting for an approver" : "Answer y or N in the terminal running P0ppy"));
+  if (live && meta.incident_id && !ui.acknowledged && r.status === "complete" && can("responder") && (r.escalations || []).length) out.push(button("I'm on it", "", () => act("ack", { incident: meta.incident_id })));
+  if (live && r.status === "complete" && (r.outcome || {}).status !== "recovered" && can("responder")) out.push(button("I fixed it, verify", "", () => act("verify", { run_id: meta.run_id })));
+  return out.length ? el("div", { class: "actions" }, out) : null;
 }
 function stages(r) {
   const inv = r.investigation || {}, d = r.diagnosis, steps = (r.remediation_plan || {}).steps || [], o = r.outcome;
@@ -566,15 +656,40 @@ function outcomeTone(o) {
   return "dim";
 }
 function select(id) { state.selected = id; state.lastIncident = ""; window.scrollTo({ top: 0, behavior: "smooth" }); tick(); }
-async function refreshHistory() {
-  const h = await get("/api/incidents"), list = h.incidents || [];
-  if (!list.length) { $("history").replaceChildren(empty("No past incidents.")); return; }
+async function refreshHistory() { state.history = (await get("/api/incidents")).incidents || []; renderHistory(); }
+function renderHistory() {
+  const q = $("fText").value.trim().toLowerCase(), mode = $("fMode").value, outcome = $("fOutcome").value;
+  const list = (state.history || []).filter((x) => (!q || [x.incident_id, x.root_cause, x.fault_class, x.outcome].join(" ").toLowerCase().includes(q))
+    && (!mode || (mode === "live" ? x.mode === "live" : x.mode !== "live")) && (!outcome || x.outcome === outcome));
+  if (!list.length) { $("history").replaceChildren(empty(state.history && state.history.length ? "Nothing matches those filters." : "No past incidents.")); return; }
   $("history").replaceChildren(el("table", {}, el("tr", {}, ["When", "Incident", "Root cause", "Type", "Confidence", "Outcome"].map((c) => el("th", {}, c))),
     list.map((x) => el("tr", { class: "click" + (state.selected === x.run_id ? " sel" : ""), tabindex: "0", onclick: () => select(x.run_id) },
       el("td", {}, String(v(x.time)).replace("T", " ").slice(0, 16)), el("td", {}, v(x.incident_id)), el("td", {}, v(x.root_cause)), el("td", {}, pretty(x.fault_class)),
       el("td", {}, typeof x.confidence === "number" ? Math.round(x.confidence * 100) + "%" : NR), el("td", {}, el("span", { class: "pillet " + outcomeTone(x.outcome) }, pretty(x.outcome)))))));
 }
 $("history").addEventListener("keydown", (ev) => { if (ev.key === "Enter" && ev.target.matches("tr.click")) ev.target.click(); });
+for (const id of ["fText", "fMode", "fOutcome"]) $(id).addEventListener("input", renderHistory);
+async function refreshSettings() {
+  const s = await get("/api/settings");
+  const channels = s.channels.map((c) => el("div", { class: "row" }, el("span", {}, pretty(c.name)),
+    el("span", { class: "actions", style: "margin:0" }, el("span", { class: "pillet " + (c.on && c.ready ? "ok" : c.on ? "warn" : "dim") }, c.on ? (c.ready ? "on" : "needs settings") : "off"),
+      c.ready && can("admin") ? button("Send test", "small", async () => { const a = await ask({ title: "Send a test " + c.name + "?", text: "It is clearly labelled as a test.", yes: "Send test" }); if (a) post("/api/action/test", { channel: c.name }); }) : null)));
+  const onCall = Object.entries(s.on_call || {});
+  put($("settings"), channels, onCall.length ? [el("h4", {}, "On call today"), onCall.map(([k, x]) => el("div", { class: "row" }, el("span", {}, k), el("b", {}, x || "cannot tell")))] : el("p", { class: "note" }, "No rotation set up yet."));
+  if (can("approver")) { $("auditBox").hidden = false; fill("auditLog", (await get("/api/audit")).audit || [], (row) => joined([row.ts, row.user, row.action, row.status]), "Nothing yet."); }
+}
+$("killBtn").addEventListener("click", async () => {
+  const resume = state.killed;
+  const answer = await ask(resume ? { title: "Let P0ppy act again?", text: "Fixes that a person approves will be able to run.", yes: "Resume P0ppy", password: true }
+    : { title: "Stop P0ppy now?", text: "This blocks all model calls, tools and fixes, even ones already approved.", yes: "Stop everything", danger: true });
+  if (answer) act(resume ? "resume" : "stop", resume ? { password: answer.password } : {});
+});
+$("startBtn").addEventListener("click", async () => {
+  const live = $("startLive").checked, service = $("startService").value, signal = $("startSignal").value;
+  const answer = await ask({ title: "Investigate " + service + "?", text: live ? "This is a live run. Any fix still needs an approval, and then really runs." : "This is a dry run. Nothing in the shop will change.", yes: "Start", danger: live, password: live });
+  if (answer) act("investigate", { service, signal, execute: live, password: answer.password });
+});
+$("logout").addEventListener("click", async (ev) => { ev.preventDefault(); await post("/api/logout", {}); location.replace("/login"); });
 $("follow").addEventListener("click", (ev) => { ev.preventDefault(); select(null); });
 
 // --- polling (paused while the tab is hidden) ----------------------------------------------------------
@@ -589,7 +704,14 @@ const noHealth = () => { $("healthAt").textContent = ""; $("health").replaceChil
 setInterval(tick, 2500);
 setInterval(() => { if (!document.hidden) refreshHealth().catch(noHealth); }, 15000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) tick(); });
-tick(); refreshHealth().catch(noHealth);
+(async function start() {
+  me = await get("/api/me");
+  $("whoName").textContent = me.user; $("whoRole").textContent = me.role;
+  $("startBox").hidden = !can("responder"); $("startLiveBox").hidden = !can("approver");
+  put($("startService"), me.services.map((s) => el("option", { value: s }, s)));
+  put($("startSignal"), me.signals.map((s) => el("option", { value: s }, pretty(s))));
+  tick(); refreshHealth().catch(noHealth); refreshSettings().catch(() => {}); setInterval(() => { if (!document.hidden) refreshSettings().catch(() => {}); }, 20000);
+})();
 </script>
 </body>
 </html>

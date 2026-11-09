@@ -227,6 +227,26 @@ a fix**: the findings go to a human, because the smaller model is less reliable.
 `ONCALL_REVIEWER=on` adds one skeptical second opinion before anything is shown for approval. It can
 lower confidence and remove steps, but it can never raise confidence, add a step or approve anything.
 
+### Dashboard
+
+`python -m oncall.ui` serves the dashboard at http://127.0.0.1:8090, on your machine only. Everyone signs in.
+Create accounts in a terminal; the password is typed at a hidden prompt:
+
+```
+python -m oncall user add yourname --role admin
+```
+
+| Role | Can do |
+|---|---|
+| `viewer` | See everything |
+| `responder` | Also acknowledge, start dry-run investigations, and verify a manual fix |
+| `approver` | Also approve or reject fixes, start live runs, and use the kill switch |
+| `admin` | Also send test alerts |
+
+To approve fixes on the dashboard as well as in the terminal, add `UI_APPROVALS=on` to `.env`. Approving
+asks for your password again. Fixes only really run if the agent was started with `--execute`.
+Every attempted action is logged in `runs/ui_audit.jsonl`.
+
 ### Who gets alerted
 
 By default, alerts go to the contacts in `.env`. To alert different people by severity, copy

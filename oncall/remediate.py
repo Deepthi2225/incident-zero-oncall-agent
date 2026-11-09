@@ -11,10 +11,13 @@ For every step, in plan order (dependencies first):
 
 Every call, refusal, failure, verify result and rollback is appended to runs/actions.jsonl.
 """
+import queue
 import sys
+import threading
+import time
 from datetime import datetime, timezone
 
-from oncall import config
+from oncall import approvals, config
 from oncall.action_api import ActionApiError, KillSwitchRefused
 from oncall.agent.actions import depends_on, execution_allowed, involved_services
 from oncall.agent.reviewer import reviewer_line
@@ -45,7 +48,60 @@ def risk_of(step):
     return (step.get("risk_assessment") or "").strip() or "not assessed"
 
 
-def make_approver(auto_approve=False, interactive=True, on_prompt=None):
+_terminal_lines = queue.Queue()
+_NO_LINE = object()
+_reader_started = threading.Lock()
+
+
+def _start_terminal_reader():
+    """One background reader for the terminal, so waiting on it can also watch the dashboard."""
+    def read():
+        while True:
+            try:
+                _terminal_lines.put(input())
+            except (EOFError, KeyboardInterrupt):
+                _terminal_lines.put(None)
+                return
+    if _reader_started.acquire(blocking=False):
+        threading.Thread(target=read, name="approval-terminal", daemon=True).start()
+
+
+def _wait_for_decision(step, run_id, terminal):
+    """The first answer from the dashboard or the terminal, or pending when nobody answers in time."""
+    if terminal:
+        _start_terminal_reader()
+        while not _terminal_lines.empty():  # anything typed before this prompt is not an answer to it
+            _terminal_lines.get_nowait()
+        print(f"Run step {step['step']} now? [y/N] (or decide on the dashboard): ", end="", flush=True)
+    else:
+        print(f"Waiting for a decision on step {step['step']} on the dashboard: {config.UI_URL}", flush=True)
+    deadline = time.monotonic() + config.APPROVAL_TIMEOUT_S
+    while time.monotonic() < deadline:
+        if config.KILL_SWITCH_FILE.exists():
+            return {"status": "pending", "decision_at": _now(), "notes": "the kill switch went on while waiting"}
+        found = approvals.take(run_id, step)
+        if found:
+            print(f"\n{found['decision']} on the dashboard by {found['by']}", flush=True)
+            if found["decision"] == "approved":
+                return {"status": "approved", "approved_by": "human", "decision_at": _now(),
+                        "notes": f"approved on the dashboard by {found['by']}"}
+            return {"status": "rejected", "decision_at": _now(), "notes": f"rejected on the dashboard by {found['by']}"}
+        try:
+            line = _terminal_lines.get_nowait() if terminal else _NO_LINE
+        except queue.Empty:
+            line = _NO_LINE
+        if line is None:  # the terminal closed: the dashboard can still answer
+            terminal = False
+        elif line is not _NO_LINE:  # as at the [y/N] prompt, only y or yes approves
+            if line.strip().lower() in ("y", "yes"):
+                return {"status": "approved", "approved_by": "human", "decision_at": _now(),
+                        "notes": "explicitly approved by the on-call engineer"}
+            return {"status": "rejected", "decision_at": _now(), "notes": "rejected by the on-call engineer"}
+        time.sleep(0.5)
+    return {"status": "pending", "decision_at": _now(), "notes": "nobody decided in time"}
+
+
+def make_approver(auto_approve=False, interactive=True, on_prompt=None, run_id=None):
     """approve(step, diag) -> approval record for that one step. on_prompt(step, diag) is called
     just before the approval box is shown to a human (never for auto-approval or without a
     terminal); the agent uses it to page the on-call engineer. It must return at once."""
@@ -58,7 +114,9 @@ def make_approver(auto_approve=False, interactive=True, on_prompt=None):
         if auto_approve:
             return {"status": "approved", "approved_by": "auto", "decision_at": _now(),
                     "notes": "auto-approved via flag: dry run only, never executed"}
-        if not interactive or not hasattr(sys.stdin, "isatty") or not sys.stdin.isatty():
+        terminal = hasattr(sys.stdin, "isatty") and sys.stdin.isatty()
+        dashboard = config.UI_APPROVALS and run_id is not None
+        if not interactive or not (terminal or dashboard):
             return {"status": "pending", "decision_at": _now(), "notes": "no terminal: nobody to approve"}
         steps = (diag.get("remediation_plan") or {}).get("steps", [])
         if on_prompt:
@@ -82,6 +140,8 @@ def make_approver(auto_approve=False, interactive=True, on_prompt=None):
         rb = step.get("rollback")
         print(f"Rollback   : {rb['action']} ({rb['note']})" if rb else "Rollback   : none (cannot be undone)")
         print("-" * 64)
+        if dashboard:
+            return _wait_for_decision(step, run_id(), terminal)
         try:
             choice = input(f"Run step {step['step']} now? [y/N]: ").strip().lower()
         except (EOFError, KeyboardInterrupt):
@@ -219,7 +279,7 @@ def run_plan(diag, client, approve, verifier, run_id="", log=print, on_update=No
         # Saved before asking, so readers of the record (the live dashboard) can see that a human is
         # being asked right now; replaced by the decision below.
         step["approval"] = {"status": "awaiting", "since": _now(),
-                            "notes": "waiting for human approval in the terminal"}
+                            "notes": "waiting for a human decision"}
         update()
         step["approval"] = approve(step, diag)
         update()

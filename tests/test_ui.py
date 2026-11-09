@@ -127,10 +127,10 @@ def test_page_never_parses_record_text_as_html_and_loads_nothing_external():
     assert "innerHTML" not in page and "outerHTML" not in page and "eval(" not in page
     assert "document.write" not in page and "<script src" not in page
     assert "http://" not in page and "https://" not in page  # works offline, no CDN
-    assert "<button" not in page and "method=\"post\"" not in page.lower()  # nothing acts
+    assert "/api/action/" in page and "X-CSRF-Token" in page  # every change carries the CSRF token
 
 
-def test_server_binds_localhost_only_and_is_get_only(runs):
+def test_server_binds_localhost_only(runs):
     with pytest.raises(ValueError, match="localhost only"):
         make_server("0.0.0.0", 0)
     server = make_server(port=0)
@@ -138,15 +138,11 @@ def test_server_binds_localhost_only_and_is_get_only(runs):
     threading.Thread(target=server.serve_forever, daemon=True).start()
     base = f"http://127.0.0.1:{server.server_address[1]}"
     try:
-        with urllib.request.urlopen(f"{base}/api/incident/{runs['nasty']}") as resp:
-            assert resp.headers["X-Content-Type-Options"] == "nosniff"
-            assert resp.headers["Content-Type"].startswith("application/json")
-            assert_clean(resp.read().decode())
-        with urllib.request.urlopen(base + "/") as resp:
-            assert "On-call agent" in resp.read().decode()
+        with urllib.request.urlopen(base + "/login") as resp:
+            assert resp.headers["X-Content-Type-Options"] == "nosniff" and "On-call agent" in resp.read().decode()
         with pytest.raises(urllib.error.HTTPError) as e:
-            urllib.request.urlopen(urllib.request.Request(base + "/api/status", data=b"{}", method="POST"))
-        assert e.value.code == 405
+            urllib.request.urlopen(f"{base}/api/incident/{runs['nasty']}")  # nothing is readable without signing in
+        assert e.value.code == 401
     finally:
         server.shutdown()
         server.server_close()

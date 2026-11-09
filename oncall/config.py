@@ -221,6 +221,10 @@ ESCALATION_FILE = Path(os.getenv("ONCALL_ESCALATION_FILE", ROOT / "escalation.js
 # Slack alerts through an incoming webhook: off unless SLACK_ENABLED=on. .env only.
 SLACK_ENABLED = env_flag("SLACK_ENABLED", False)
 SLACK_WEBHOOK_URL = _env("SLACK_WEBHOOK_URL")
+# Dashboard sign-in and approvals. Off: fixes are approved in the terminal only.
+UI_USERS_FILE = Path(os.getenv("ONCALL_UI_USERS", ROOT / "ui_users.json"))
+UI_APPROVALS = env_flag("UI_APPROVALS", False)
+APPROVAL_TIMEOUT_S = float(os.getenv("APPROVAL_TIMEOUT_S", "1800"))
 # Telegram alerts through a bot: off unless TELEGRAM_ENABLED=on. .env only.
 TELEGRAM_ENABLED = env_flag("TELEGRAM_ENABLED", False)
 TELEGRAM_BOT_TOKEN = _env("TELEGRAM_BOT_TOKEN")

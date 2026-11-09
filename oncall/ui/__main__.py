@@ -1,4 +1,4 @@
-"""python -m oncall.ui [--port N]: the read-only live dashboard on http://127.0.0.1:8090."""
+"""python -m oncall.ui [--port N]: the sign-in dashboard on http://127.0.0.1:8090."""
 import argparse
 
 from oncall import config
@@ -10,7 +10,7 @@ def main():
     p.add_argument("--port", type=int, default=config.UI_PORT)
     args = p.parse_args()
     server = make_server(port=args.port)
-    print(f"live dashboard on http://127.0.0.1:{args.port} (read-only; approvals stay in the terminal)", flush=True)
+    print(f"live dashboard on http://127.0.0.1:{args.port} (sign in required)", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
