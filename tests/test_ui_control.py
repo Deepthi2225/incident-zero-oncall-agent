@@ -317,3 +317,41 @@ def test_settings_never_show_secrets(app, monkeypatch):
     monkeypatch.setattr(config, "TELEGRAM_BOT_TOKEN", "123456:SECRET-TOKEN-VALUE")
     status, found = signed_in(app, "viewer").call("GET", "/api/settings")
     assert status == 200 and "SECRET-TOKEN-VALUE" not in json.dumps(found)
+
+
+# --- the whole approval path ------------------------------------------------------------------------------
+
+def test_a_dashboard_approval_reaches_a_running_agent(payment_down, app, monkeypatch):
+    import time
+
+    from tests.conftest import FIXTURES
+    from tests.test_agent_loop import block_tool, make_agent, response, submit
+    from tests.test_remediate import StubVerifier
+    monkeypatch.setattr(config, "UI_APPROVALS", True)
+    monkeypatch.setattr(config, "APPROVAL_TIMEOUT_S", 30.0)
+
+    def script(n, kwargs):
+        if n == 1:
+            return response(block_tool("d", "get_deploy_history", {"lookback": "30m"}))
+        found = json.loads(kwargs["messages"][-1]["content"][0]["content"])
+        return response(submit("s", "payment", [found["changed_or_unhealthy"][0]["evidence"]]))
+
+    agent, _ = make_agent(monkeypatch, script, verifier=StubVerifier({}))
+    alert = json.loads((FIXTURES / "payment_down" / "alert.json").read_text())
+    done = {}
+    worker = threading.Thread(target=lambda: done.update(agent.run(alert)), daemon=True)
+    worker.start()
+    client = signed_in(app, "approver")
+    for _ in range(100):
+        status, record = client.call("GET", "/api/incident")
+        if status == 200 and record["ui"]["awaiting_approval"]:
+            break
+        time.sleep(0.1)
+    assert record["ui"]["awaiting_approval"] == [1]
+    step = record["remediation_plan"]["steps"][0]
+    assert client.call("POST", "/api/action/decide", {"run_id": record["metadata"]["run_id"], "step": 1, "action": step["action"],
+                                                      "target": step["target"], "decision": "approved", "password": PASSWORD})[0] == 200
+    worker.join(20)
+    assert not worker.is_alive()
+    approval = done["remediation_plan"]["steps"][0]["approval"]
+    assert approval["status"] == "approved" and approval["approved_by"] == "human" and "approver" in approval["notes"]

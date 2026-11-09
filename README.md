@@ -129,7 +129,7 @@ python -m actionapi
 python -m oncall.ui
 ```
 
-The first is the only component allowed to change the shop. The second is a read-only dashboard at
+The first is the only component allowed to change the shop. The second is the sign-in dashboard (see Settings) at
 http://127.0.0.1:8090.
 
 **5. Break something and watch the agent respond.** In a third terminal:
