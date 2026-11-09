@@ -1,0 +1,17 @@
+{
+ "status": "success",
+ "data": {
+  "resultType": "vector",
+  "result": [
+   {
+    "metric": {
+     "service_name": "frontend"
+    },
+    "value": [
+     1792740000,
+     "0.72"
+    ]
+   }
+  ]
+ }
+}

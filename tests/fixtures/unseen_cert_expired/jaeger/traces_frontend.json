@@ -1,0 +1,1412 @@
+{
+ "data": [
+  {
+   "traceID": "8e4f0000000000000000000000000000",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "8e4f0000000000000000000000000000",
+     "spanID": "0000000000000001",
+     "operationName": "POST /api/checkout",
+     "references": [],
+     "startTime": 1792739880000000,
+     "duration": 24000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to convert currency: rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate has expired or is not yet valid\""
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "8e4f0000000000000000000000000000",
+     "spanID": "0000000000000002",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "8e4f0000000000000000000000000000",
+       "spanID": "0000000000000001"
+      }
+     ],
+     "startTime": 1792739880000800,
+     "duration": 21000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to convert currency: rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate has expired or is not yet valid\""
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "8e4f0000000000000000000000000000",
+     "spanID": "0000000000000003",
+     "operationName": "oteldemo.CurrencyService/Convert",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "8e4f0000000000000000000000000000",
+       "spanID": "0000000000000002"
+      }
+     ],
+     "startTime": 1792739880005000,
+     "duration": 6000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.CurrencyService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "currency"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate has expired or is not yet valid\""
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "8e4f0000000000000000000000000001",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "8e4f0000000000000000000000000001",
+     "spanID": "0100000000000001",
+     "operationName": "POST /api/checkout",
+     "references": [],
+     "startTime": 1792739895000000,
+     "duration": 24000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to convert currency: rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate has expired or is not yet valid\""
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "8e4f0000000000000000000000000001",
+     "spanID": "0100000000000002",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "8e4f0000000000000000000000000001",
+       "spanID": "0100000000000001"
+      }
+     ],
+     "startTime": 1792739895000800,
+     "duration": 21000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to convert currency: rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate has expired or is not yet valid\""
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "8e4f0000000000000000000000000001",
+     "spanID": "0100000000000003",
+     "operationName": "oteldemo.CurrencyService/Convert",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "8e4f0000000000000000000000000001",
+       "spanID": "0100000000000002"
+      }
+     ],
+     "startTime": 1792739895005000,
+     "duration": 6000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.CurrencyService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "currency"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate has expired or is not yet valid\""
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "8e4f0000000000000000000000000002",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "8e4f0000000000000000000000000002",
+     "spanID": "0200000000000001",
+     "operationName": "POST /api/checkout",
+     "references": [],
+     "startTime": 1792739910000000,
+     "duration": 24000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to convert currency: rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate has expired or is not yet valid\""
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "8e4f0000000000000000000000000002",
+     "spanID": "0200000000000002",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "8e4f0000000000000000000000000002",
+       "spanID": "0200000000000001"
+      }
+     ],
+     "startTime": 1792739910000800,
+     "duration": 21000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to convert currency: rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate has expired or is not yet valid\""
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "8e4f0000000000000000000000000002",
+     "spanID": "0200000000000003",
+     "operationName": "oteldemo.CurrencyService/Convert",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "8e4f0000000000000000000000000002",
+       "spanID": "0200000000000002"
+      }
+     ],
+     "startTime": 1792739910005000,
+     "duration": 6000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.CurrencyService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "currency"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate has expired or is not yet valid\""
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "8e4f0000000000000000000000000003",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "8e4f0000000000000000000000000003",
+     "spanID": "0300000000000001",
+     "operationName": "POST /api/checkout",
+     "references": [],
+     "startTime": 1792739925000000,
+     "duration": 24000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to convert currency: rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate has expired or is not yet valid\""
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "8e4f0000000000000000000000000003",
+     "spanID": "0300000000000002",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "8e4f0000000000000000000000000003",
+       "spanID": "0300000000000001"
+      }
+     ],
+     "startTime": 1792739925000800,
+     "duration": 21000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to convert currency: rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate has expired or is not yet valid\""
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "8e4f0000000000000000000000000003",
+     "spanID": "0300000000000003",
+     "operationName": "oteldemo.CurrencyService/Convert",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "8e4f0000000000000000000000000003",
+       "spanID": "0300000000000002"
+      }
+     ],
+     "startTime": 1792739925005000,
+     "duration": 6000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.CurrencyService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "currency"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate has expired or is not yet valid\""
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "8e4f0000000000000000000000000004",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "8e4f0000000000000000000000000004",
+     "spanID": "0400000000000001",
+     "operationName": "POST /api/checkout",
+     "references": [],
+     "startTime": 1792739940000000,
+     "duration": 24000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to convert currency: rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate has expired or is not yet valid\""
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "8e4f0000000000000000000000000004",
+     "spanID": "0400000000000002",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "8e4f0000000000000000000000000004",
+       "spanID": "0400000000000001"
+      }
+     ],
+     "startTime": 1792739940000800,
+     "duration": 21000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to convert currency: rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate has expired or is not yet valid\""
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "8e4f0000000000000000000000000004",
+     "spanID": "0400000000000003",
+     "operationName": "oteldemo.CurrencyService/Convert",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "8e4f0000000000000000000000000004",
+       "spanID": "0400000000000002"
+      }
+     ],
+     "startTime": 1792739940005000,
+     "duration": 6000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.CurrencyService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "currency"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate has expired or is not yet valid\""
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "8e4f0000000000000000000000000005",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "8e4f0000000000000000000000000005",
+     "spanID": "0500000000000001",
+     "operationName": "POST /api/checkout",
+     "references": [],
+     "startTime": 1792739955000000,
+     "duration": 24000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to convert currency: rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate has expired or is not yet valid\""
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "8e4f0000000000000000000000000005",
+     "spanID": "0500000000000002",
+     "operationName": "oteldemo.CheckoutService/PlaceOrder",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "8e4f0000000000000000000000000005",
+       "spanID": "0500000000000001"
+      }
+     ],
+     "startTime": 1792739955000800,
+     "duration": 21000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: failed to convert currency: rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate has expired or is not yet valid\""
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    },
+    {
+     "traceID": "8e4f0000000000000000000000000005",
+     "spanID": "0500000000000003",
+     "operationName": "oteldemo.CurrencyService/Convert",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "8e4f0000000000000000000000000005",
+       "spanID": "0500000000000002"
+      }
+     ],
+     "startTime": 1792739955005000,
+     "duration": 6000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.CurrencyService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "currency"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate has expired or is not yet valid\""
+      }
+     ],
+     "logs": [],
+     "processID": "p3",
+     "warnings": null
+    }
+   ]
+  }
+ ],
+ "total": 6,
+ "limit": 0,
+ "offset": 0,
+ "errors": null
+}

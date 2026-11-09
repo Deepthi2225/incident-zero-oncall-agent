@@ -1,0 +1,20 @@
+{
+ "data": [
+  "ad",
+  "cart",
+  "checkout",
+  "currency",
+  "email",
+  "frontend",
+  "frontend-proxy",
+  "payment",
+  "product-catalog",
+  "quote",
+  "recommendation",
+  "shipping"
+ ],
+ "total": 12,
+ "limit": 0,
+ "offset": 0,
+ "errors": null
+}

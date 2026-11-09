@@ -1,0 +1,1442 @@
+{
+ "data": [
+  {
+   "traceID": "9f500000000000000000000000000000",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "9f500000000000000000000000000000",
+     "spanID": "0000000000000001",
+     "operationName": "POST /api/product-review",
+     "references": [],
+     "startTime": 1792739860000000,
+     "duration": 19000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: pq: could not extend file \"base/16384/2619\": No space left on device"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "9f500000000000000000000000000000",
+     "spanID": "0000000000000002",
+     "operationName": "oteldemo.ProductCatalogService/AddReview",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "9f500000000000000000000000000000",
+       "spanID": "0000000000000001"
+      }
+     ],
+     "startTime": 1792739860000700,
+     "duration": 9000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.ProductCatalogService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "product-catalog"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: pq: could not extend file \"base/16384/2619\": No space left on device"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "9f500000000000000000000000000000",
+     "spanID": "0000000000000003",
+     "operationName": "oteldemo.ProductCatalogService/AddReview",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "9f500000000000000000000000000000",
+       "spanID": "0000000000000002"
+      }
+     ],
+     "startTime": 1792739860001000,
+     "duration": 7000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "db.system",
+       "type": "string",
+       "value": "postgresql"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "pq: could not extend file \"base/16384/2619\": No space left on device"
+      }
+     ],
+     "logs": [],
+     "processID": "p5",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "9f500000000000000000000000000001",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "9f500000000000000000000000000001",
+     "spanID": "0100000000000001",
+     "operationName": "POST /api/product-review",
+     "references": [],
+     "startTime": 1792739880000000,
+     "duration": 19000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: pq: could not extend file \"base/16384/2619\": No space left on device"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "9f500000000000000000000000000001",
+     "spanID": "0100000000000002",
+     "operationName": "oteldemo.ProductCatalogService/AddReview",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "9f500000000000000000000000000001",
+       "spanID": "0100000000000001"
+      }
+     ],
+     "startTime": 1792739880000700,
+     "duration": 9000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.ProductCatalogService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "product-catalog"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: pq: could not extend file \"base/16384/2619\": No space left on device"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "9f500000000000000000000000000001",
+     "spanID": "0100000000000003",
+     "operationName": "oteldemo.ProductCatalogService/AddReview",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "9f500000000000000000000000000001",
+       "spanID": "0100000000000002"
+      }
+     ],
+     "startTime": 1792739880001000,
+     "duration": 7000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "db.system",
+       "type": "string",
+       "value": "postgresql"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "pq: could not extend file \"base/16384/2619\": No space left on device"
+      }
+     ],
+     "logs": [],
+     "processID": "p5",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "9f500000000000000000000000000002",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "9f500000000000000000000000000002",
+     "spanID": "0200000000000001",
+     "operationName": "POST /api/product-review",
+     "references": [],
+     "startTime": 1792739900000000,
+     "duration": 19000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: pq: could not extend file \"base/16384/2619\": No space left on device"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "9f500000000000000000000000000002",
+     "spanID": "0200000000000002",
+     "operationName": "oteldemo.ProductCatalogService/AddReview",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "9f500000000000000000000000000002",
+       "spanID": "0200000000000001"
+      }
+     ],
+     "startTime": 1792739900000700,
+     "duration": 9000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.ProductCatalogService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "product-catalog"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: pq: could not extend file \"base/16384/2619\": No space left on device"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "9f500000000000000000000000000002",
+     "spanID": "0200000000000003",
+     "operationName": "oteldemo.ProductCatalogService/AddReview",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "9f500000000000000000000000000002",
+       "spanID": "0200000000000002"
+      }
+     ],
+     "startTime": 1792739900001000,
+     "duration": 7000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "db.system",
+       "type": "string",
+       "value": "postgresql"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "pq: could not extend file \"base/16384/2619\": No space left on device"
+      }
+     ],
+     "logs": [],
+     "processID": "p5",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "9f500000000000000000000000000003",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "9f500000000000000000000000000003",
+     "spanID": "0300000000000001",
+     "operationName": "POST /api/product-review",
+     "references": [],
+     "startTime": 1792739920000000,
+     "duration": 19000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: pq: could not extend file \"base/16384/2619\": No space left on device"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "9f500000000000000000000000000003",
+     "spanID": "0300000000000002",
+     "operationName": "oteldemo.ProductCatalogService/AddReview",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "9f500000000000000000000000000003",
+       "spanID": "0300000000000001"
+      }
+     ],
+     "startTime": 1792739920000700,
+     "duration": 9000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.ProductCatalogService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "product-catalog"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: pq: could not extend file \"base/16384/2619\": No space left on device"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "9f500000000000000000000000000003",
+     "spanID": "0300000000000003",
+     "operationName": "oteldemo.ProductCatalogService/AddReview",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "9f500000000000000000000000000003",
+       "spanID": "0300000000000002"
+      }
+     ],
+     "startTime": 1792739920001000,
+     "duration": 7000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "db.system",
+       "type": "string",
+       "value": "postgresql"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "pq: could not extend file \"base/16384/2619\": No space left on device"
+      }
+     ],
+     "logs": [],
+     "processID": "p5",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "9f500000000000000000000000000004",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "9f500000000000000000000000000004",
+     "spanID": "0400000000000001",
+     "operationName": "POST /api/product-review",
+     "references": [],
+     "startTime": 1792739940000000,
+     "duration": 19000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: pq: could not extend file \"base/16384/2619\": No space left on device"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "9f500000000000000000000000000004",
+     "spanID": "0400000000000002",
+     "operationName": "oteldemo.ProductCatalogService/AddReview",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "9f500000000000000000000000000004",
+       "spanID": "0400000000000001"
+      }
+     ],
+     "startTime": 1792739940000700,
+     "duration": 9000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.ProductCatalogService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "product-catalog"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: pq: could not extend file \"base/16384/2619\": No space left on device"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "9f500000000000000000000000000004",
+     "spanID": "0400000000000003",
+     "operationName": "oteldemo.ProductCatalogService/AddReview",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "9f500000000000000000000000000004",
+       "spanID": "0400000000000002"
+      }
+     ],
+     "startTime": 1792739940001000,
+     "duration": 7000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "db.system",
+       "type": "string",
+       "value": "postgresql"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "pq: could not extend file \"base/16384/2619\": No space left on device"
+      }
+     ],
+     "logs": [],
+     "processID": "p5",
+     "warnings": null
+    }
+   ]
+  },
+  {
+   "traceID": "9f500000000000000000000000000005",
+   "processes": {
+    "p1": {
+     "serviceName": "frontend-proxy",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p2": {
+     "serviceName": "frontend",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p3": {
+     "serviceName": "checkout",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p4": {
+     "serviceName": "cart",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p5": {
+     "serviceName": "product-catalog",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p6": {
+     "serviceName": "currency",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p7": {
+     "serviceName": "shipping",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    },
+    "p8": {
+     "serviceName": "payment",
+     "tags": [
+      {
+       "key": "service.namespace",
+       "type": "string",
+       "value": "opentelemetry-demo"
+      }
+     ]
+    }
+   },
+   "warnings": null,
+   "spans": [
+    {
+     "traceID": "9f500000000000000000000000000005",
+     "spanID": "0500000000000001",
+     "operationName": "POST /api/product-review",
+     "references": [],
+     "startTime": 1792739960000000,
+     "duration": 19000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "http.response.status_code",
+       "type": "int64",
+       "value": 500
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: pq: could not extend file \"base/16384/2619\": No space left on device"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "9f500000000000000000000000000005",
+     "spanID": "0500000000000002",
+     "operationName": "oteldemo.ProductCatalogService/AddReview",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "9f500000000000000000000000000005",
+       "spanID": "0500000000000001"
+      }
+     ],
+     "startTime": 1792739960000700,
+     "duration": 9000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "client"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.service",
+       "type": "string",
+       "value": "oteldemo.ProductCatalogService"
+      },
+      {
+       "key": "server.address",
+       "type": "string",
+       "value": "product-catalog"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "13 INTERNAL: pq: could not extend file \"base/16384/2619\": No space left on device"
+      }
+     ],
+     "logs": [],
+     "processID": "p2",
+     "warnings": null
+    },
+    {
+     "traceID": "9f500000000000000000000000000005",
+     "spanID": "0500000000000003",
+     "operationName": "oteldemo.ProductCatalogService/AddReview",
+     "references": [
+      {
+       "refType": "CHILD_OF",
+       "traceID": "9f500000000000000000000000000005",
+       "spanID": "0500000000000002"
+      }
+     ],
+     "startTime": 1792739960001000,
+     "duration": 7000,
+     "tags": [
+      {
+       "key": "span.kind",
+       "type": "string",
+       "value": "server"
+      },
+      {
+       "key": "otel.scope.name",
+       "type": "string",
+       "value": "demo"
+      },
+      {
+       "key": "rpc.system",
+       "type": "string",
+       "value": "grpc"
+      },
+      {
+       "key": "db.system",
+       "type": "string",
+       "value": "postgresql"
+      },
+      {
+       "key": "error",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "key": "otel.status_code",
+       "type": "string",
+       "value": "ERROR"
+      },
+      {
+       "key": "otel.status_description",
+       "type": "string",
+       "value": "pq: could not extend file \"base/16384/2619\": No space left on device"
+      }
+     ],
+     "logs": [],
+     "processID": "p5",
+     "warnings": null
+    }
+   ]
+  }
+ ],
+ "total": 6,
+ "limit": 0,
+ "offset": 0,
+ "errors": null
+}

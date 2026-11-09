@@ -6,27 +6,19 @@
 <title>P0ppy: On-call agent</title>
 <style>
   :root {
-    color-scheme: light dark;
-    --paper:#f7f1e8; --card:#fffdf9; --sunk:#f0e8db; --ink:#241a17; --soft:#6e5f58; --line:#e4d8c8;
-    --poppy:#d8341f; --poppy-deep:#a82313; --poppy-wash:#fbe3dc;
-    --leaf:#2f7d55; --leaf-wash:#ddf0e4; --honey:#b5720b; --honey-wash:#fbeccb; --sky:#2b6a9e; --sky-wash:#dcebf6;
-    --shadow:0 1px 2px rgba(60,35,20,.06), 0 8px 24px rgba(60,35,20,.06);
-    --display:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
-    --body:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+    color-scheme: dark;
+    --paper:#170a13; --card:#26131f; --sunk:#351c2d; --ink:#fdf1f1; --soft:#c9aeb9; --line:#4d2c42;
+    --on-cause:#2b0509; --accent:#f2ab9f; --poppy:#ff5a6a; --poppy-deep:#ff8d98; --poppy-wash:#5c1727;
+    --leaf:#86dbab; --leaf-wash:#1b3b2e; --honey:#f7bd78; --honey-wash:#4d301b; --sky:#d3aee0; --sky-wash:#40264f;
+    --shadow:0 10px 30px rgba(10,2,8,.35);
+    --display:"Inter","Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+    --body:"Inter","Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
     --mono:"Cascadia Code",ui-monospace,Consolas,Menlo,monospace;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --paper:#17110f; --card:#221a17; --sunk:#2c221e; --ink:#f6ece3; --soft:#b5a59b; --line:#3b2e29;
-      --poppy:#ff6a50; --poppy-deep:#ff8a74; --poppy-wash:#47201a;
-      --leaf:#6bcb97; --leaf-wash:#1d3a2b; --honey:#f0b04a; --honey-wash:#44321a; --sky:#7fbbe8; --sky-wash:#1c3347;
-      --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
-    }
   }
   * { box-sizing:border-box; }
   html { -webkit-text-size-adjust:100%; }
   body { margin:0; background:var(--paper); color:var(--ink); font:15px/1.5 var(--body); }
-  a { color:var(--sky); }
+  a { color:var(--accent); }
   code, .mono { font-family:var(--mono); font-size:.88em; }
   .wrap { max-width:1320px; margin:0 auto; padding:0 24px 56px; }
 
@@ -34,8 +26,8 @@
   .top { display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:18px 0 14px; }
   .brand { display:flex; align-items:center; gap:11px; margin-right:auto; }
   .brand svg { width:40px; height:40px; flex:none; }
-  .brand h1 { margin:0; font:600 26px/1 var(--display); letter-spacing:-.01em; }
-  .brand p { margin:3px 0 0; color:var(--soft); font-size:13px; }
+  .brand h1 { color:var(--accent); margin:0; font:650 22px/1 var(--display); letter-spacing:-.02em; }
+  .brand p { margin:4px 0 0; color:var(--soft); font-size:13px; }
   .chips { display:flex; flex-wrap:wrap; gap:6px; }
   .chip { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(--line); border-radius:99px; background:var(--card); color:var(--soft); font-size:12.5px; white-space:nowrap; }
   .chip::before { content:""; width:7px; height:7px; border-radius:50%; background:var(--line); }
@@ -44,14 +36,26 @@
   .chip.plain::before { display:none; }
 
   /* verdict */
-  .verdict { position:relative; overflow:hidden; padding:26px 28px 22px; border-radius:18px; background:var(--card); box-shadow:var(--shadow); border:1px solid var(--line); }
+  .verdict { position:relative; overflow:hidden; padding:24px 28px 20px; border-radius:12px; background:var(--card); box-shadow:var(--shadow); border:1px solid var(--line); }
   .verdict::before { content:""; position:absolute; inset:0 auto 0 0; width:7px; background:var(--tone); }
   .verdict { --tone:var(--soft); --wash:var(--sunk); }
   .verdict.good { --tone:var(--leaf); --wash:var(--leaf-wash); } .verdict.warn { --tone:var(--honey); --wash:var(--honey-wash); }
   .verdict.bad { --tone:var(--poppy); --wash:var(--poppy-wash); } .verdict.busy { --tone:var(--sky); --wash:var(--sky-wash); }
-  .eyebrow { display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:12.5px; color:var(--soft); }
+  .verdict { background:#2b1022; border-color:#5e3752; }
+  .verdict > :not(.waves) { position:relative; }
+  .waves { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  .verdict .line { color:#fdf1f1; }
+  .verdict .steps li { color:#ecd5db; }
+  .verdict .steps li::before { background:#3a1a30; border-color:#a98396; }
+  .verdict .steps li::after { background:#a98396; }
+  .verdict .steps li.done::before { background:var(--leaf); border-color:var(--leaf); }
+  .verdict .steps li.done::after { background:var(--leaf); }
+  .verdict .steps li.now::before { background:var(--sky); border-color:var(--sky); }
+  .verdict .steps li.hold::before { background:var(--honey); border-color:var(--honey); }
+  .verdict .steps li.fail::before { background:var(--poppy); border-color:var(--poppy); }
+  .eyebrow { display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:12.5px; color:#ecd5db; }
   .tag { padding:2px 9px; border-radius:99px; background:var(--wash,var(--sunk)); color:var(--tone,var(--ink)); font-weight:650; font-size:12px; }
-  .verdict h2 { margin:8px 0 6px; font:600 clamp(28px,4vw,42px)/1.1 var(--display); letter-spacing:-.015em; }
+  .verdict h2 { margin:8px 0 6px; font:650 clamp(26px,3.4vw,36px)/1.15 var(--display); letter-spacing:-.025em; }
   .verdict .line { margin:0; max-width:78ch; font-size:16.5px; }
   .approve { display:inline-block; margin-top:12px; padding:7px 13px; border-radius:10px; background:var(--honey-wash); color:var(--honey); font-weight:650; }
   .dot { display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--tone); animation:pulse 1.5s ease-in-out infinite; }
@@ -69,11 +73,64 @@
   .steps li.hold::before { background:var(--honey); border-color:var(--honey); }
   .steps li.fail::before { background:var(--poppy); border-color:var(--poppy); } .steps li.fail { color:var(--poppy); font-weight:600; }
 
+  body { font-feature-settings:"tnum" 1,"cv11" 1; -webkit-font-smoothing:antialiased; }
+  ::selection { background:var(--accent); color:#2b0509; }
+  * { scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
+  .wrap > *, .stack > * { animation:rise .35s ease-out both; }
+  @keyframes rise { from { opacity:0; transform:translateY(6px); } }
+  .top { padding:22px 0 18px; }
+  .brand p { letter-spacing:.005em; }
+  .panel { transition:border-color .15s; } .panel:hover { border-color:#6a4560; }
+  .panel > h3, summary.head { padding-bottom:12px; border-bottom:1px solid var(--line); }
+  details:not([open]) > summary.head { padding-bottom:0; border-bottom:0; }
+  .cause { position:relative; border-left:3px solid var(--poppy); }
+  .cause:has(.meter.low) { border-left-color:var(--honey); }
+  .cause:has(.pillet.ok) { border-left-color:var(--leaf); }
+  .pillet { font-weight:500; white-space:nowrap; }
+  .pillet.bad { background:var(--poppy-wash); color:var(--poppy-deep); }
+  .pillet.warn { background:var(--honey-wash); color:var(--honey); }
+  .pillet.dim { background:var(--sunk); color:var(--soft); }
+  a.ev { transition:background .12s; } a.ev:hover { background:var(--accent); color:#2b0509; }
+  .tile { transition:transform .12s, border-color .12s; } .tile:hover { transform:translateY(-1px); border-color:var(--soft); }
+  .tile.red b, .tile.amber b { color:var(--ink); }
+  .callout { border:1px solid transparent; border-left:3px solid var(--honey); }
+  .callout.red { border-left-color:var(--poppy); }
+  .evi { margin-bottom:4px; line-height:1.45; }
+  #map .n { transition:opacity .15s; cursor:default; } #map .n:hover rect { stroke:var(--accent); }
+  th { text-transform:none; letter-spacing:.01em; }
+  tr.click td:first-child { color:var(--soft); white-space:nowrap; }
+  footer { margin-top:32px; padding-top:18px; border-top:1px solid var(--line); }
+
+  /* key numbers */
+  .stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-top:18px; }
+  .stat { padding:12px 16px; border-radius:11px; background:#1f0c1a; border:1px solid #5e3752; }
+  .stat b { display:block; font:650 24px/1.2 var(--display); letter-spacing:-.02em; }
+  .stat span { color:#e3cbd3; font-size:12.5px; }
+
+  /* service map */
+  .mapbox { margin-top:20px; }
+  .mapscroll { overflow-x:auto; }
+  #map { display:block; width:100%; min-width:720px; height:auto; }
+  #map .e { fill:none; stroke:var(--line); stroke-width:1.4; }
+  #map .e.hot { stroke:var(--poppy); stroke-width:2.4; stroke-dasharray:7 6; animation:flow 1.1s linear infinite; }
+  @keyframes flow { to { stroke-dashoffset:-13; } }
+  #map .n rect { fill:var(--card); stroke:var(--line); stroke-width:1.4; }
+  #map .n text { fill:var(--ink); font:600 13px var(--body); }
+  #map .n.ok rect { fill:var(--leaf-wash); stroke:var(--leaf); }
+  #map .n.warn rect { fill:var(--honey-wash); stroke:var(--honey); }
+  #map .n.hit rect { fill:var(--honey-wash); stroke:var(--honey); stroke-width:2; }
+  #map .n.cause rect { fill:var(--poppy); stroke:var(--poppy-deep); stroke-width:2; animation:glow 1.5s ease-in-out infinite; }
+  @keyframes glow { 50% { fill-opacity:.72; } }
+  #map .n.cause text { fill:var(--on-cause); }
+  #map .n.mystery rect { fill:var(--sky-wash); stroke:var(--sky); stroke-width:2; stroke-dasharray:5 4; }
+  .legend { display:flex; flex-wrap:wrap; gap:14px; margin-top:10px; color:var(--soft); font-size:12.5px; }
+  .legend i { display:inline-block; width:11px; height:11px; margin-right:5px; border-radius:3px; vertical-align:-1px; }
+
   /* layout */
   .cols { display:grid; grid-template-columns:minmax(0,1.65fr) minmax(0,1fr); gap:20px; margin-top:20px; align-items:start; }
   .stack { display:grid; gap:20px; min-width:0; }
-  .panel { padding:18px 20px; background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); min-width:0; }
-  .panel > h3, summary.head { display:flex; align-items:baseline; gap:8px; margin:0 0 12px; font:600 19px/1.2 var(--display); }
+  .panel { padding:18px 20px; background:var(--card); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); min-width:0; }
+  .panel > h3, summary.head { display:flex; align-items:baseline; gap:8px; margin:0 0 12px; font:600 16px/1.3 var(--display); letter-spacing:-.01em; }
   .note { color:var(--soft); font:400 12.5px/1.4 var(--body); }
   .empty { padding:14px; border-radius:10px; background:var(--sunk); color:var(--soft); font-size:14px; }
   details > summary.head { margin:0; cursor:pointer; list-style:none; }
@@ -84,9 +141,9 @@
 
   /* root causes */
   .causes { display:grid; gap:12px; }
-  .cause { padding:14px 16px; border:1px solid var(--line); border-radius:12px; background:var(--paper); }
+  .cause { padding:14px 16px; border:1px solid var(--line); border-radius:10px; background:var(--card); }
   .cause header { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px; }
-  .cause b.name { font:600 19px/1.2 var(--display); }
+  .cause b.name { font:600 16px/1.3 var(--display); }
   .cause p { margin:6px 0 10px; }
   .pillet { padding:1px 8px; border-radius:6px; background:var(--sunk); color:var(--soft); font-size:12px; }
   .pillet.ok { background:var(--leaf-wash); color:var(--leaf); }
@@ -147,6 +204,7 @@
   @media (max-width:640px) {
     .wrap { padding:0 16px 40px; }
     .verdict { padding:20px 18px 18px 22px; }
+    .stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .steps { grid-template-columns:repeat(4,1fr); row-gap:10px; }
     .steps li::after { display:none; }
     .kv { grid-template-columns:minmax(0,1fr); gap:0; } .kv > :nth-child(even) { margin-bottom:6px; }
@@ -159,13 +217,13 @@
   <div class="top">
     <div class="brand">
       <svg viewBox="0 0 48 48" aria-hidden="true">
-        <path d="M24 30v16" stroke="#2f7d55" stroke-width="3" stroke-linecap="round"/>
-        <path d="M25 41c5 0 9-2 11-6-5-1-9 1-11 6z" fill="#2f7d55"/>
-        <g fill="#d8341f">
+        <path d="M24 30v16" stroke="#c9aeb9" stroke-width="3" stroke-linecap="round"/>
+        <path d="M25 41c5 0 9-2 11-6-5-1-9 1-11 6z" fill="#c9aeb9"/>
+        <g style="fill:var(--accent)">
           <ellipse cx="24" cy="11" rx="10" ry="9"/><ellipse cx="13" cy="20" rx="9" ry="10"/>
           <ellipse cx="35" cy="20" rx="9" ry="10"/><ellipse cx="24" cy="27" rx="10" ry="8"/>
         </g>
-        <circle cx="24" cy="19" r="6" fill="#2a1a16"/><circle cx="24" cy="19" r="2.2" fill="#f0b04a"/>
+        <circle cx="24" cy="19" r="6" fill="#26131f"/><circle cx="24" cy="19" r="2.2" fill="#f7bd78"/>
       </svg>
       <div><h1>P0ppy</h1><p>Your little buddy for big incidents. On-call agent, read-only view.</p></div>
     </div>
@@ -179,11 +237,24 @@
   </div>
 
   <section id="verdict" class="verdict" aria-live="polite">
+    <svg class="waves" viewBox="0 0 1200 360" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">
+      <path fill="#431a34" d="M560 0C720 120 780 250 650 360H1200V0Z"/>
+      <path fill="#5c2a4b" d="M770 0C890 110 910 240 810 360H1200V0Z"/>
+      <path fill="#774669" d="M960 0C1030 100 1040 230 960 360H1200V0Z"/>
+      <path fill="#b57f8a" d="M1040 0C1080 60 1130 130 1200 170V0Z"/>
+      <path fill="#f2c4bb" d="M1130 0C1150 30 1175 55 1200 70V0Z"/>
+    </svg>
     <div class="eyebrow" id="eyebrow"></div>
     <h2 id="say">Looking around&hellip;</h2>
     <p class="line" id="line"></p>
     <div id="approve"></div>
+    <div class="stats" id="stats"></div>
     <ol class="steps" id="steps"></ol>
+  </section>
+
+  <section class="panel mapbox"><h3>Where it hurts <span class="note">red is the cause, amber is what it reaches</span></h3>
+    <div class="mapscroll"><svg id="map" viewBox="0 0 1010 298" role="img" aria-label="Service map coloured by the current incident"><path class="e" data-from="frontend-proxy" data-to="frontend" d="M147 150C165 150 165 150 183 150"/><path class="e" data-from="frontend-proxy" data-to="image-provider" d="M147 150C275 150 275 265 403 265"/><path class="e" data-from="frontend" data-to="ad" d="M317 150C360 150 360 35 403 35"/><path class="e" data-from="frontend" data-to="cart" d="M317 150C475 150 475 210 633 210"/><path class="e" data-from="frontend" data-to="checkout" d="M317 150C360 150 360 110 403 110"/><path class="e" data-from="frontend" data-to="currency" d="M317 150C475 150 475 120 633 120"/><path class="e" data-from="frontend" data-to="product-catalog" d="M317 150C475 150 475 262 633 262"/><path class="e" data-from="frontend" data-to="quote" d="M317 150C590 150 590 165 863 165"/><path class="e" data-from="frontend" data-to="recommendation" d="M317 150C360 150 360 190 403 190"/><path class="e" data-from="frontend" data-to="shipping" d="M317 150C475 150 475 165 633 165"/><path class="e" data-from="frontend" data-to="image-provider" d="M317 150C360 150 360 265 403 265"/><path class="e" data-from="checkout" data-to="cart" d="M537 110C585 110 585 210 633 210"/><path class="e" data-from="checkout" data-to="currency" d="M537 110C585 110 585 120 633 120"/><path class="e" data-from="checkout" data-to="email" d="M537 110C585 110 585 75 633 75"/><path class="e" data-from="checkout" data-to="payment" d="M537 110C585 110 585 30 633 30"/><path class="e" data-from="checkout" data-to="product-catalog" d="M537 110C585 110 585 262 633 262"/><path class="e" data-from="checkout" data-to="shipping" d="M537 110C585 110 585 165 633 165"/><path class="e" data-from="cart" data-to="valkey-cart" d="M767 210C815 210 815 210 863 210"/><path class="e" data-from="product-catalog" data-to="astronomy-db" d="M767 262C815 262 815 262 863 262"/><path class="e" data-from="recommendation" data-to="product-catalog" d="M537 190C585 190 585 262 633 262"/><path class="e" data-from="shipping" data-to="quote" d="M767 165C815 165 815 165 863 165"/><g class="n" data-svc="frontend-proxy"><title>frontend-proxy</title><rect x="13" y="134" width="134" height="32" rx="9"/><text x="80" y="154.5" text-anchor="middle">frontend-proxy</text></g><g class="n" data-svc="frontend"><title>frontend</title><rect x="183" y="134" width="134" height="32" rx="9"/><text x="250" y="154.5" text-anchor="middle">frontend</text></g><g class="n" data-svc="ad"><title>ad</title><rect x="403" y="19" width="134" height="32" rx="9"/><text x="470" y="39.5" text-anchor="middle">ad</text></g><g class="n" data-svc="checkout"><title>checkout</title><rect x="403" y="94" width="134" height="32" rx="9"/><text x="470" y="114.5" text-anchor="middle">checkout</text></g><g class="n" data-svc="recommendation"><title>recommendation</title><rect x="403" y="174" width="134" height="32" rx="9"/><text x="470" y="194.5" text-anchor="middle">recommendation</text></g><g class="n" data-svc="image-provider"><title>image-provider</title><rect x="403" y="249" width="134" height="32" rx="9"/><text x="470" y="269.5" text-anchor="middle">image-provider</text></g><g class="n" data-svc="payment"><title>payment</title><rect x="633" y="14" width="134" height="32" rx="9"/><text x="700" y="34.5" text-anchor="middle">payment</text></g><g class="n" data-svc="email"><title>email</title><rect x="633" y="59" width="134" height="32" rx="9"/><text x="700" y="79.5" text-anchor="middle">email</text></g><g class="n" data-svc="currency"><title>currency</title><rect x="633" y="104" width="134" height="32" rx="9"/><text x="700" y="124.5" text-anchor="middle">currency</text></g><g class="n" data-svc="shipping"><title>shipping</title><rect x="633" y="149" width="134" height="32" rx="9"/><text x="700" y="169.5" text-anchor="middle">shipping</text></g><g class="n" data-svc="cart"><title>cart</title><rect x="633" y="194" width="134" height="32" rx="9"/><text x="700" y="214.5" text-anchor="middle">cart</text></g><g class="n" data-svc="product-catalog"><title>product-catalog</title><rect x="633" y="246" width="134" height="32" rx="9"/><text x="700" y="266.5" text-anchor="middle">product-catalog</text></g><g class="n" data-svc="quote"><title>quote</title><rect x="863" y="149" width="134" height="32" rx="9"/><text x="930" y="169.5" text-anchor="middle">quote</text></g><g class="n" data-svc="valkey-cart"><title>valkey-cart</title><rect x="863" y="194" width="134" height="32" rx="9"/><text x="930" y="214.5" text-anchor="middle">valkey-cart</text></g><g class="n" data-svc="astronomy-db"><title>astronomy-db</title><rect x="863" y="246" width="134" height="32" rx="9"/><text x="930" y="266.5" text-anchor="middle">astronomy-db</text></g></svg></div>
+    <div class="legend"><span><i style="background:var(--poppy)"></i>Root cause</span><span><i style="background:var(--honey)"></i>Affected or alerting</span><span><i style="background:var(--sky)"></i>Unexplained</span><span><i style="background:var(--leaf)"></i>Healthy</span></div>
   </section>
 
   <div class="cols">
@@ -213,7 +284,7 @@
     </div>
     <h4>Notifications</h4><div id="notifyLog" class="log"></div>
   </details></section>
-  <footer>Nothing can be changed from this page. Fixes are approved in the terminal running P0ppy.</footer>
+  <footer>P0ppy never changes anything from this page. Every fix is approved by a human in the terminal.</footer>
 </div>
 <script>
 "use strict";
@@ -262,10 +333,27 @@ async function refreshStatus() {
 }
 
 // --- shop health -----------------------------------------------------------------------------------
+function paintMap() {
+  const r = state.record || {}, d = r.diagnosis || {}, alert = r.alert || {}, health = state.health || {};
+  const causes = new Set((d.root_causes || []).filter((x) => x.status !== "resolved").map((x) => x.component));
+  const mystery = new Set((r.escalations || []).filter((e) => e.source === "unexplained alert").map((e) => e.target));
+  const hit = new Set([...(alert.alerting_services || [alert.service]), ...(d.affected_services || []).map((x) => x.service)].filter(Boolean));
+  const open = r.status === "running" || (r.outcome && r.outcome.status !== "recovered");
+  document.querySelectorAll("#map .n").forEach((n) => {
+    const s = n.dataset.svc;
+    n.setAttribute("class", "n " + (open && causes.has(s) ? "cause" : open && mystery.has(s) ? "mystery" : open && hit.has(s) ? "hit" :
+      health[s] === "red" || health[s] === "amber" ? "warn" : health[s] === "green" ? "ok" : ""));
+  });
+  document.querySelectorAll("#map .e").forEach((e) => {
+    const on = open && (causes.has(e.dataset.to) || (hit.has(e.dataset.to) && !causes.has(e.dataset.from))) && (hit.has(e.dataset.from) || causes.has(e.dataset.from));
+    e.setAttribute("class", "e" + (on ? " hot" : ""));
+  });
+}
 const RANK = { red: 0, amber: 1, green: 2, idle: 3 };
 async function refreshHealth() {
   const h = await get("/api/health");
   const box = $("health");
+  state.health = Object.fromEntries((h.services || []).map((s) => [s.service, s.state])); paintMap();
   if (h.error) { $("healthAt").textContent = ""; box.replaceChildren(empty("Can't see the shop right now. " + h.error + ".")); return; }
   $("healthAt").textContent = v(h.at) + (h.breaches ? ", " + h.breaches + " over the limit" : ", all within limits");
   const rows = (h.services || []).slice().sort((a, b) => (RANK[a.state] - RANK[b.state]) || a.service.localeCompare(b.service));
@@ -433,8 +521,17 @@ function postmortemView(pm) {
         pm.action_items.map((a) => el("tr", {}, el("td", {}, a.action), el("td", {}, a.type), el("td", {}, a.priority), el("td", {}, a.owner))))) : el("div", { class: "note" }, "None recorded.")].flat(Infinity));
 }
 
-function renderIncident(r) { renderVerdict(r); renderCauses(r); renderPlan(r); renderTrail(r); renderEvidence(r.evidence || []); renderTold(r); postmortemView(r.postmortem); }
+function renderStats(r) {
+  const d = r.diagnosis || {}, acc = r.accounting || {}, causes = d.root_causes || [], ev = r.evidence || [];
+  const total = (acc.phases || {}).total_s;
+  const cells = [[typeof d.confidence === "number" ? Math.round(d.confidence * 100) + "%" : "-", "Confidence"],
+    [causes.length || "-", causes.length === 1 ? "Root cause" : "Root causes"], [ev.length, "Pieces of evidence"],
+    [typeof total === "number" ? (total >= 60 ? Math.round(total / 60) + " min" : Math.round(total) + " s") : "-", "Time taken"]];
+  $("stats").replaceChildren(...cells.map(([big, small]) => el("div", { class: "stat" }, el("b", {}, big), el("span", {}, small))));
+}
+function renderIncident(r) { state.record = r; paintMap(); renderStats(r); renderVerdict(r); renderCauses(r); renderPlan(r); renderTrail(r); renderEvidence(r.evidence || []); renderTold(r); postmortemView(r.postmortem); }
 function renderQuiet() {
+  state.record = null; paintMap(); $("stats").replaceChildren();
   $("verdict").className = "verdict good"; $("eyebrow").replaceChildren(); $("approve").replaceChildren(); $("steps").replaceChildren();
   $("say").textContent = "All quiet"; $("line").textContent = "No incidents on record. P0ppy will start investigating as soon as an alert fires.";
   $("causes").replaceChildren(empty("Nothing has gone wrong yet.")); $("plan").replaceChildren(empty("No fix needed.")); $("feed").replaceChildren(empty("No investigation yet."));
@@ -462,6 +559,12 @@ async function refreshNotifications() {
   const rows = (await get("/api/notifications")).notifications || [];
   fill("notifyLog", rows, (row) => joined([row.ts, row.incident_id, row.event, row.channel, row.status, row.channel === "log" ? row.subject : (row.recipients || []).join(", "), row.error]), "Nothing yet.");
 }
+function outcomeTone(o) {
+  if (o === "recovered") return "ok";
+  if (["not_recovered", "inconclusive", "interrupted", "unreadable"].includes(o)) return "bad";
+  if (["escalated", "partial", "running"].includes(o)) return "warn";
+  return "dim";
+}
 function select(id) { state.selected = id; state.lastIncident = ""; window.scrollTo({ top: 0, behavior: "smooth" }); tick(); }
 async function refreshHistory() {
   const h = await get("/api/incidents"), list = h.incidents || [];
@@ -469,7 +572,7 @@ async function refreshHistory() {
   $("history").replaceChildren(el("table", {}, el("tr", {}, ["When", "Incident", "Root cause", "Type", "Confidence", "Outcome"].map((c) => el("th", {}, c))),
     list.map((x) => el("tr", { class: "click" + (state.selected === x.run_id ? " sel" : ""), tabindex: "0", onclick: () => select(x.run_id) },
       el("td", {}, String(v(x.time)).replace("T", " ").slice(0, 16)), el("td", {}, v(x.incident_id)), el("td", {}, v(x.root_cause)), el("td", {}, pretty(x.fault_class)),
-      el("td", {}, typeof x.confidence === "number" ? Math.round(x.confidence * 100) + "%" : NR), el("td", {}, pretty(x.outcome))))));
+      el("td", {}, typeof x.confidence === "number" ? Math.round(x.confidence * 100) + "%" : NR), el("td", {}, el("span", { class: "pillet " + outcomeTone(x.outcome) }, pretty(x.outcome)))))));
 }
 $("history").addEventListener("keydown", (ev) => { if (ev.key === "Enter" && ev.target.matches("tr.click")) ev.target.click(); });
 $("follow").addEventListener("click", (ev) => { ev.preventDefault(); select(null); });

@@ -24,7 +24,8 @@ from tests.schema_check import errors
 from tests.test_agent_loop import block_tool, make_agent, response
 from tests.test_remediate import StubVerifier, human
 
-APP_FIXTURES = ["payment_app_error", "product_one_item", "homepage_flood", "two_app_faults"]
+APP_FIXTURES = ["payment_app_error", "product_one_item", "homepage_flood", "two_app_faults",
+                "unseen_cert_expired", "unseen_disk_full"]
 
 
 @pytest.fixture

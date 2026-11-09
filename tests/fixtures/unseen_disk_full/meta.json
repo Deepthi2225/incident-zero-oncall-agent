@@ -1,0 +1,5 @@
+{
+ "now": 1792740000,
+ "scenario": "astronomy-db has no disk space left; writes fail, container healthy",
+ "synthetic": true
+}

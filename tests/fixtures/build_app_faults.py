@@ -303,7 +303,86 @@ def two_app_faults():
             for src in sources if (src / "docker" / "logs" / f"{svc}.log").exists()))
 
 
+# --- e, f. faults the agent's instructions never mention ---------------------------------------------------------
+TLS_ERR = ('rpc error: code = Unavailable desc = connection error: desc = "transport: authentication handshake failed: '
+           'tls: failed to verify certificate: x509: certificate has expired or is not yet valid"')
+DISK_ERR = 'pq: could not extend file "base/16384/2619": No space left on device'
+
+
+def unseen_cert_expired():
+    """checkout's TLS calls to currency are refused: the certificate expired. A restart cannot help."""
+    fx = Fixture("unseen_cert_expired")
+    rps = {s: r for s, (r, _) in BASE.items()}
+    rps.update(currency=2.6, email=0.02, payment=0.02, shipping=0.3)  # currency still serves its other callers
+    common(fx, "checkout cannot complete a TLS handshake with currency: expired certificate",
+           {"incident_id": "INC-UNSEEN-TLS", "detected_at": iso(NOW, False), "alerting_services": ["checkout"],
+            "trigger": [{"service": "checkout", "signal": "error_rate", "value": 0.97, "threshold": 0.05, "window": "3m"}],
+            "note": "alerting service is a symptom, not necessarily the root cause"},
+           server_rps=rps, server_err={"checkout": 0.4, "frontend": 0.4, "frontend-proxy": 0.4},
+           client_rps={"frontend-proxy": 9.8, "frontend": 15.2, "checkout": 0.9}, client_err={"checkout": 0.4, "frontend": 0.4},
+           p95={s: p for s, (_, p) in BASE.items()})
+
+    def trace(n, t):
+        tid = f"8e4f{n:028x}"
+        s = lambda k: f"{n:02x}{k:014x}"  # noqa: E731
+        up = f"13 INTERNAL: failed to convert currency: {TLS_ERR}"
+        return {"traceID": tid, "processes": processes(), "warnings": None, "spans": [
+            span(tid, s(1), None, "p2", "POST /api/checkout", "server", t, 24000, up, [("http.response.status_code", 500)]),
+            span(tid, s(2), s(1), "p3", "oteldemo.CheckoutService/PlaceOrder", "server", t + 800, 21000, up, [("rpc.system", "grpc")]),
+            span(tid, s(3), s(2), "p3", "oteldemo.CurrencyService/Convert", "client", t + 5000, 6000, TLS_ERR,
+                 [("rpc.service", "oteldemo.CurrencyService"), ("server.address", "currency")]),
+        ]}
+
+    failing = [trace(i, (NOW - 120 + 15 * i) * 1_000_000) for i in range(6)]
+    for svc in ("frontend", "frontend-proxy", "checkout"):
+        fx.write(f"jaeger/traces_{svc}.json", envelope(failing))
+    fx.write("jaeger/traces_currency.json", envelope([]))
+    fx.write("docker/logs/checkout.log", "\n".join(
+        f"{iso(NOW - 120 + 15 * i)} " + json.dumps({"level": "error", "msg": f"failed to convert currency: {TLS_ERR}"})
+        for i in range(6)) + "\n")
+    fx.write("docker/logs/frontend.log", "\n".join(
+        f"{iso(NOW - 119 + 15 * i)} Error: 13 INTERNAL: failed to convert currency" for i in range(6)) + "\n")
+    fx.write("docker/logs/currency.log", "")
+
+
+def unseen_disk_full():
+    """The database's disk is full: reads work, every write fails. Its container looks healthy."""
+    fx = Fixture("unseen_disk_full")
+    rps = {s: r for s, (r, _) in BASE.items()}
+    common(fx, "astronomy-db has no disk space left; writes fail, container healthy",
+           {"incident_id": "INC-UNSEEN-DISK", "detected_at": iso(NOW, False), "alerting_services": ["product-catalog", "frontend"],
+            "trigger": [{"service": "product-catalog", "signal": "error_rate", "value": 0.31, "threshold": 0.05, "window": "3m"},
+                        {"service": "frontend", "signal": "error_rate", "value": 0.08, "threshold": 0.05, "window": "3m"}],
+            "note": "alerting service is a symptom, not necessarily the root cause"},
+           server_rps=rps, server_err={"product-catalog": 1.86, "frontend": 0.72, "frontend-proxy": 0.72},
+           client_rps={"frontend-proxy": 9.8, "frontend": 15.2, "recommendation": 1.5, "checkout": 2.5},
+           client_err={"frontend": 0.72}, p95={s: p for s, (_, p) in BASE.items()})
+
+    def trace(n, t):
+        tid = f"9f50{n:028x}"
+        s = lambda k: f"{n:02x}{k:014x}"  # noqa: E731
+        up = f"13 INTERNAL: {DISK_ERR}"
+        return {"traceID": tid, "processes": processes(), "warnings": None, "spans": [
+            span(tid, s(1), None, "p2", "POST /api/product-review", "server", t, 19000, up, [("http.response.status_code", 500)]),
+            span(tid, s(2), s(1), "p2", "oteldemo.ProductCatalogService/AddReview", "client", t + 700, 9000, up,
+                 [("rpc.service", "oteldemo.ProductCatalogService"), ("server.address", "product-catalog")]),
+            span(tid, s(3), s(2), "p5", "oteldemo.ProductCatalogService/AddReview", "server", t + 1000, 7000, DISK_ERR,
+                 [("rpc.system", "grpc"), ("db.system", "postgresql")]),
+        ]}
+
+    failing = [trace(i, (NOW - 140 + 20 * i) * 1_000_000) for i in range(6)]
+    for svc in ("frontend", "frontend-proxy", "product-catalog"):
+        fx.write(f"jaeger/traces_{svc}.json", envelope(failing))
+    fx.write("docker/logs/astronomy-db.log", "\n".join(
+        f'{iso(NOW - 140 + 20 * i)} ERROR:  could not extend file "base/16384/2619": No space left on device\n'
+        f"{iso(NOW - 140 + 20 * i)} HINT:  Check free disk space." for i in range(6)) + "\n")
+    fx.write("docker/logs/product-catalog.log", "\n".join(
+        f"{iso(NOW - 140 + 20 * i)} " + json.dumps({"level": "error", "msg": f"add review failed: {DISK_ERR}"})
+        for i in range(6)) + "\n")
+    fx.write("docker/logs/frontend.log", "")
+
+
 if __name__ == "__main__":
-    for build in (payment_app_error, product_one_item, homepage_flood, two_app_faults):
+    for build in (payment_app_error, product_one_item, homepage_flood, two_app_faults, unseen_cert_expired, unseen_disk_full):
         build()
         print(f"wrote {build.__name__}")

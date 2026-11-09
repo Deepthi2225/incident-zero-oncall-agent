@@ -1,0 +1,5 @@
+{
+ "now": 1792740000,
+ "scenario": "checkout cannot complete a TLS handshake with currency: expired certificate",
+ "synthetic": true
+}
