@@ -1,0 +1,5 @@
+{
+ "now": 1792740000,
+ "scenario": "two unrelated faults: payment's Charge handler errors and product-catalog fails for one product id",
+ "synthetic": true
+}

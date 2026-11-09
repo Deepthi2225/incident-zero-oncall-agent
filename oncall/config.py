@@ -218,6 +218,9 @@ TWILIO_FROM_NUMBER = _env("TWILIO_FROM_NUMBER")
 ONCALL_PRIMARY_PHONE = _env("ONCALL_PRIMARY_PHONE").replace(" ", "")
 # Who is alerted for each severity (see escalation.example.json). No file: everyone in .env as before.
 ESCALATION_FILE = Path(os.getenv("ONCALL_ESCALATION_FILE", ROOT / "escalation.json"))
+# Slack alerts through an incoming webhook: off unless SLACK_ENABLED=on. .env only.
+SLACK_ENABLED = env_flag("SLACK_ENABLED", False)
+SLACK_WEBHOOK_URL = _env("SLACK_WEBHOOK_URL")
 # Telegram alerts through a bot: off unless TELEGRAM_ENABLED=on. .env only.
 TELEGRAM_ENABLED = env_flag("TELEGRAM_ENABLED", False)
 TELEGRAM_BOT_TOKEN = _env("TELEGRAM_BOT_TOKEN")

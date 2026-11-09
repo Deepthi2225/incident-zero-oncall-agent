@@ -80,7 +80,8 @@ def incident(run_id=None):
     steps = (r.get("remediation_plan") or {}).get("steps") or []
     awaiting = [s.get("step") for s in steps if (s.get("approval") or {}).get("status") == "awaiting"]
     r["ui"] = {"file": path.name, "awaiting_approval": awaiting if r.get("status") == "running" else [],
-               "in_progress": r.get("status") == "running"}
+               "in_progress": r.get("status") == "running",
+               "acknowledged": (r.get("metadata") or {}).get("incident_id") in _acknowledged()}
     if r.get("status") in ("complete", "interrupted") and not r.get("postmortem"):
         try:  # older records: derived on the fly, the file is not changed
             from oncall.postmortem import build_postmortem
@@ -88,6 +89,11 @@ def incident(run_id=None):
         except Exception:  # an odd record must still render
             r["postmortem"] = None
     return clean(r)
+
+
+def _acknowledged():
+    from oncall import ack
+    return ack.acknowledged()
 
 
 def report_text(run_id):

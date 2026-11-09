@@ -173,6 +173,9 @@ turns the agent back on.
 | `python -m oncall emailtest` | Sends one test email |
 | `python -m oncall calltest` | Places one test phone call |
 | `python -m oncall telegramtest` | Sends one test Telegram message |
+| `python -m oncall slacktest` | Sends one test Slack message |
+| `python -m oncall ack <incident>` | Acknowledges an incident; with no id, lists those waiting |
+| `python -m oncall whoison` | Shows who each rotation has on call today |
 | `python -m faultctl list` / `inject <id>` / `status` / `reset` | Practice faults |
 
 ## Troubleshooting
@@ -230,6 +233,20 @@ By default, alerts go to the contacts in `.env`. To alert different people by se
 `escalation.example.json` to `escalation.json` (ignored by Git) and fill in each person's contacts.
 `routes` lists who hears about each severity, and `unknown` covers services with no known severity.
 Anything missing falls back to `.env`, and test runs only ever reach the `.env` contacts.
+
+`escalation.example.json` also shows two optional extras:
+
+- **Rotation:** `rotations` takes turns between people, and `@weekly` in a route means whoever is on
+  call that week. `python -m oncall whoison` shows who it is.
+- **Acknowledge or escalate:** with `acknowledge`, `python -m oncall watch` alerts the `then` people
+  if nobody acknowledges a SEV1 or SEV2 in time. Run `python -m oncall ack <incident>` to acknowledge;
+  answering an approval prompt counts too.
+
+### Slack alerts (optional, off by default)
+
+Create an [incoming webhook](https://api.slack.com/messaging/webhooks), add `SLACK_ENABLED=on` and
+`SLACK_WEBHOOK_URL=your-webhook-url` to `.env`, and check it with `python -m oncall slacktest`. Runs on
+recorded data are not sent.
 
 ### Telegram alerts (optional, off by default)
 
@@ -298,6 +315,8 @@ Check it with `python -m oncall emailtest`. You cannot approve a fix by replying
   ruled out with evidence goes to a human as a possible second fault.
 - **A fault it does not recognise:** it can answer "unknown" and hand over its findings. A diagnosis
   without the right kind of evidence for its label has its confidence capped, so no fix is offered.
+- **Seen something similar before:** P0ppy shares earlier live incidents on those services as a hint
+  on where to look. It still has to prove the cause from the current incident's evidence.
 - **A new alert during a run:** `python -m oncall watch` keeps watching, queues it, and investigates
   everything still broken as one incident afterwards.
 

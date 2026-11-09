@@ -301,7 +301,16 @@ class _Tracker:
         return ready, current
 
 
-def _investigate_while_watching(on_incident, incident, tracker):
+def _tick(on_tick):
+    """Per-poll housekeeping (escalating unacknowledged alerts); it can never stop the watcher."""
+    if on_tick:
+        try:
+            on_tick()
+        except Exception as ex:
+            print(f"[warn] {type(ex).__name__} in the per-poll check", file=sys.stderr, flush=True)
+
+
+def _investigate_while_watching(on_incident, incident, tracker, on_tick=None):
     """Run on_incident on this thread while another keeps polling. (its result, alerts queued)."""
     stop, queued = threading.Event(), []
 
@@ -311,6 +320,7 @@ def _investigate_while_watching(on_incident, incident, tracker):
                 ready, _ = tracker.check()
             except Exception:  # Prometheus hiccup: the next poll tries again
                 continue
+            _tick(on_tick)
             for b in ready:
                 print(f"[watch] new alert during this investigation: {b['service']} {b['signal']}={b['value']}. "
                       "Queued for afterwards.", flush=True)
@@ -333,7 +343,7 @@ def _brief(incident, result):
             "root_causes": [{"component": rc.get("component"), "fault_class": rc.get("fault_class")} for rc in causes]}
 
 
-def run(on_incident=start_investigation, once=False):
+def run(on_incident=start_investigation, once=False, on_tick=None):
     """Poll forever; hand ONE grouped incident to on_incident when breaches persist for
     CONSECUTIVE polls. Polling continues during an investigation: new alerts are queued and handed
     over together afterwards, if still breaching. once=True returns after the first incident."""
@@ -350,6 +360,7 @@ def run(on_incident=start_investigation, once=False):
     while True:
         try:
             ready, current = tracker.check()
+            _tick(on_tick)
         except Exception as ex:  # keep running if Prometheus hiccups
             print(f"[warn] poll failed: {ex}", file=sys.stderr, flush=True)
             time.sleep(POLL_SECS)
@@ -365,7 +376,7 @@ def run(on_incident=start_investigation, once=False):
         waiting = []
         if ready:
             incident = make_incident(ready, earlier)  # ONE incident, many signals
-            result, waiting = _investigate_while_watching(on_incident, incident, tracker)
+            result, waiting = _investigate_while_watching(on_incident, incident, tracker, on_tick)
             earlier = _brief(incident, result)
             if once:
                 return

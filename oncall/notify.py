@@ -14,7 +14,9 @@ failed send is tried again by the next run of the same incident):
   approval_page        sent DURING the run, the moment a step's approval box is shown in the
                        terminal (page(); one per step, EMAIL_ON_APPROVAL, default on)
 
-Channels: JsonlNotifier always appends to runs/notifications.jsonl. When EMAIL_ENABLED=on, email
+Channels: optional phone calls (Twilio), Telegram and Slack are switched on in .env. escalation.json
+chooses who hears about each severity. JsonlNotifier always appends to runs/notifications.jsonl.
+When EMAIL_ENABLED=on, email
 goes out by EMAIL_TRANSPORT: smtp (default; EmailNotifier, standard library smtplib +
 email.message, to exactly SMTP_HOST:SMTP_PORT) or resend (ResendNotifier, one HTTPS POST to
 Resend's API with RESEND_API_KEY; the key is never printed or logged). Both use the same deadline.
@@ -39,6 +41,7 @@ import ssl
 import threading
 import time
 import urllib.parse
+from datetime import date
 from concurrent.futures import ThreadPoolExecutor
 from email.message import EmailMessage
 from itertools import groupby
@@ -233,6 +236,8 @@ def build_event(record, event, why):
             ["", "Next steps:"] + [f"  - {s}" for s in next_steps] + \
             ["", report_line,
              f"Outcome so far: {(record.get('outcome') or {}).get('summary', 'not recorded')}",
+             *([] if banner or not _escalation().get("acknowledge") else
+               ["", f"To acknowledge it and stop further escalation: python -m oncall ack {incident}"]),
              "", "Sent by the AI on-call agent. Nothing was changed because of this message."]
     subject = _tagged(f"[on-call {sev.split(' ')[0]}] {incident}: {TITLES[event]}", meta)
     clean = scrub({"subject": subject, "lines": lines})
@@ -298,6 +303,25 @@ def _escalation():
     return plan if isinstance(plan, dict) else {}
 
 
+def on_call(name, plan=None, today=None):
+    """Who a rotation (escalation.json "rotations") has on call today, or None if it cannot tell."""
+    try:
+        rotation = (_escalation() if plan is None else plan)["rotations"][name]
+        days = ((today or date.today()) - date.fromisoformat(rotation["start"])).days
+        return rotation["people"][(days // int(rotation.get("days", 7))) % len(rotation["people"])]
+    except (KeyError, TypeError, ValueError, ZeroDivisionError, AttributeError, IndexError):
+        return None
+
+
+def contacts_of(names, kind, plan=None):
+    """The kind of address (email, phone, telegram) for each name; "@x" means rotation x's person."""
+    plan = _escalation() if plan is None else plan
+    people = plan.get("people") or {}
+    names = [on_call(n[1:], plan) if str(n).startswith("@") else n for n in names]
+    found = [(people.get(name) or {}).get(kind) for name in names if name]
+    return list(dict.fromkeys(str(value).replace(" ", "") for value in found if value))
+
+
 def contacts_for(event, kind):
     """Addresses of kind (email, phone, telegram) for the event's severity. Empty means use the .env
     contacts, so an alert is never lost to a gap in the file. Test messages never reach the list."""
@@ -306,9 +330,8 @@ def contacts_for(event, kind):
         return []
     try:
         plan = _escalation()
-        routes, people = plan.get("routes") or {}, plan.get("people") or {}
-        found = [(people.get(name) or {}).get(kind) for name in routes.get(sev) or routes.get("unknown") or []]
-        return list(dict.fromkeys(str(value).replace(" ", "") for value in found if value))
+        routes = plan.get("routes") or {}
+        return contacts_of(routes.get(sev) or routes.get("unknown") or [], kind, plan)
     except (AttributeError, TypeError):
         return []
 
@@ -658,6 +681,39 @@ class TelegramNotifier(Notifier):
         return {"status": "failed", "error": str(scrub(error))[:300]}
 
 
+class SlackNotifier(Notifier):
+    """A message in one Slack channel through an incoming webhook. One-way, live incidents only.
+    The webhook URL is a secret, so errors never quote the request."""
+    channel, transport = "slack", "slack"
+
+    def __init__(self, http=None):
+        import requests
+        self.http = http or requests  # tests pass a fake client
+        self.url, self.timeout = config.SLACK_WEBHOOK_URL, config.EMAIL_TIMEOUT_S
+        self.to = ["webhook channel"] if self.url else []
+
+    def wants(self, event):
+        return not str(event.get("subject") or "").startswith("[TEST]")
+
+    def notify(self, event):
+        result = {"channel": self.channel, "transport": self.transport, "recipients": self.to}
+        if not self.url:
+            return {**result, "status": "failed", "error": "slack failed: SLACK_WEBHOOK_URL not set"}
+        try:
+            resp = self.http.post(self.url, json={"text": telegram_text(event)}, timeout=self.timeout)
+        except Exception as e:  # the exception text can contain the URL
+            return {**result, "status": "failed", "error": f"slack failed: {type(e).__name__}"}
+        if 200 <= resp.status_code < 300:
+            return {**result, "status": "sent"}
+        return {**result, "status": "failed", "error": f"slack failed: HTTP {resp.status_code}"}
+
+
+def send_test_slack():
+    """One labelled test message; ignores SLACK_ENABLED so the setup can be checked first."""
+    return SlackNotifier().notify({"subject": "[on-call TEST] Slack test from P0ppy",
+                                   "lines": ["This is only a test message. Nothing is wrong."]})
+
+
 def telegram_chats(http=None):
     """[(chat id, name)] of people who have messaged the bot, to help fill in TELEGRAM_CHAT_ID."""
     if http is None:
@@ -704,6 +760,8 @@ def notifiers():
         chans.append(CallNotifier())
     if config.TELEGRAM_ENABLED:
         chans.append(TelegramNotifier())
+    if config.SLACK_ENABLED:
+        chans.append(SlackNotifier())
     return chans
 
 
@@ -741,6 +799,8 @@ def _run(chan, message, box):
 
 def _line(event, entry):
     """The one terminal line for one attempt."""
+    if entry["channel"] == "slack":
+        return f"[notify] {event}: " + ("slack message sent" if entry["status"] == "sent" else str(entry.get("error")))
     if entry["channel"] == "telegram":
         if entry["status"] == "sent":
             return f"[notify] {event}: telegram message sent to chat {', '.join(entry['recipients'])}"

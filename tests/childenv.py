@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parent.parent
 _SOURCES = ["oncall/config.py", "oncall/record.py", "oncall/notify.py", "actionapi/config.py", "detector.py"]
 _NAME = re.compile(r"""["']([A-Z][A-Z0-9_]{2,})["']""")
 _PREFIXES = ("ONCALL_", "EMAIL_", "SMTP_", "RESEND_", "NOTIFICATION_", "ACTION_API_", "VERIFY_", "ANTHROPIC_",
-             "GEMINI_", "GROQ_", "TWILIO_", "CALLS_", "TELEGRAM_", "LOCUST_", "FAULTCTL_")
+             "GEMINI_", "GROQ_", "TWILIO_", "CALLS_", "TELEGRAM_", "SLACK_", "LOCUST_", "FAULTCTL_")
 _KEEP = {"PATH", "PATHEXT", "SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "COMSPEC", "TEMP", "TMP", "TMPDIR", "HOME",
          "USERPROFILE", "APPDATA", "LOCALAPPDATA", "PYTHONPATH", "PYTHONHOME", "LANG", "LC_ALL"}
 SETTINGS = (set().union(*(_NAME.findall((ROOT / p).read_text(encoding="utf-8")) for p in _SOURCES))

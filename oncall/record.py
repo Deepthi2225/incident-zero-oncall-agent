@@ -71,7 +71,7 @@ REDACTED, FLAG_REMOVED = "<redacted>", "<removed: feature-flag data>"
 def _known_secrets():
     values = [os.environ.get("ANTHROPIC_API_KEY"), os.environ.get("ANTHROPIC_AUTH_TOKEN"),
               os.environ.get("GEMINI_API_KEY"), config.GROQ_API_KEY, config.ACTION_API_TOKEN,
-              config.SMTP_PASSWORD, config.RESEND_API_KEY, config.TWILIO_AUTH_TOKEN, config.TELEGRAM_BOT_TOKEN]
+              config.SMTP_PASSWORD, config.RESEND_API_KEY, config.TWILIO_AUTH_TOKEN, config.TELEGRAM_BOT_TOKEN, config.SLACK_WEBHOOK_URL]
     return [v for v in values if v and len(v) >= 6]
 
 

@@ -16,7 +16,7 @@ from pathlib import Path
 
 import anthropic
 
-from oncall import config
+from oncall import config, memory
 from oncall.agent.prompt import alert_message, build_system_prompt
 from oncall.agent.actions import hold_for_human
 from oncall.agent.diagnosis import CONFIDENT, SUBMIT_TOOL, check_coverage, empty_summary, validate
@@ -113,7 +113,16 @@ class Agent:
         # Dry run unless a live Action API client is passed in (--execute).
         self.action_client = action_client or DryRunClient()
         self._rec = None  # the run being recorded, for the "approval needed" page
-        self.approve = make_approver(auto_approve, self.interactive, on_prompt=self._page)
+        ask = make_approver(auto_approve, self.interactive, on_prompt=self._page)
+
+        def approve(step, diag):  # a human answering the prompt has acknowledged the incident
+            decision = ask(step, diag)
+            if (decision.get("status") in ("approved", "rejected") and decision.get("approved_by") != "auto"
+                    and decision.get("notes") != "cancelled or interrupted" and self._rec is not None):
+                from oncall import ack
+                ack.acknowledge(self._rec.data["metadata"].get("incident_id"), "approval prompt")
+            return decision
+        self.approve = approve
         self.verifier = verifier
         self.tools = TOOL_SPECS + [SUBMIT_TOOL]
         self.system = build_system_prompt(self.max_steps)
@@ -165,7 +174,10 @@ class Agent:
 
     def _investigate_and_act(self, rec, alert, info, run_id):
         started = rec.t0
-        messages = [{"role": "user", "content": alert_message(alert)}]
+        history = memory.note(alert) if info["source"] == "live" else ""  # fixtures and replays start clean
+        if history:
+            self.log("[memory] similar earlier incidents shared with the model as a hint")
+        messages = [{"role": "user", "content": alert_message(alert) + history}]
         summary, outcome, error = None, "incomplete", None
         if info["source"] == "test":
             self.log("!!! TEST MODE: answers come from fixtures, not the live demo")

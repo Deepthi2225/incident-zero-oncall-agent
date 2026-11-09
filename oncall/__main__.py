@@ -11,6 +11,9 @@
   python -m oncall emailtest                     send one test email with the .env settings
   python -m oncall calltest                      place one test phone call with the .env settings
   python -m oncall telegramtest                  send one test Telegram message with the .env settings
+  python -m oncall slacktest                     send one test Slack message with the .env settings
+  python -m oncall ack [incident]                acknowledge an incident, or list those waiting
+  python -m oncall whoison                       show who each rotation has on call today
 
 Source flags (before the command). Default is live. --source bundle --bundle DIR replays a recording;
 --record DIR saves one while live; --test [--fixtures DIR] uses fixtures under tests/fixtures/ and
@@ -88,9 +91,10 @@ def cmd_watch(args):
     # One source of truth for detection: detector.py and its calibrated per-service limits.
     sys.path.insert(0, str(config.ROOT))
     import detector
+    from oncall import ack
     from oncall.agent.run import run_agent
     detector.POLL_SECS = args.interval
-    detector.run(on_incident=run_agent, once=args.once)
+    detector.run(on_incident=run_agent, once=args.once, on_tick=ack.escalate_overdue)
 
 
 def find_run(run):
@@ -171,6 +175,31 @@ def cmd_telegramtest(_args):
     sys.exit(1)
 
 
+def cmd_slacktest(_args):
+    """One clearly labelled test message. Does not run the agent."""
+    from oncall import notify
+    entry = notify.send_test_slack()
+    print("slack message sent" if entry["status"] == "sent" else entry.get("error"))
+    if entry["status"] != "sent":
+        sys.exit(1)
+
+
+def cmd_ack(args):
+    from oncall import ack
+    if args.incident:
+        ack.acknowledge(args.incident)
+        print(f"acknowledged {args.incident}")
+        return
+    print("\n".join(f"{i}: {row.get('subject')}" for i, row in ack.waiting().items()) or "nothing waiting")
+
+
+def cmd_whoison(_args):
+    from oncall import notify
+    rotations = notify._escalation().get("rotations") or {}
+    print("\n".join(f"{name}: {notify.on_call(name) or 'cannot tell, check escalation.json'}" for name in rotations)
+          or "no rotations in escalation.json")
+
+
 def cmd_resume(_args):
     config.KILL_SWITCH_FILE.unlink(missing_ok=True)
     print("kill switch OFF")
@@ -203,12 +232,17 @@ def main():
     sub.add_parser("emailtest", help="send one test email with the email settings in .env")
     sub.add_parser("calltest", help="place one test phone call with the Twilio settings in .env")
     sub.add_parser("telegramtest", help="send one test Telegram message with the settings in .env")
+    sub.add_parser("slacktest", help="send one test Slack message with the settings in .env")
+    a = sub.add_parser("ack", help="acknowledge an incident, or list the ones waiting")
+    a.add_argument("incident", nargs="?")
+    sub.add_parser("whoison", help="show who each rotation has on call today")
     args = p.parse_args()
-    if args.cmd not in ("stop", "resume", "emailtest", "calltest", "telegramtest"):
+    if args.cmd not in ("stop", "resume", "emailtest", "calltest", "telegramtest", "slacktest", "ack", "whoison"):
         apply_source_args(p, args)
     {"check": cmd_check, "baseline": cmd_baseline, "investigate": cmd_investigate,
      "watch": cmd_watch, "verify": cmd_verify, "stop": cmd_stop, "resume": cmd_resume,
-     "emailtest": cmd_emailtest, "calltest": cmd_calltest, "telegramtest": cmd_telegramtest}[args.cmd](args)
+     "emailtest": cmd_emailtest, "calltest": cmd_calltest, "telegramtest": cmd_telegramtest,
+     "slacktest": cmd_slacktest, "ack": cmd_ack, "whoison": cmd_whoison}[args.cmd](args)
 
 
 if __name__ == "__main__":

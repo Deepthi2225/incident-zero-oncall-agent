@@ -304,6 +304,7 @@ function renderVerdict(r) {
     services.length ? el("span", {}, "Alert on " + services.join(", ")) : null,
     meta.started_at ? el("span", {}, String(meta.started_at).replace("T", " ").slice(0, 19)) : null,
     nonLive ? el("span", { class: "tag" }, "Not live: " + meta.mode) : null,
+    (r.ui || {}).acknowledged ? el("span", { class: "tag" }, "Acknowledged") : null,
     state.selected ? el("span", {}, "Viewing an older run") : null,
   ].filter(Boolean));
   $("approve").replaceChildren(...((r.ui || {}).awaiting_approval || []).length ? [el("span", { class: "approve" }, "Answer y or N in the terminal running P0ppy")] : []);

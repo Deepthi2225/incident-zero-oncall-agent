@@ -4,11 +4,15 @@
     "lead": {"email": "lead@example.com", "phone": "+910000000002", "telegram": "100000002"},
     "manager": {"email": "manager@example.com", "phone": "+910000000003", "telegram": "100000003"}
   },
+  "rotations": {
+    "weekly": {"people": ["primary", "lead"], "start": "2026-11-02", "days": 7}
+  },
+  "acknowledge": {"wait_minutes": 5, "then": ["manager"], "severities": ["SEV1", "SEV2"]},
   "routes": {
-    "SEV1": ["primary", "lead", "manager"],
-    "SEV2": ["primary", "lead"],
-    "SEV3": ["primary"],
-    "SEV4": ["primary"],
+    "SEV1": ["@weekly", "lead", "manager"],
+    "SEV2": ["@weekly", "lead"],
+    "SEV3": ["@weekly"],
+    "SEV4": ["@weekly"],
     "unknown": ["primary", "lead"]
   }
 }

@@ -275,7 +275,35 @@ def homepage_flood():
     fx.write("docker/logs/frontend.log", "")
 
 
+# --- d. two unrelated faults at once (built from a and b) ------------------------------------------------------
+def two_app_faults():
+    """payment's Charge handler fails AND product-catalog fails for one product. Run a and b first."""
+    fx = Fixture("two_app_faults")
+    rps = {s: r for s, (r, _) in BASE.items()}
+    rps.update(email=0.03)
+    common(fx, "two unrelated faults: payment's Charge handler errors and product-catalog fails for one product id",
+           {"incident_id": "INC-APP-TWO", "detected_at": iso(NOW, False), "alerting_services": ["checkout", "product-catalog"],
+            "trigger": [{"service": "checkout", "signal": "error_rate", "value": 0.93, "threshold": 0.05, "window": "3m"},
+                        {"service": "product-catalog", "signal": "error_rate", "value": 0.097, "threshold": 0.05, "window": "3m"}],
+            "note": "alerting service is a symptom, not necessarily the root cause"},
+           server_rps=rps, server_err={"payment": 0.37, "checkout": 0.38, "product-catalog": 0.58, "frontend": 0.69, "frontend-proxy": 0.69},
+           client_rps={"frontend-proxy": 9.8, "frontend": 15.2, "checkout": 2.5, "recommendation": 1.5},
+           client_err={"checkout": 0.37, "frontend": 0.69, "recommendation": 0.12}, p95={s: p for s, (_, p) in BASE.items()})
+    sources = [HERE / "payment_app_error", HERE / "product_one_item"]
+    for svc in ("frontend", "frontend-proxy", "checkout", "payment", "product-catalog"):
+        traces = []
+        for src in sources:
+            path = src / "jaeger" / f"traces_{svc}.json"
+            if path.exists():
+                traces += json.loads(path.read_text(encoding="utf-8"))["data"]
+        fx.write(f"jaeger/traces_{svc}.json", envelope(traces))
+    for svc in ("payment", "checkout", "frontend", "email", "cart", "product-catalog", "recommendation"):
+        fx.write(f"docker/logs/{svc}.log", "".join(
+            (src / "docker" / "logs" / f"{svc}.log").read_text(encoding="utf-8")
+            for src in sources if (src / "docker" / "logs" / f"{svc}.log").exists()))
+
+
 if __name__ == "__main__":
-    for build in (payment_app_error, product_one_item, homepage_flood):
+    for build in (payment_app_error, product_one_item, homepage_flood, two_app_faults):
         build()
         print(f"wrote {build.__name__}")
