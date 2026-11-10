@@ -83,7 +83,7 @@ with no diagnosis because no key was set; they are counted as runs but not as di
 
 | Measure | Count |
 |---|---|
-| Saved runs / live runs | 55 / 26 |
+| Saved runs / live runs | 55 / 27 (2 of the live runs ended early: no key set on Day 1) |
 | Diagnoses with root causes / root-cause claims / evidence citations | 30 / 38 / 148 |
 | Citations the validator dropped as not collected | 0 |
 | Live Claude runs on 24 Oct naming payment's stopped container as the top cause | 15 of 15; confidence 0.65 to 0.92, median 0.90 |
