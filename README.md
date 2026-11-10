@@ -212,6 +212,45 @@ To alert different people by severity, copy `escalation.example.json` to `escala
 supports on-call rotations and escalating when nobody acknowledges in time. Anything missing falls back to `.env`,
 and test runs only ever reach the `.env` contacts.
 
+## How well it works
+
+We tested P0ppy on faults we injected ourselves, live on one laptop with Claude Opus 5.5 on 23 and
+24 October 2026, and later on recorded incidents with other models. These are our own tests, not
+an independent benchmark. Every run is saved in `results/`, and [EVALUATION.md](EVALUATION.md)
+has the details.
+
+### Reliability metrics
+
+| Metric | What it tells you | Result |
+|---|---|---|
+| Diagnosis accuracy (live) | Did it name the right failing component and fault type? | 3 of 3 correct: stopped payment service, cache down, database down |
+| Evidence validity | Does every claim cite evidence P0ppy really collected? | Every evidence ID valid in all live diagnoses; claims citing anything else are dropped |
+| Confidence | How sure it was, from 0 to 1 | 0.85 to 0.92 on correct live diagnoses |
+| Time to diagnosis (live) | Alert to named root cause | 26 to 34 seconds |
+| End-to-end recovery | Alert, diagnose, approve, fix, verify, report | 3 of 3 approved live fixes recovered |
+| Time to verified recovery | Approved fix until health is back near the baseline | 176 to 280 seconds |
+| Cost per incident | Estimated LLM spend (Claude) | $0.14 to $0.44 |
+| Kill switch | Does it stop a step that was already approved? | Yes: the step was refused and the run escalated |
+| Safe escalation | Does it hand over instead of guessing? | Yes, in every run with low confidence or no allowed fix |
+| Several faults at once | Can it separate two causes? | Found both (payment errors and one broken product), each with its own evidence |
+| Unseen faults | Faults with no matching runbook | Disk full and expired certificate: right origin both times, escalated to a person instead of acting |
+| Fault injection and reset | Does the test environment recover cleanly? | 26 of 26 faults reset; telemetry back to normal in 25 of 26 |
+| Automated tests | Safety rules, validator, approvals, rollback, alerts, dashboard | 616 pass, with no Docker or network needed |
+
+### What this does and does not show
+
+- **Strengths:** diagnoses come from real telemetry with evidence you can check, nothing changes
+  without a person's "yes", and when P0ppy is unsure or has no safe fix it escalates instead of
+  guessing.
+- **Small sample:** the full loop was proven live on one fault type (a stopped service) and one
+  action (restart). These numbers do not predict accuracy on new incidents.
+- **Not yet tested live:** memory leaks, CPU pressure, network latency and several faults at once.
+  The multi-fault and unseen-fault results come from recorded incidents, and rollback is covered by
+  automated tests only.
+- **Smaller models are less reliable:** on recorded incidents, Groq and a local Ollama model got
+  several faults right but once gave a confident wrong answer. Because of that, a diagnosis the
+  fallback model helped with never offers a fix; it goes to a person.
+
 ## How it stays safe
 
 - **The agent only reads.** Every change goes through the Action API, a separate local service that needs a token.

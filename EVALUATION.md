@@ -64,13 +64,24 @@ The wrong diagnosis led to a rule: a diagnosis the fallback helped produce keeps
 offers no fix, and goes to a human. Run 20261108-162654 predates that rule. The same fixture gave
 different answers on different runs, so these confidence numbers should not be read as reliable.
 
+## Several faults at once and unseen faults (offline fixtures, 9 Nov 2026)
+
+Synthetic fixtures, nothing executed. Saved outputs are in [results/multi_fault/](results/multi_fault/)
+and [results/unseen/](results/unseen/).
+
+| Run | Fixture (actual fault) | Model | Result | Time |
+|---|---|---|---|---|
+| 20261109-084014 | two_app_faults (payment errors + one product fails) | Groq | Both causes found: payment `service_error` 0.94, product-catalog `input_specific_error` 0.92; escalated, as neither has an allowlisted fix | 193 s |
+| 20261109-110811 | unseen_disk_full (Postgres out of disk) | Groq | Right origin (astronomy-db); the reviewer doubted "disk full" against a quota, lowering 0.59 to 0.39; escalated | 183 s |
+| 20261109-115221 | unseen_cert_expired (TLS to currency) | Ollama | Right cause (expired certificate on the currency call), 0.95; its proposed restart was replaced by escalation by the validator | 137 s |
+
 ## Other checks
 
 - **Fault injection and reset:** all 26 `faultctl` faults were injected for 60 s and reset. Containers
   and shop APIs recovered 26 of 26. Telemetry returned near its healthy snapshot in 25 of 26; the
   exception was payment traffic after `stop-payment`, where the snapshot itself was a burst
   ([results/recovery_audit.json](results/recovery_audit.json)).
-- **Automated tests:** 426 pass, using no Docker or network. They cover the flag guards, evidence
+- **Automated tests:** 616 pass, using no Docker or network. They cover the flag guards, evidence
   validator, approval rules, kill switch, Action API refusals, rollback and verification.
 - **Rule compliance:** a guard blocks flag URLs, ports and files, and flag data is stripped from all
   telemetry. A test confirms the agent never issues state-changing docker commands.
@@ -82,7 +93,7 @@ different answers on different runs, so these confidence numbers should not be r
 - `toggle_feature_flag` and `scale_service` are not implemented (they return 501). Faults that need
   them are escalated rather than fixed.
 - Memory leak, CPU pressure, network latency and combined faults were not evaluated end to end in
-  the saved runs.
+  the saved live runs. Combined and unseen faults have only been run on offline fixtures, one run each.
 - Diagnosis was measured on a small sample of faults we injected ourselves, so these numbers do not
   predict accuracy on unseen incidents.
 - All live results come from Claude. Groq and Ollama have only run on offline fixtures, and Gemini has
