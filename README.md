@@ -1,11 +1,19 @@
 <div align="center">
 
-# P0ppy
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/banner-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/banner-light.svg">
+  <img src="docs/banner-light.svg" alt="P0ppy: AI on-call engineer for production incidents" width="760">
+</picture>
 
-### Your little buddy for big incidents
+<br>
 
-An AI on-call engineer that investigates production incidents with real telemetry,<br>
-proves its diagnosis with evidence, and fixes things only after a person says yes.
+*Your little buddy for big incidents.*
+
+Investigates production incidents with real telemetry, proves its diagnosis with evidence,<br>
+and fixes things only after a person says yes.
+
+<br>
 
 [![Tests](https://img.shields.io/badge/tests-616%20passing-2ea44f?style=flat-square)](#how-well-it-works)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776ab?style=flat-square&logo=python&logoColor=white)](https://www.python.org/downloads/)
