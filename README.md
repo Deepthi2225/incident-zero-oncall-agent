@@ -214,28 +214,40 @@ and test runs only ever reach the `.env` contacts.
 
 ## How well it works
 
-We tested P0ppy on faults we injected ourselves, live on one laptop with Claude Opus 5.5 on 23 and
-24 October 2026, and later on recorded incidents with other models. These are our own tests, not
-an independent benchmark. Every run is saved in `results/`, and [EVALUATION.md](EVALUATION.md)
-has the details.
+We tested P0ppy on faults we injected ourselves: live on one laptop with Claude Opus 5.5 on 23 and
+24 October 2026, and later on recorded incidents with other models. Every number below is counted
+from the saved run records in `results/`, which you can open and check. These are our own tests,
+not an independent benchmark. [EVALUATION.md](EVALUATION.md) has every run.
 
-### Reliability metrics
+### The numbers
 
-| Metric | What it tells you | Result |
+| Result | What it means |
+|---|---|
+| **55 runs** | Saved investigations, 26 of them live against the running shop |
+| **3 of 3** | Different live faults diagnosed correctly: a stopped service, the cache down and the database down |
+| **15 of 15** | Live runs of the same incident that named the same root cause, with median confidence 0.90. Twice the alert came from another service and P0ppy still traced it back to payment |
+| **0 of 148** | Evidence citations pointing at evidence P0ppy had not collected. Nothing was invented |
+| **32 s** | Median time from alert to diagnosis, live (26 to 62 s) |
+| **3 of 3** | Approved live fixes that recovered, confirmed against the healthy baseline in 176 to 280 s |
+| **0** | Changes made without a person's "yes". 4 rejected proposals and 4 dry runs changed nothing, and all 5 restarts in the Action API log were approved |
+| **3** | Restarts the safety validator blocked because the evidence didn't support them; each became an escalation instead |
+| **1 of 1** | Kill-switch tests where an already-approved step was refused |
+| **2 of 2** | Recorded faults P0ppy had never seen (full disk, expired certificate) where it found the right origin and handed over instead of guessing a fix |
+| **2 of 2** | Causes found when two faults happened at once, each with its own evidence |
+| **26 of 26** | Practice faults that were injected and reset cleanly |
+| **$0.19** | Median model cost per live incident with Claude ($0.14 to $0.44) |
+| **616** | Automated tests passing, with no Docker or network needed |
+
+### How it improved
+
+| What | Before | After |
 |---|---|---|
-| Diagnosis accuracy (live) | Did it name the right failing component and fault type? | 3 of 3 correct: stopped payment service, cache down, database down |
-| Evidence validity | Does every claim cite evidence P0ppy really collected? | Every evidence ID valid in all live diagnoses; claims citing anything else are dropped |
-| Confidence | How sure it was, from 0 to 1 | 0.85 to 0.92 on correct live diagnoses |
-| Time to diagnosis (live) | Alert to named root cause | 26 to 34 seconds |
-| End-to-end recovery | Alert, diagnose, approve, fix, verify, report | 3 of 3 approved live fixes recovered |
-| Time to verified recovery | Approved fix until health is back near the baseline | 176 to 280 seconds |
-| Cost per incident | Estimated LLM spend (Claude) | $0.14 to $0.44 |
-| Kill switch | Does it stop a step that was already approved? | Yes: the step was refused and the run escalated |
-| Safe escalation | Does it hand over instead of guessing? | Yes, in every run with low confidence or no allowed fix |
-| Several faults at once | Can it separate two causes? | Found both (payment errors and one broken product), each with its own evidence |
-| Unseen faults | Faults with no matching runbook | Disk full and expired certificate: right origin both times, escalated to a person instead of acting |
-| Fault injection and reset | Does the test environment recover cleanly? | 26 of 26 faults reset; telemetry back to normal in 25 of 26 |
-| Automated tests | Safety rules, validator, approvals, rollback, alerts, dashboard | 616 pass, with no Docker or network needed |
+| Automated tests | 106 at the end of Day 1 (23 Oct) | 301 at code freeze, 406 at the end of Day 2, **616** now |
+| Recorded test incidents | 1 (a stopped service) | **7**, adding an app error, one broken product, a traffic flood, two faults at once, a full disk and an expired certificate |
+| What it can do | Day 1: diagnose and summarise | The full loop live: diagnose, approve, fix, verify and report, plus a dashboard and alerts |
+| Diagnosis output | Checkpoint 1: a summary naming a suspected origin | A fault type, a confidence and cited evidence for every cause |
+| Restart-loop practice faults | Did not actually crash 3 of the services | Crash confirmed, with a kill-and-start fallback (checked live on payment) |
+| Smaller models | 8 Nov: a confident wrong answer (0.95) that proposed restarting the wrong service | A diagnosis the fallback model helped with never offers a fix, and the validator has since turned 3 unjustified restarts into escalations |
 
 ### What this does and does not show
 

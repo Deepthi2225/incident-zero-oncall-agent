@@ -1,0 +1,813 @@
+{
+  "run_id": "20261023-172336",
+  "source": "test",
+  "source_detail": "fixtures tests/fixtures/payment_down",
+  "alert": {
+    "source": "watcher",
+    "fired_at": "2026-10-23T07:20:00Z",
+    "service": "checkout",
+    "signal": "error_rate",
+    "value": 0.952,
+    "threshold": 0.05,
+    "window_s": 120,
+    "other_breaches": [
+      {
+        "service": "frontend",
+        "signal": "error_rate",
+        "value": 0.044,
+        "threshold": 0.05
+      }
+    ]
+  },
+  "model": "claude-opus-5-5",
+  "steps": [
+    {
+      "step": 1,
+      "tool": "get_service_health",
+      "input": {
+        "window": "5m"
+      },
+      "result": {
+        "window_s": 300,
+        "baseline": "loaded",
+        "flagged": [
+          {
+            "service": "checkout",
+            "rps": 0.42,
+            "error_rate": 0.9524,
+            "client_error_rate": 0.16,
+            "p95_ms": 45.0,
+            "baseline": {
+              "rps": 0.41,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 260
+            },
+            "p95_ratio": 0.17,
+            "rps_ratio": 1.02,
+            "flags": [
+              "errors",
+              "client_call_errors"
+            ],
+            "criticality": "critical",
+            "evidence": "E1"
+          },
+          {
+            "service": "payment",
+            "rps": 0.0,
+            "error_rate": null,
+            "p95_ms": null,
+            "baseline": {
+              "rps": 0.4,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 35
+            },
+            "flags": [
+              "silent"
+            ],
+            "criticality": "critical",
+            "evidence": "E2"
+          },
+          {
+            "service": "email",
+            "rps": 0.0,
+            "error_rate": null,
+            "p95_ms": null,
+            "baseline": {
+              "rps": 0.38,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 40
+            },
+            "flags": [
+              "silent"
+            ],
+            "criticality": "medium",
+            "evidence": "E3"
+          },
+          {
+            "service": "frontend-proxy",
+            "rps": 9.8,
+            "error_rate": 0.0408,
+            "client_error_rate": 0.0408,
+            "p95_ms": 190.0,
+            "baseline": {
+              "rps": 9.6,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 185
+            },
+            "p95_ratio": 1.03,
+            "rps_ratio": 1.02,
+            "flags": [
+              "errors",
+              "client_call_errors"
+            ],
+            "criticality": "critical",
+            "evidence": "E4"
+          },
+          {
+            "service": "frontend",
+            "rps": 9.1,
+            "error_rate": 0.044,
+            "client_error_rate": 0.0263,
+            "p95_ms": 180.0,
+            "baseline": {
+              "rps": 9.0,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 170
+            },
+            "p95_ratio": 1.06,
+            "rps_ratio": 1.01,
+            "flags": [
+              "errors",
+              "client_call_errors"
+            ],
+            "criticality": "critical",
+            "evidence": "E5"
+          }
+        ],
+        "healthy": [
+          "cart",
+          "product-catalog",
+          "shipping",
+          "currency",
+          "recommendation",
+          "ad",
+          "quote",
+          "image-provider"
+        ]
+      },
+      "is_error": false,
+      "seconds": 0.0
+    },
+    {
+      "step": 1,
+      "tool": "get_deploy_history",
+      "input": {
+        "lookback": "30m"
+      },
+      "result": {
+        "lookback_s": 1800,
+        "containers": 17,
+        "stats_available": true,
+        "changed_or_unhealthy": [
+          {
+            "name": "payment",
+            "status": "exited",
+            "exit_code": 143,
+            "oom_killed": false,
+            "restart_count": 0,
+            "health": "none",
+            "started_at": "2026-10-23T06:30:00.123456717Z",
+            "started_ago_s": 2999,
+            "image": "ghcr.io/open-telemetry/demo:latest-payment",
+            "stopped_at": "2026-10-23T07:18:20.500000000Z",
+            "stopped_ago_s": 99,
+            "problems": [
+              "not running (exited, exit code 143, stopped 99s ago)"
+            ],
+            "evidence": "E6"
+          }
+        ],
+        "healthy": [
+          "ad",
+          "cart",
+          "checkout",
+          "currency",
+          "email",
+          "frontend",
+          "frontend-proxy",
+          "jaeger",
+          "load-generator",
+          "otel-collector",
+          "product-catalog",
+          "prometheus",
+          "quote",
+          "recommendation",
+          "shipping",
+          "valkey-cart"
+        ],
+        "top_memory": [
+          {
+            "name": "ad",
+            "mem_pct": 70.0
+          },
+          {
+            "name": "cart",
+            "mem_pct": 61.88
+          },
+          {
+            "name": "frontend",
+            "mem_pct": 56.0
+          },
+          {
+            "name": "checkout",
+            "mem_pct": 41.0
+          },
+          {
+            "name": "frontend-proxy",
+            "mem_pct": 30.0
+          }
+        ],
+        "organiser_history": "not configured",
+        "our_actions": []
+      },
+      "is_error": false,
+      "seconds": 0.01
+    },
+    {
+      "step": 2,
+      "tool": "find_error_traces",
+      "input": {
+        "service": "checkout",
+        "lookback": "5m"
+      },
+      "result": {
+        "service": "checkout",
+        "lookback_s": 300,
+        "errors_only": true,
+        "traces_examined": 5,
+        "origins": [
+          {
+            "origin_service": "checkout",
+            "operation": "oteldemo.PaymentService/Charge",
+            "count": 5,
+            "message": "name resolver error: produced zero addresses",
+            "chain": [
+              "frontend-proxy",
+              "frontend",
+              "checkout"
+            ],
+            "example_trace": "7b2e4c00000000000000000000000000",
+            "unanswered_call_to": "oteldemo.PaymentService",
+            "evidence": "E7"
+          }
+        ],
+        "attribute_clusters": [],
+        "edges": [
+          {
+            "edge": "frontend->checkout",
+            "calls": 5,
+            "avg_client_ms": 56.0,
+            "avg_server_ms": 52.0,
+            "avg_gap_ms": 4.0
+          },
+          {
+            "edge": "checkout->cart",
+            "calls": 5,
+            "avg_client_ms": 9.0,
+            "avg_server_ms": 7.0,
+            "avg_gap_ms": 2.0
+          },
+          {
+            "edge": "checkout->shipping",
+            "calls": 5,
+            "avg_client_ms": 9.5,
+            "avg_server_ms": 8.1,
+            "avg_gap_ms": 1.4
+          },
+          {
+            "edge": "checkout->product-catalog",
+            "calls": 5,
+            "avg_client_ms": 5.0,
+            "avg_server_ms": 4.1,
+            "avg_gap_ms": 0.9
+          },
+          {
+            "edge": "checkout->currency",
+            "calls": 5,
+            "avg_client_ms": 2.5,
+            "avg_server_ms": 1.8,
+            "avg_gap_ms": 0.7
+          }
+        ],
+        "slowest": [
+          {
+            "trace_id": "7b2e4c00000000000000000000000000",
+            "root": "frontend-proxy ingress",
+            "duration_ms": 61.0
+          },
+          {
+            "trace_id": "7b2e4c00000000000000000000000001",
+            "root": "frontend-proxy ingress",
+            "duration_ms": 61.0
+          },
+          {
+            "trace_id": "7b2e4c00000000000000000000000002",
+            "root": "frontend-proxy ingress",
+            "duration_ms": 61.0
+          }
+        ]
+      },
+      "is_error": false,
+      "seconds": 0.0
+    },
+    {
+      "step": 2,
+      "tool": "search_logs",
+      "input": {
+        "services": [
+          "checkout",
+          "payment"
+        ],
+        "since": "10m"
+      },
+      "result": {
+        "since_s": 600,
+        "min_level": "warn",
+        "contains": null,
+        "services": {
+          "checkout": {
+            "log_source": "docker logs",
+            "matching_lines": 6
+          },
+          "payment": {
+            "log_source": "docker logs",
+            "matching_lines": 0,
+            "evidence": "E9"
+          }
+        },
+        "patterns": [
+          {
+            "service": "checkout",
+            "level": "error",
+            "count": 6,
+            "first_seen": "2026-10-23T07:18:25.049999952Z",
+            "last_seen": "2026-10-23T07:19:40.049999952Z",
+            "example": "{\"level\": \"error\", \"msg\": \"failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses\", \"time\": \"2026-10-23T07:18:25Z\"}",
+            "evidence": "E8"
+          }
+        ]
+      },
+      "is_error": false,
+      "seconds": 0.0
+    }
+  ],
+  "usage": {
+    "input": 22720,
+    "output": 2169
+  },
+  "outcome": "submitted",
+  "seconds": 105.3,
+  "evidence": [
+    {
+      "id": "E1",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "summary": "checkout [errors,client_call_errors] over 300s: error_rate 95.2% (baseline 0.0%) client_error_rate 16.0% (baseline 0.0%) p95 45.0ms (baseline 260ms) rps 0.42 (baseline 0.41)",
+      "data": {
+        "row": {
+          "service": "checkout",
+          "rps": 0.42,
+          "error_rate": 0.9524,
+          "client_error_rate": 0.16,
+          "p95_ms": 45.0,
+          "baseline": {
+            "rps": 0.41,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 260
+          },
+          "p95_ratio": 0.17,
+          "rps_ratio": 1.02,
+          "flags": [
+            "errors",
+            "client_call_errors"
+          ],
+          "criticality": "critical",
+          "evidence": "E1"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      },
+      "ts": 1792756420.058489
+    },
+    {
+      "id": "E2",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "summary": "payment [silent] over 300s: rps 0.0 (baseline 0.4)",
+      "data": {
+        "row": {
+          "service": "payment",
+          "rps": 0.0,
+          "error_rate": null,
+          "p95_ms": null,
+          "baseline": {
+            "rps": 0.4,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 35
+          },
+          "flags": [
+            "silent"
+          ],
+          "criticality": "critical",
+          "evidence": "E2"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      },
+      "ts": 1792756420.0584998
+    },
+    {
+      "id": "E3",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "summary": "email [silent] over 300s: rps 0.0 (baseline 0.38)",
+      "data": {
+        "row": {
+          "service": "email",
+          "rps": 0.0,
+          "error_rate": null,
+          "p95_ms": null,
+          "baseline": {
+            "rps": 0.38,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 40
+          },
+          "flags": [
+            "silent"
+          ],
+          "criticality": "medium",
+          "evidence": "E3"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      },
+      "ts": 1792756420.0585058
+    },
+    {
+      "id": "E4",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "summary": "frontend-proxy [errors,client_call_errors] over 300s: error_rate 4.1% (baseline 0.0%) client_error_rate 4.1% (baseline 0.0%) p95 190.0ms (baseline 185ms) rps 9.8 (baseline 9.6)",
+      "data": {
+        "row": {
+          "service": "frontend-proxy",
+          "rps": 9.8,
+          "error_rate": 0.0408,
+          "client_error_rate": 0.0408,
+          "p95_ms": 190.0,
+          "baseline": {
+            "rps": 9.6,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 185
+          },
+          "p95_ratio": 1.03,
+          "rps_ratio": 1.02,
+          "flags": [
+            "errors",
+            "client_call_errors"
+          ],
+          "criticality": "critical",
+          "evidence": "E4"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      },
+      "ts": 1792756420.0585148
+    },
+    {
+      "id": "E5",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "summary": "frontend [errors,client_call_errors] over 300s: error_rate 4.4% (baseline 0.0%) client_error_rate 2.6% (baseline 0.0%) p95 180.0ms (baseline 170ms) rps 9.1 (baseline 9.0)",
+      "data": {
+        "row": {
+          "service": "frontend",
+          "rps": 9.1,
+          "error_rate": 0.044,
+          "client_error_rate": 0.0263,
+          "p95_ms": 180.0,
+          "baseline": {
+            "rps": 9.0,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 170
+          },
+          "p95_ratio": 1.06,
+          "rps_ratio": 1.01,
+          "flags": [
+            "errors",
+            "client_call_errors"
+          ],
+          "criticality": "critical",
+          "evidence": "E5"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      },
+      "ts": 1792756420.0585217
+    },
+    {
+      "id": "E6",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "summary": "container payment: not running (exited, exit code 143, stopped 99s ago) (status=exited, restarts=0, oom_killed=False, health=none)",
+      "data": {
+        "name": "payment",
+        "status": "exited",
+        "exit_code": 143,
+        "oom_killed": false,
+        "restart_count": 0,
+        "health": "none",
+        "started_at": "2026-10-23T06:30:00.123456717Z",
+        "started_ago_s": 2999,
+        "image": "ghcr.io/open-telemetry/demo:latest-payment",
+        "stopped_at": "2026-10-23T07:18:20.500000000Z",
+        "stopped_ago_s": 99,
+        "problems": [
+          "not running (exited, exit code 143, stopped 99s ago)"
+        ],
+        "evidence": "E6"
+      },
+      "ts": 1792756420.068625
+    },
+    {
+      "id": "E7",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "summary": "5/5 traces: deepest failing span is checkout 'oteldemo.PaymentService/Charge' (client call to oteldemo.PaymentService got no server span) msg='name resolver error: produced zero addresses' chain=frontend-proxy>frontend>checkout e.g. trace 7b2e4c00000000000000000000000000",
+      "data": {
+        "origin_service": "checkout",
+        "operation": "oteldemo.PaymentService/Charge",
+        "count": 5,
+        "message": "name resolver error: produced zero addresses",
+        "chain": [
+          "frontend-proxy",
+          "frontend",
+          "checkout"
+        ],
+        "example_trace": "7b2e4c00000000000000000000000000",
+        "unanswered_call_to": "oteldemo.PaymentService",
+        "lookback_s": 300
+      },
+      "ts": 1792756423.2108972
+    },
+    {
+      "id": "E8",
+      "tool": "search_logs",
+      "kind": "log",
+      "summary": "checkout logs (docker logs, 600s): 6x ERROR '{\"level\": \"error\", \"msg\": \"failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses\",' first 2026-10-23T07:18:25.049999952Z last 2026-10-23T07:19:40.049999952Z",
+      "data": {
+        "service": "checkout",
+        "log_source": "docker logs",
+        "level": "error",
+        "pattern": "failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses",
+        "count": 6,
+        "first_seen": "2026-10-23T07:18:25.049999952Z",
+        "last_seen": "2026-10-23T07:19:40.049999952Z",
+        "example": "{\"level\": \"error\", \"msg\": \"failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses\", \"time\": \"2026-10-23T07:18:25Z\"}"
+      },
+      "ts": 1792756423.2124357
+    },
+    {
+      "id": "E9",
+      "tool": "search_logs",
+      "kind": "log",
+      "summary": "payment: no warn+ log lines in last 600s (docker logs)",
+      "data": {
+        "service": "payment",
+        "since_s": 600,
+        "level": "warn",
+        "contains": null,
+        "log_source": "docker logs"
+      },
+      "ts": 1792756423.2132392
+    }
+  ],
+  "summary": {
+    "source": "test",
+    "source_detail": "fixtures tests/fixtures/payment_down",
+    "headline": "The payment container stopped at 07:18:20Z (exit code 143, SIGTERM, not OOM) and has not come back. Checkout's PaymentService/Charge calls now fail with \"name resolver error: produced zero addresses\", so about 95% of checkouts fail and the errors reach frontend and frontend-proxy.",
+    "affected_services": [
+      {
+        "service": "payment",
+        "impact": "Container has exited and serves no traffic; it is silent in span metrics.",
+        "evidence": [
+          "E6",
+          "E2",
+          "E9"
+        ]
+      },
+      {
+        "service": "checkout",
+        "impact": "PlaceOrder fails for 95.24% of requests because the payment Charge call cannot resolve the payment host.",
+        "evidence": [
+          "E1",
+          "E7",
+          "E8"
+        ]
+      },
+      {
+        "service": "frontend",
+        "impact": "Checkout errors are passed back to users; error rate is 4.4%.",
+        "evidence": [
+          "E5",
+          "E7"
+        ]
+      },
+      {
+        "service": "frontend-proxy",
+        "impact": "4.08% of user requests fail (the checkout flow).",
+        "evidence": [
+          "E4"
+        ]
+      },
+      {
+        "service": "email",
+        "impact": "No order confirmation emails are sent, because checkout fails before the email step. Email is silent.",
+        "evidence": [
+          "E3"
+        ]
+      }
+    ],
+    "anomalies": [
+      {
+        "service": "checkout",
+        "signal": "error_rate",
+        "observed": "0.9524",
+        "baseline": "0.0",
+        "evidence": [
+          "E1"
+        ]
+      },
+      {
+        "service": "checkout",
+        "signal": "client_error_rate",
+        "observed": "0.16",
+        "baseline": "0.0",
+        "evidence": [
+          "E1"
+        ]
+      },
+      {
+        "service": "checkout",
+        "signal": "p95",
+        "observed": "45.0 ms (fails fast)",
+        "baseline": "260 ms",
+        "evidence": [
+          "E1"
+        ]
+      },
+      {
+        "service": "payment",
+        "signal": "container_state",
+        "observed": "exited, exit code 143, oom_killed false, stopped 2026-10-23T07:18:20Z",
+        "baseline": "running",
+        "evidence": [
+          "E6"
+        ]
+      },
+      {
+        "service": "payment",
+        "signal": "silent",
+        "observed": "0.0 rps",
+        "baseline": "0.4 rps",
+        "evidence": [
+          "E2"
+        ]
+      },
+      {
+        "service": "email",
+        "signal": "silent",
+        "observed": "0.0 rps",
+        "baseline": "0.38 rps",
+        "evidence": [
+          "E3"
+        ]
+      },
+      {
+        "service": "frontend",
+        "signal": "error_rate",
+        "observed": "0.044",
+        "baseline": "0.0",
+        "evidence": [
+          "E5"
+        ]
+      },
+      {
+        "service": "frontend-proxy",
+        "signal": "error_rate",
+        "observed": "0.0408",
+        "baseline": "0.0",
+        "evidence": [
+          "E4"
+        ]
+      },
+      {
+        "service": "checkout",
+        "signal": "log_errors",
+        "observed": "6 'failed to charge card ... Unavailable desc = name resolver error: produced zero addresses' errors starting 07:18:25Z",
+        "baseline": "0",
+        "evidence": [
+          "E8"
+        ]
+      }
+    ],
+    "root_causes": [
+      {
+        "component": "payment",
+        "fault_class": "container_stopped_or_restarting",
+        "cause": "The payment container received SIGTERM and exited (exit code 143, not OOM-killed, restart_count 0) at 07:18:20Z. It has stayed stopped, so its DNS name returns no addresses. Every checkout Charge call fails with Unavailable 'name resolver error: produced zero addresses' and gets no payment server span.",
+        "confidence": 0.92,
+        "evidence": [
+          "E6",
+          "E2",
+          "E7",
+          "E8",
+          "E9"
+        ],
+        "evidence_detail": {
+          "E6": "container payment: not running (exited, exit code 143, stopped 99s ago) (status=exited, restarts=0, oom_killed=False, health=none)",
+          "E2": "payment [silent] over 300s: rps 0.0 (baseline 0.4)",
+          "E7": "5/5 traces: deepest failing span is checkout 'oteldemo.PaymentService/Charge' (client call to oteldemo.PaymentService got no server span) msg='name resolver error: produced zero addresses' chain=frontend-proxy>frontend>checkout e.g. trace 7b2e4c00000000000000000000000000",
+          "E8": "checkout logs (docker logs, 600s): 6x ERROR '{\"level\": \"error\", \"msg\": \"failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses\",' first 2026-10-23T07:18:25.049999952Z last 2026-10-23T07:19:40.049999952Z",
+          "E9": "payment: no warn+ log lines in last 600s (docker logs)"
+        }
+      }
+    ],
+    "suspected_origin": {
+      "service": "payment",
+      "reasoning": "The deepest failing span is checkout's call to PaymentService/Charge, which got no reply from payment (unanswered_call_to). Payment is the only container that is not running; it stopped 99s before the alert, and checkout errors start 5s after that. All other callees of checkout respond normally.",
+      "confidence": 0.92,
+      "evidence": [
+        "E6",
+        "E7",
+        "E8",
+        "E2"
+      ],
+      "evidence_detail": {
+        "E6": "container payment: not running (exited, exit code 143, stopped 99s ago) (status=exited, restarts=0, oom_killed=False, health=none)",
+        "E7": "5/5 traces: deepest failing span is checkout 'oteldemo.PaymentService/Charge' (client call to oteldemo.PaymentService got no server span) msg='name resolver error: produced zero addresses' chain=frontend-proxy>frontend>checkout e.g. trace 7b2e4c00000000000000000000000000",
+        "E8": "checkout logs (docker logs, 600s): 6x ERROR '{\"level\": \"error\", \"msg\": \"failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses\",' first 2026-10-23T07:18:25.049999952Z last 2026-10-23T07:19:40.049999952Z",
+        "E2": "payment [silent] over 300s: rps 0.0 (baseline 0.4)"
+      }
+    },
+    "proposed_action": {
+      "action": "restart_service",
+      "target": "payment",
+      "dry_run": true,
+      "reason": "Payment exited cleanly after SIGTERM and has not restarted. Starting it again restores the DNS entry and the Charge endpoint that checkout needs.",
+      "expected_outcome": "Payment spans return at about 0.4 rps, checkout error rate falls from 0.9524 back toward 0.0, email traffic returns to about 0.38 rps, and frontend and frontend-proxy error rates go back to 0.",
+      "risk_assessment": "Low risk: payment is down already, so a restart cannot make things worse. If something outside the system stopped it on purpose (exit 143 = SIGTERM, e.g. maintenance or a manual docker stop), restarting may clash with that work, so check with the team first. Orders that failed meanwhile are not retried."
+    },
+    "open_questions": [
+      "Who or what sent SIGTERM to payment at 07:18:20Z (manual stop, orchestration, host action)? Exit 143 with OOMKilled=false points to a deliberate stop, not a crash.",
+      "Why does payment have no restart policy that would have brought it back?",
+      "Payment logs show no warn or error lines before the stop (E9); check the info-level logs.",
+      "checkout's client_error_rate is 0.16 while its server error rate is 0.9524; confirm that every failure comes from the payment call."
+    ],
+    "confidence": 0.92,
+    "status": "diagnosed",
+    "diagnosis_status": "diagnosed",
+    "approval": {
+      "status": "approved",
+      "requested_at": "2026-10-23T11:53:59+00:00",
+      "dry_run": true,
+      "executed": false,
+      "notes": "Explicitly approved by on-call engineer",
+      "decision_at": "2026-10-23T11:55:22+00:00"
+    },
+    "validation": {
+      "dropped_evidence_ids": [],
+      "notes": []
+    }
+  }
+}

@@ -1,0 +1,553 @@
+{
+  "schema_version": 2,
+  "status": "complete",
+  "metadata": {
+    "run_id": "20261109-113924",
+    "incident_id": "INC-UNSEEN-TLS",
+    "started_at": "2026-11-09T06:09:24+00:00",
+    "ended_at": "2026-11-09T06:09:32+00:00",
+    "updated_at": "2026-11-09T06:09:32+00:00",
+    "mode": "test",
+    "source_detail": "fixtures tests/fixtures/unseen_cert_expired",
+    "provider": "groq",
+    "model": "openai/gpt-oss-120b",
+    "git": {
+      "commit": "e1835ed611565c18277856c963f90be46e3030f8",
+      "dirty": false
+    }
+  },
+  "alert": {
+    "incident_id": "INC-UNSEEN-TLS",
+    "detected_at": "2026-10-23T07:20:00Z",
+    "alerting_services": [
+      "checkout"
+    ],
+    "trigger": [
+      {
+        "service": "checkout",
+        "signal": "error_rate",
+        "value": 0.97,
+        "threshold": 0.05,
+        "window": "3m"
+      }
+    ],
+    "note": "alerting service is a symptom, not necessarily the root cause"
+  },
+  "investigation": {
+    "steps": [
+      {
+        "step": 1,
+        "tool": "get_service_health",
+        "arguments": {
+          "window": "5m"
+        },
+        "result": {
+          "window_s": 300,
+          "baseline": "loaded",
+          "flagged": [
+            {
+              "service": "checkout",
+              "rps": 0.41,
+              "error_rate": 0.9756,
+              "client_error_rate": 0.4444,
+              "p95_ms": 260.0,
+              "baseline": {
+                "rps": 0.41,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 260
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 1.0,
+              "flags": [
+                "errors",
+                "client_call_errors"
+              ],
+              "criticality": "critical",
+              "evidence": "E1"
+            },
+            {
+              "service": "payment",
+              "rps": 0.02,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 35.0,
+              "baseline": {
+                "rps": 0.4,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 35
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 0.05,
+              "flags": [
+                "traffic_drop",
+                "silent"
+              ],
+              "criticality": "critical",
+              "evidence": "E2"
+            },
+            {
+              "service": "email",
+              "rps": 0.02,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 40.0,
+              "baseline": {
+                "rps": 0.38,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 40
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 0.05,
+              "flags": [
+                "traffic_drop",
+                "silent"
+              ],
+              "criticality": "medium",
+              "evidence": "E3"
+            },
+            {
+              "service": "frontend",
+              "rps": 9.0,
+              "error_rate": 0.0444,
+              "client_error_rate": 0.0263,
+              "p95_ms": 170.0,
+              "baseline": {
+                "rps": 9.0,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 170
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 1.0,
+              "flags": [
+                "errors",
+                "client_call_errors"
+              ],
+              "criticality": "critical",
+              "evidence": "E4"
+            },
+            {
+              "service": "frontend-proxy",
+              "rps": 9.6,
+              "error_rate": 0.0417,
+              "client_error_rate": 0.0,
+              "p95_ms": 185.0,
+              "baseline": {
+                "rps": 9.6,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 185
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 1.0,
+              "flags": [
+                "errors"
+              ],
+              "criticality": "critical",
+              "evidence": "E5"
+            }
+          ],
+          "healthy": [
+            "cart",
+            "shipping",
+            "currency",
+            "product-catalog",
+            "recommendation",
+            "ad",
+            "quote",
+            "image-provider"
+          ]
+        },
+        "evidence_ids": [
+          "E1",
+          "E2",
+          "E3",
+          "E4",
+          "E5"
+        ],
+        "seconds": 0.02,
+        "at_s": 1.1,
+        "error": null
+      }
+    ],
+    "outcome": "llm_error",
+    "error": "groq: RateLimitError: Error code: 429 - Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01kmyqpwhafe6tty82p1yrbmrd` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 196451, Requested 4443. Please try again in 6m26.208s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing; fallback ollama: APIConnectionError: Connection error.",
+    "model_turns": 1,
+    "submitted_at_s": 8.5
+  },
+  "evidence": [
+    {
+      "id": "E1",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "checkout [errors,client_call_errors] over 300s: error_rate 97.6% (baseline 0.0%) client_error_rate 44.4% (baseline 0.0%) p95 260.0ms (baseline 260ms) rps 0.41 (baseline 0.41)",
+      "ts": "2026-11-09T06:09:25+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "checkout",
+          "rps": 0.41,
+          "error_rate": 0.9756,
+          "client_error_rate": 0.4444,
+          "p95_ms": 260.0,
+          "baseline": {
+            "rps": 0.41,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 260
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 1.0,
+          "flags": [
+            "errors",
+            "client_call_errors"
+          ],
+          "criticality": "critical",
+          "evidence": "E1"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E2",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "payment [traffic_drop,silent] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 35.0ms (baseline 35ms) rps 0.02 (baseline 0.4)",
+      "ts": "2026-11-09T06:09:25+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "payment",
+          "rps": 0.02,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 35.0,
+          "baseline": {
+            "rps": 0.4,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 35
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 0.05,
+          "flags": [
+            "traffic_drop",
+            "silent"
+          ],
+          "criticality": "critical",
+          "evidence": "E2"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E3",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "email [traffic_drop,silent] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 40.0ms (baseline 40ms) rps 0.02 (baseline 0.38)",
+      "ts": "2026-11-09T06:09:25+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "email",
+          "rps": 0.02,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 40.0,
+          "baseline": {
+            "rps": 0.38,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 40
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 0.05,
+          "flags": [
+            "traffic_drop",
+            "silent"
+          ],
+          "criticality": "medium",
+          "evidence": "E3"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E4",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "frontend [errors,client_call_errors] over 300s: error_rate 4.4% (baseline 0.0%) client_error_rate 2.6% (baseline 0.0%) p95 170.0ms (baseline 170ms) rps 9.0 (baseline 9.0)",
+      "ts": "2026-11-09T06:09:25+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "frontend",
+          "rps": 9.0,
+          "error_rate": 0.0444,
+          "client_error_rate": 0.0263,
+          "p95_ms": 170.0,
+          "baseline": {
+            "rps": 9.0,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 170
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 1.0,
+          "flags": [
+            "errors",
+            "client_call_errors"
+          ],
+          "criticality": "critical",
+          "evidence": "E4"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E5",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "frontend-proxy [errors] over 300s: error_rate 4.2% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 185.0ms (baseline 185ms) rps 9.6 (baseline 9.6)",
+      "ts": "2026-11-09T06:09:25+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "frontend-proxy",
+          "rps": 9.6,
+          "error_rate": 0.0417,
+          "client_error_rate": 0.0,
+          "p95_ms": 185.0,
+          "baseline": {
+            "rps": 9.6,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 185
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 1.0,
+          "flags": [
+            "errors"
+          ],
+          "criticality": "critical",
+          "evidence": "E5"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    }
+  ],
+  "diagnosis": {
+    "status": "escalate",
+    "headline": "Investigation ended without a diagnosis (agent outcome: llm_error).",
+    "confidence": 0.0,
+    "root_causes": [],
+    "suspected_origin": {
+      "service": "unknown",
+      "reasoning": "agent outcome: llm_error",
+      "confidence": 0.0,
+      "evidence": []
+    },
+    "affected_services": [],
+    "anomalies": [],
+    "ruled_out": [],
+    "open_questions": [],
+    "prevention": [
+      "Close the telemetry gaps that kept this diagnosis uncertain (logs, traces, metrics).",
+      "Write a runbook entry once the cause is known."
+    ],
+    "proposed_action": {
+      "action": "escalate_to_human",
+      "target": "unknown",
+      "fault_class": "unknown",
+      "reason": "Confidence below threshold or no root cause with valid evidence; a human must decide.",
+      "next_steps": [
+        "Review the cited evidence and the open questions.",
+        "Collect more telemetry: traces of the alerting service, logs, container state over time."
+      ]
+    },
+    "validation": {
+      "dropped_evidence_ids": [],
+      "notes": [
+        "no root cause with valid evidence; escalated to human"
+      ],
+      "overrides": []
+    },
+    "suggested_fixes": []
+  },
+  "remediation_plan": {
+    "steps": []
+  },
+  "escalations": [
+    {
+      "target": "unknown",
+      "fault_class": "unknown",
+      "reason": "Confidence below threshold or no root cause with valid evidence; a human must decide.",
+      "next_steps": [
+        "Review the cited evidence and the open questions.",
+        "Collect more telemetry: traces of the alerting service, logs, container state over time."
+      ],
+      "source": "no allowlisted fix"
+    }
+  ],
+  "manual_verifications": [],
+  "outcome": {
+    "status": "escalated",
+    "summary": "investigation ended without a diagnosis (llm_error); escalated to a human",
+    "prevention": [
+      "Close the telemetry gaps that kept this diagnosis uncertain (logs, traces, metrics).",
+      "Write a runbook entry once the cause is known."
+    ],
+    "investigation_outcome": "llm_error",
+    "plan_outcome": null
+  },
+  "review": null,
+  "notifications": [],
+  "accounting": {
+    "tokens_in": 3332,
+    "tokens_out": 52,
+    "estimated_cost_usd": null,
+    "reviewer_tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "price_basis": "USD per 1M tokens, Anthropic first-party rates",
+    "phases": {
+      "investigation_s": 8.5,
+      "remediation_s": -0.0,
+      "verify_s": 0,
+      "total_s": 8.5
+    },
+    "steps_used": 1,
+    "step_budget": 10
+  },
+  "report_paths": {
+    "report": "C:\\Placement\\incident-zero-oncall-agent\\runs\\20261109-113924-test.report.md",
+    "actions_log": "C:\\Placement\\incident-zero-oncall-agent\\runs\\actions.jsonl",
+    "action_log_lines": []
+  },
+  "postmortem": {
+    "draft": true,
+    "times": {
+      "fault_started": null,
+      "fault_started_evidence": null,
+      "fault_started_what": null,
+      "detected": "2026-10-23T07:20:00+00:00",
+      "investigation_started": "2026-11-09T06:09:24+00:00",
+      "diagnosed": null,
+      "approved": null,
+      "executed": null,
+      "recovery_verified": null,
+      "ended": "2026-11-09T06:09:32+00:00"
+    },
+    "durations": {
+      "time_to_detect_s": null,
+      "time_to_diagnose_s": null,
+      "time_to_recover_s": null,
+      "total_s": 1464572.0
+    },
+    "impact": {
+      "services": [],
+      "signals": [
+        {
+          "text": "checkout: error rate 97.6% (baseline 0.0%); client-call error rate 44.4% (baseline 0.0%)",
+          "evidence": [
+            "E1"
+          ]
+        },
+        {
+          "text": "payment: traffic 0.02 rps against a baseline of 0.4 rps (5%)",
+          "evidence": [
+            "E2"
+          ]
+        },
+        {
+          "text": "email: traffic 0.02 rps against a baseline of 0.38 rps (5%)",
+          "evidence": [
+            "E3"
+          ]
+        },
+        {
+          "text": "frontend: error rate 4.4% (baseline 0.0%); client-call error rate 2.6% (baseline 0.0%)",
+          "evidence": [
+            "E4"
+          ]
+        },
+        {
+          "text": "frontend-proxy: error rate 4.2% (baseline 0.0%)",
+          "evidence": [
+            "E5"
+          ]
+        }
+      ],
+      "failed_requests": [],
+      "failed_requests_total": null,
+      "note": "Failed-request numbers are counts from sampled traces and log lines in the record; the total number of failed requests is unknown."
+    },
+    "five_whys": [
+      {
+        "n": 1,
+        "why": "Why did this incident happen?",
+        "because": "unknown, needs human investigation",
+        "evidence": [],
+        "source": "unknown"
+      }
+    ],
+    "went_well": [],
+    "could_be_better": [
+      "The investigation ended without a diagnosis (llm_error).",
+      "The reviewer did not run (ONCALL_REVIEWER off)."
+    ],
+    "action_items": [
+      {
+        "action": "Close the telemetry gaps that kept this diagnosis uncertain (logs, traces, metrics).",
+        "type": "prevent",
+        "priority": "medium",
+        "owner": "to assign"
+      },
+      {
+        "action": "Write a runbook entry once the cause is known.",
+        "type": "mitigate",
+        "priority": "medium",
+        "owner": "to assign"
+      }
+    ]
+  }
+}

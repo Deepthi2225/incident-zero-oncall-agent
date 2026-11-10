@@ -1,0 +1,57 @@
+{
+  "run_id": "20261023-141455",
+  "source": "test",
+  "source_detail": "fixtures tests/fixtures/payment_down",
+  "alert": {
+    "source": "watcher",
+    "fired_at": "2026-10-23T08:44:55+00:00",
+    "service": "checkout",
+    "signal": "error_rate",
+    "value": 0.9524,
+    "threshold": 0.05,
+    "window_s": 120,
+    "other_breaches": [
+      {
+        "service": "payment",
+        "signal": "traffic_stopped",
+        "value": 0,
+        "threshold": 0.4
+      },
+      {
+        "service": "email",
+        "signal": "traffic_stopped",
+        "value": 0,
+        "threshold": 0.38
+      }
+    ]
+  },
+  "model": "claude-opus-5-5",
+  "steps": [],
+  "usage": {
+    "input": 0,
+    "output": 0
+  },
+  "error": "no LLM credentials: set ANTHROPIC_API_KEY",
+  "outcome": "llm_error",
+  "seconds": 0.5,
+  "evidence": [],
+  "summary": {
+    "source": "test",
+    "source_detail": "fixtures tests/fixtures/payment_down",
+    "headline": "Investigation ended without a summary (agent outcome: llm_error).",
+    "affected_services": [],
+    "anomalies": [],
+    "suspected_origin": {
+      "service": "unknown",
+      "reasoning": "agent outcome: llm_error",
+      "confidence": 0.0,
+      "evidence": []
+    },
+    "open_questions": [],
+    "status": "needs_human",
+    "validation": {
+      "dropped_evidence_ids": [],
+      "notes": []
+    }
+  }
+}

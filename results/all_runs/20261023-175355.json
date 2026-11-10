@@ -1,0 +1,983 @@
+{
+  "run_id": "20261023-175355",
+  "source": "live",
+  "source_detail": "prometheus http://localhost:9090, jaeger, opensearch, docker CLI",
+  "alert": {
+    "incident_id": "INC-20261023-122355",
+    "detected_at": "2026-10-23T12:23:55+00:00",
+    "trigger": [
+      {
+        "service": "checkout",
+        "signal": "error_rate",
+        "value": 1.0,
+        "threshold": 0.05,
+        "window": "3m",
+        "promql": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_SERVER\",status_code=\"STATUS_CODE_ERROR\"}[3m])) / sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_SERVER\"}[3m]))",
+        "severity": 20.0
+      },
+      {
+        "service": "email",
+        "signal": "silent",
+        "value": 0.0,
+        "threshold": 0.0249,
+        "window": "3m",
+        "promql": "sum by (service_name) (rate(traces_span_metrics_calls_total[3m]))",
+        "severity": 10.0
+      },
+      {
+        "service": "payment",
+        "signal": "silent",
+        "value": 0.0,
+        "threshold": 0.0125,
+        "window": "3m",
+        "promql": "sum by (service_name) (rate(traces_span_metrics_calls_total[3m]))",
+        "severity": 10.0
+      }
+    ],
+    "alerting_services": [
+      "checkout",
+      "email",
+      "payment"
+    ],
+    "note": "alerting service is a symptom, not necessarily the root cause"
+  },
+  "model": "claude-opus-5-5",
+  "steps": [
+    {
+      "step": 1,
+      "tool": "get_service_health",
+      "input": {
+        "window": "5m"
+      },
+      "result": {
+        "window_s": 300,
+        "baseline": "loaded",
+        "flagged": [
+          {
+            "service": "checkout",
+            "rps": 0.023,
+            "error_rate": 0.8333,
+            "client_error_rate": 0.0847,
+            "p95_ms": 8500.0,
+            "baseline": {
+              "rps": 0.019,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 4250.0
+            },
+            "p95_ratio": 2.0,
+            "rps_ratio": 1.21,
+            "flags": [
+              "errors",
+              "client_call_errors",
+              "slow"
+            ],
+            "criticality": "critical",
+            "evidence": "E1"
+          },
+          {
+            "service": "payment",
+            "rps": 0.004,
+            "error_rate": 0.0,
+            "client_error_rate": 1.0,
+            "p95_ms": 1.9,
+            "baseline": {
+              "rps": 0.019,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 1.9
+            },
+            "p95_ratio": 1.0,
+            "rps_ratio": 0.21,
+            "flags": [
+              "client_call_errors",
+              "traffic_drop"
+            ],
+            "criticality": "critical",
+            "evidence": "E2"
+          },
+          {
+            "service": "email",
+            "rps": 0.004,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 7.9,
+            "baseline": {
+              "rps": 0.019,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 175.0
+            },
+            "p95_ratio": 0.05,
+            "rps_ratio": 0.21,
+            "flags": [
+              "traffic_drop"
+            ],
+            "criticality": "medium",
+            "evidence": "E3"
+          }
+        ],
+        "healthy": [
+          "shipping",
+          "load-generator",
+          "ad",
+          "currency",
+          "cart",
+          "quote",
+          "frontend",
+          "frontend-proxy",
+          "image-provider",
+          "telemetry-docs",
+          "frontend-web",
+          "product-catalog",
+          "recommendation"
+        ]
+      },
+      "is_error": false,
+      "seconds": 0.07
+    },
+    {
+      "step": 1,
+      "tool": "get_deploy_history",
+      "input": {
+        "lookback": "30m"
+      },
+      "result": {
+        "lookback_s": 1800,
+        "containers": 23,
+        "stats_available": true,
+        "changed_or_unhealthy": [
+          {
+            "name": "payment",
+            "status": "exited",
+            "exit_code": 137,
+            "oom_killed": false,
+            "restart_count": 9,
+            "health": "unhealthy",
+            "started_at": "2026-10-23T11:57:30.691679812Z",
+            "started_ago_s": 1591,
+            "image": "ghcr.io/open-telemetry/demo:latest-payment",
+            "stopped_at": "2026-10-23T12:20:54.113360596Z",
+            "stopped_ago_s": 188,
+            "problems": [
+              "not running (exited, exit code 137, stopped 188s ago)",
+              "restarted 9x",
+              "health unhealthy"
+            ],
+            "evidence": "E4"
+          },
+          {
+            "name": "checkout",
+            "status": "running",
+            "exit_code": 0,
+            "oom_killed": false,
+            "restart_count": 10,
+            "health": "healthy",
+            "started_at": "2026-10-23T12:05:53.384552713Z",
+            "started_ago_s": 1088,
+            "image": "ghcr.io/open-telemetry/demo:latest-checkout",
+            "cpu_pct": 0.72,
+            "mem_used_mb": 10.4,
+            "mem_limit_mb": 20.0,
+            "mem_pct": 51.86,
+            "problems": [
+              "restarted 10x",
+              "(re)started 1088s ago"
+            ],
+            "evidence": "E5"
+          },
+          {
+            "name": "recommendation",
+            "status": "running",
+            "exit_code": 0,
+            "oom_killed": false,
+            "restart_count": 12,
+            "health": "healthy",
+            "started_at": "2026-10-23T12:13:51.465759623Z",
+            "started_ago_s": 610,
+            "image": "ghcr.io/open-telemetry/demo:latest-recommendation",
+            "cpu_pct": 1.66,
+            "mem_used_mb": 213.6,
+            "mem_limit_mb": 500.0,
+            "mem_pct": 42.73,
+            "problems": [
+              "restarted 12x",
+              "(re)started 610s ago"
+            ],
+            "evidence": "E6"
+          }
+        ],
+        "healthy": [
+          "astronomy-db",
+          "currency",
+          "email",
+          "frontend",
+          "frontend-proxy",
+          "grafana",
+          "image-provider",
+          "jaeger",
+          "load-generator",
+          "opamp-server",
+          "otel-collector",
+          "prometheus",
+          "shipping",
+          "telemetry-docs",
+          "valkey-cart"
+        ],
+        "top_memory": [
+          {
+            "name": "opensearch",
+            "mem_pct": 92.59
+          },
+          {
+            "name": "ad",
+            "mem_pct": 75.76
+          },
+          {
+            "name": "shipping",
+            "mem_pct": 73.57
+          },
+          {
+            "name": "prometheus",
+            "mem_pct": 71.93
+          },
+          {
+            "name": "product-catalog",
+            "mem_pct": 69.77
+          }
+        ],
+        "organiser_history": "not configured",
+        "our_actions": [],
+        "truncated": true
+      },
+      "is_error": false,
+      "seconds": 2.77
+    },
+    {
+      "step": 1,
+      "tool": "find_error_traces",
+      "input": {
+        "service": "checkout",
+        "lookback": "5m"
+      },
+      "result": {
+        "service": "checkout",
+        "lookback_s": 300,
+        "errors_only": true,
+        "traces_examined": 5,
+        "origins": [
+          {
+            "origin_service": "checkout",
+            "operation": "oteldemo.PaymentService/Charge",
+            "count": 3,
+            "message": "name resolver error: produced zero addresses",
+            "chain": [
+              "load-generator",
+              "frontend-proxy",
+              "frontend",
+              "checkout"
+            ],
+            "example_trace": "6c019a2cd93a7a8f45725517503cd0db",
+            "evidence": "E12"
+          },
+          {
+            "origin_service": "checkout",
+            "operation": "oteldemo.PaymentService/Charge",
+            "count": 2,
+            "message": "connection error: desc = \"transport: Error while dialing: dial tcp 172.21.0.16:50051: connect: no route to host\"",
+            "chain": [
+              "load-generator",
+              "frontend-proxy",
+              "frontend",
+              "checkout"
+            ],
+            "example_trace": "d31e52c8772c456da845ace5f5ec3138",
+            "evidence": "E13"
+          }
+        ],
+        "attribute_clusters": [],
+        "edges": [
+          {
+            "edge": "frontend-proxy->frontend",
+            "calls": 33,
+            "avg_client_ms": 325.9,
+            "avg_server_ms": 260.4,
+            "avg_gap_ms": 65.5
+          },
+          {
+            "edge": "checkout->shipping",
+            "calls": 5,
+            "avg_client_ms": 5.0,
+            "avg_server_ms": 2.4,
+            "avg_gap_ms": 2.6
+          },
+          {
+            "edge": "checkout->product-catalog",
+            "calls": 13,
+            "avg_client_ms": 6.4,
+            "avg_server_ms": 4.0,
+            "avg_gap_ms": 2.4
+          },
+          {
+            "edge": "frontend->product-catalog",
+            "calls": 14,
+            "avg_client_ms": 8.6,
+            "avg_server_ms": 6.3,
+            "avg_gap_ms": 2.2
+          },
+          {
+            "edge": "shipping->quote",
+            "calls": 5,
+            "avg_client_ms": 2.2,
+            "avg_server_ms": 0.3,
+            "avg_gap_ms": 1.9
+          }
+        ],
+        "slowest": [
+          {
+            "trace_id": "eec28d8b7a84f0a8d410ad86a2a35505",
+            "root": "load-generator user_checkout_multi",
+            "duration_ms": 10475.8
+          },
+          {
+            "trace_id": "f1deb78630790ae04006bc5f81626a98",
+            "root": "load-generator user_checkout_multi",
+            "duration_ms": 123.0
+          },
+          {
+            "trace_id": "d31e52c8772c456da845ace5f5ec3138",
+            "root": "load-generator user_checkout_multi",
+            "duration_ms": 113.0
+          }
+        ]
+      },
+      "is_error": false,
+      "seconds": 0.2
+    },
+    {
+      "step": 2,
+      "tool": "search_logs",
+      "input": {
+        "services": [
+          "payment",
+          "checkout"
+        ],
+        "since": "30m"
+      },
+      "result": {
+        "since_s": 1800,
+        "min_level": "warn",
+        "contains": null,
+        "services": {
+          "payment": {
+            "log_source": "opensearch (none) + docker logs",
+            "matching_lines": 1
+          },
+          "checkout": {
+            "log_source": "opensearch (none) + docker logs",
+            "matching_lines": 0,
+            "evidence": "E15"
+          }
+        },
+        "patterns": [
+          {
+            "service": "payment",
+            "level": "error",
+            "count": 1,
+            "first_seen": "2026-10-23T11:57:34.499725451Z",
+            "last_seen": "2026-10-23T11:57:34.499725451Z",
+            "example": "(node:1) MetadataLookupWarning: received unexpected error = All promises were rejected code = UNKNOWN",
+            "evidence": "E14"
+          }
+        ]
+      },
+      "is_error": false,
+      "seconds": 1.07
+    },
+    {
+      "step": 2,
+      "tool": "get_metric",
+      "input": {
+        "promql": "sum by (service_name) (rate(traces_span_metrics_calls_total{service_name=\"payment\"}[1m]))",
+        "window": "30m"
+      },
+      "result": {
+        "promql": "sum by (service_name) (rate(traces_span_metrics_calls_total{service_name=\"payment\"}[1m]))",
+        "window_s": 1800,
+        "series_total": 0,
+        "series": [],
+        "evidence": "E16"
+      },
+      "is_error": false,
+      "seconds": 0.01
+    }
+  ],
+  "usage": {
+    "input": 21478,
+    "output": 1995
+  },
+  "outcome": "submitted",
+  "seconds": 26.5,
+  "evidence": [
+    {
+      "id": "E1",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "summary": "checkout [errors,client_call_errors,slow] over 300s: error_rate 83.3% (baseline 0.0%) client_error_rate 8.5% (baseline 0.0%) p95 8500.0ms (baseline 4250.0ms) rps 0.023 (baseline 0.019)",
+      "data": {
+        "row": {
+          "service": "checkout",
+          "rps": 0.023,
+          "error_rate": 0.8333,
+          "client_error_rate": 0.0847,
+          "p95_ms": 8500.0,
+          "baseline": {
+            "rps": 0.019,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 4250.0
+          },
+          "p95_ratio": 2.0,
+          "rps_ratio": 1.21,
+          "flags": [
+            "errors",
+            "client_call_errors",
+            "slow"
+          ],
+          "criticality": "critical",
+          "evidence": "E1"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      },
+      "ts": 1792758239.5743032
+    },
+    {
+      "id": "E2",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "summary": "payment [client_call_errors,traffic_drop] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 100.0% (baseline 0.0%) p95 1.9ms (baseline 1.9ms) rps 0.004 (baseline 0.019)",
+      "data": {
+        "row": {
+          "service": "payment",
+          "rps": 0.004,
+          "error_rate": 0.0,
+          "client_error_rate": 1.0,
+          "p95_ms": 1.9,
+          "baseline": {
+            "rps": 0.019,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 1.9
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 0.21,
+          "flags": [
+            "client_call_errors",
+            "traffic_drop"
+          ],
+          "criticality": "critical",
+          "evidence": "E2"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      },
+      "ts": 1792758239.5743182
+    },
+    {
+      "id": "E3",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "summary": "email [traffic_drop] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 7.9ms (baseline 175.0ms) rps 0.004 (baseline 0.019)",
+      "data": {
+        "row": {
+          "service": "email",
+          "rps": 0.004,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 7.9,
+          "baseline": {
+            "rps": 0.019,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 175.0
+          },
+          "p95_ratio": 0.05,
+          "rps_ratio": 0.21,
+          "flags": [
+            "traffic_drop"
+          ],
+          "criticality": "medium",
+          "evidence": "E3"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      },
+      "ts": 1792758239.5743268
+    },
+    {
+      "id": "E4",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "summary": "container payment: not running (exited, exit code 137, stopped 188s ago); restarted 9x; health unhealthy (status=exited, restarts=9, oom_killed=False, health=unhealthy)",
+      "data": {
+        "name": "payment",
+        "status": "exited",
+        "exit_code": 137,
+        "oom_killed": false,
+        "restart_count": 9,
+        "health": "unhealthy",
+        "started_at": "2026-10-23T11:57:30.691679812Z",
+        "started_ago_s": 1591,
+        "image": "ghcr.io/open-telemetry/demo:latest-payment",
+        "stopped_at": "2026-10-23T12:20:54.113360596Z",
+        "stopped_ago_s": 188,
+        "problems": [
+          "not running (exited, exit code 137, stopped 188s ago)",
+          "restarted 9x",
+          "health unhealthy"
+        ],
+        "evidence": "E4"
+      },
+      "ts": 1792758242.3394222
+    },
+    {
+      "id": "E5",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "summary": "container checkout: restarted 10x; (re)started 1088s ago (status=running, restarts=10, oom_killed=False, health=healthy, mem=10.4/20.0MB)",
+      "data": {
+        "name": "checkout",
+        "status": "running",
+        "exit_code": 0,
+        "oom_killed": false,
+        "restart_count": 10,
+        "health": "healthy",
+        "started_at": "2026-10-23T12:05:53.384552713Z",
+        "started_ago_s": 1088,
+        "image": "ghcr.io/open-telemetry/demo:latest-checkout",
+        "cpu_pct": 0.72,
+        "mem_used_mb": 10.4,
+        "mem_limit_mb": 20.0,
+        "mem_pct": 51.86,
+        "problems": [
+          "restarted 10x",
+          "(re)started 1088s ago"
+        ],
+        "evidence": "E5"
+      },
+      "ts": 1792758242.3394313
+    },
+    {
+      "id": "E6",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "summary": "container recommendation: restarted 12x; (re)started 610s ago (status=running, restarts=12, oom_killed=False, health=healthy, mem=213.6/500.0MB)",
+      "data": {
+        "name": "recommendation",
+        "status": "running",
+        "exit_code": 0,
+        "oom_killed": false,
+        "restart_count": 12,
+        "health": "healthy",
+        "started_at": "2026-10-23T12:13:51.465759623Z",
+        "started_ago_s": 610,
+        "image": "ghcr.io/open-telemetry/demo:latest-recommendation",
+        "cpu_pct": 1.66,
+        "mem_used_mb": 213.6,
+        "mem_limit_mb": 500.0,
+        "mem_pct": 42.73,
+        "problems": [
+          "restarted 12x",
+          "(re)started 610s ago"
+        ],
+        "evidence": "E6"
+      },
+      "ts": 1792758242.3394356
+    },
+    {
+      "id": "E7",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "summary": "container ad: restarted 12x; (re)started 363s ago (status=running, restarts=12, oom_killed=False, health=healthy, mem=227.3/300.0MB)",
+      "data": {
+        "name": "ad",
+        "status": "running",
+        "exit_code": 0,
+        "oom_killed": false,
+        "restart_count": 12,
+        "health": "healthy",
+        "started_at": "2026-10-23T12:17:58.635803569Z",
+        "started_ago_s": 363,
+        "image": "ghcr.io/open-telemetry/demo:latest-ad",
+        "cpu_pct": 1.97,
+        "mem_used_mb": 227.3,
+        "mem_limit_mb": 300.0,
+        "mem_pct": 75.76,
+        "problems": [
+          "restarted 12x",
+          "(re)started 363s ago"
+        ],
+        "evidence": "E7"
+      },
+      "ts": 1792758242.339438
+    },
+    {
+      "id": "E8",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "summary": "container product-catalog: restarted 10x; (re)started 893s ago (status=running, restarts=10, oom_killed=False, health=healthy, mem=13.9/20.0MB)",
+      "data": {
+        "name": "product-catalog",
+        "status": "running",
+        "exit_code": 0,
+        "oom_killed": false,
+        "restart_count": 10,
+        "health": "healthy",
+        "started_at": "2026-10-23T12:09:08.823699106Z",
+        "started_ago_s": 893,
+        "image": "ghcr.io/open-telemetry/demo:latest-product-catalog",
+        "cpu_pct": 0.96,
+        "mem_used_mb": 13.9,
+        "mem_limit_mb": 20.0,
+        "mem_pct": 69.77,
+        "problems": [
+          "restarted 10x",
+          "(re)started 893s ago"
+        ],
+        "evidence": "E8"
+      },
+      "ts": 1792758242.3394573
+    },
+    {
+      "id": "E9",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "summary": "container cart: restarted 12x; (re)started 1390s ago (status=running, restarts=12, oom_killed=False, health=none, mem=54.0/160.0MB)",
+      "data": {
+        "name": "cart",
+        "status": "running",
+        "exit_code": 0,
+        "oom_killed": false,
+        "restart_count": 12,
+        "health": "none",
+        "started_at": "2026-10-23T12:00:51.40899306Z",
+        "started_ago_s": 1390,
+        "image": "ghcr.io/open-telemetry/demo:latest-cart",
+        "cpu_pct": 0.11,
+        "mem_used_mb": 54.0,
+        "mem_limit_mb": 160.0,
+        "mem_pct": 33.73,
+        "problems": [
+          "restarted 12x",
+          "(re)started 1390s ago"
+        ],
+        "evidence": "E9"
+      },
+      "ts": 1792758242.3394601
+    },
+    {
+      "id": "E10",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "summary": "container quote: restarted 1x (status=running, restarts=1, oom_killed=False, health=healthy, mem=23.2/40.0MB)",
+      "data": {
+        "name": "quote",
+        "status": "running",
+        "exit_code": 0,
+        "oom_killed": false,
+        "restart_count": 1,
+        "health": "healthy",
+        "started_at": "2026-10-23T09:46:01.566812513Z",
+        "started_ago_s": 9480,
+        "image": "ghcr.io/open-telemetry/demo:latest-quote",
+        "cpu_pct": 0.1,
+        "mem_used_mb": 23.2,
+        "mem_limit_mb": 40.0,
+        "mem_pct": 58.11,
+        "problems": [
+          "restarted 1x"
+        ],
+        "evidence": "E10"
+      },
+      "ts": 1792758242.3394635
+    },
+    {
+      "id": "E11",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "summary": "container opensearch: memory 92.59% of limit (status=running, restarts=0, oom_killed=False, health=healthy, mem=948.2/1024.0MB)",
+      "data": {
+        "name": "opensearch",
+        "status": "running",
+        "exit_code": 0,
+        "oom_killed": false,
+        "restart_count": 0,
+        "health": "healthy",
+        "started_at": "2026-10-23T10:29:30.552708215Z",
+        "started_ago_s": 6871,
+        "image": "ghcr.io/open-telemetry/demo:latest-opensearch",
+        "cpu_pct": 8.68,
+        "mem_used_mb": 948.2,
+        "mem_limit_mb": 1024.0,
+        "mem_pct": 92.59,
+        "problems": [
+          "memory 92.59% of limit"
+        ],
+        "evidence": "E11"
+      },
+      "ts": 1792758242.3395462
+    },
+    {
+      "id": "E12",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "summary": "3/5 traces: deepest failing span is checkout 'oteldemo.PaymentService/Charge' msg='name resolver error: produced zero addresses' chain=load-generator>frontend-proxy>frontend>checkout e.g. trace 6c019a2cd93a7a8f45725517503cd0db",
+      "data": {
+        "origin_service": "checkout",
+        "operation": "oteldemo.PaymentService/Charge",
+        "count": 3,
+        "message": "name resolver error: produced zero addresses",
+        "chain": [
+          "load-generator",
+          "frontend-proxy",
+          "frontend",
+          "checkout"
+        ],
+        "example_trace": "6c019a2cd93a7a8f45725517503cd0db",
+        "lookback_s": 300
+      },
+      "ts": 1792758242.540755
+    },
+    {
+      "id": "E13",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "summary": "2/5 traces: deepest failing span is checkout 'oteldemo.PaymentService/Charge' msg='connection error: desc = \"transport: Error while dialing: dial tcp 172.21.0.16:50051: connect: no route to host\"' chain=load-generator>frontend-proxy>frontend>checkout e.g. trace d31e52c8772c456da845ace5f5ec3138",
+      "data": {
+        "origin_service": "checkout",
+        "operation": "oteldemo.PaymentService/Charge",
+        "count": 2,
+        "message": "connection error: desc = \"transport: Error while dialing: dial tcp 172.21.0.16:50051: connect: no route to host\"",
+        "chain": [
+          "load-generator",
+          "frontend-proxy",
+          "frontend",
+          "checkout"
+        ],
+        "example_trace": "d31e52c8772c456da845ace5f5ec3138",
+        "lookback_s": 300
+      },
+      "ts": 1792758242.5407612
+    },
+    {
+      "id": "E14",
+      "tool": "search_logs",
+      "kind": "log",
+      "summary": "payment logs (opensearch (none) + docker logs, 1800s): 1x ERROR '(node:1) MetadataLookupWarning: received unexpected error = All promises were rejected code = UNKNOWN' first 2026-10-23T11:57:34.499725451Z last 2026-10-23T11:57:34.499725451Z",
+      "data": {
+        "service": "payment",
+        "log_source": "opensearch (none) + docker logs",
+        "level": "error",
+        "pattern": "(node:<n>) MetadataLookupWarning: received unexpected error = All promises were rejected code = UNKNOWN",
+        "count": 1,
+        "first_seen": "2026-10-23T11:57:34.499725451Z",
+        "last_seen": "2026-10-23T11:57:34.499725451Z",
+        "example": "(node:1) MetadataLookupWarning: received unexpected error = All promises were rejected code = UNKNOWN"
+      },
+      "ts": 1792758247.1054003
+    },
+    {
+      "id": "E15",
+      "tool": "search_logs",
+      "kind": "log",
+      "summary": "checkout: no warn+ log lines in last 1800s (opensearch (none) + docker logs)",
+      "data": {
+        "service": "checkout",
+        "since_s": 1800,
+        "level": "warn",
+        "contains": null,
+        "log_source": "opensearch (none) + docker logs"
+      },
+      "ts": 1792758247.1978831
+    },
+    {
+      "id": "E16",
+      "tool": "get_metric",
+      "kind": "metric",
+      "summary": "sum by (service_name) (rate(traces_span_metrics_calls_total{service_name=\"payment\"}[1m])) returned no data over 1800s",
+      "data": {
+        "promql": "sum by (service_name) (rate(traces_span_metrics_calls_total{service_name=\"payment\"}[1m]))",
+        "window_s": 1800
+      },
+      "ts": 1792758247.2101204
+    }
+  ],
+  "summary": {
+    "source": "live",
+    "source_detail": "prometheus http://localhost:9090, jaeger, opensearch, docker CLI",
+    "headline": "The payment container exited (code 137, not OOM-killed, 9 restarts) about 3 minutes before the alert. Checkout's PaymentService/Charge calls now fail with DNS/no-route errors, so checkout errors on 83% of requests and email gets almost no order-confirmation traffic.",
+    "affected_services": [
+      {
+        "service": "payment",
+        "impact": "Container has exited and is unhealthy. Nothing can reach it to charge orders.",
+        "evidence": [
+          "E4",
+          "E2"
+        ]
+      },
+      {
+        "service": "checkout",
+        "impact": "PlaceOrder fails because Charge to payment fails ('name resolver error: produced zero addresses' / 'no route to host'). Users cannot complete purchases and p95 latency has doubled.",
+        "evidence": [
+          "E1",
+          "E12",
+          "E13"
+        ]
+      },
+      {
+        "service": "email",
+        "impact": "Orders do not complete, so few confirmation emails are sent and traffic has dropped. This is a side effect of the checkout failures, not a fault in email.",
+        "evidence": [
+          "E3"
+        ]
+      }
+    ],
+    "anomalies": [
+      {
+        "service": "checkout",
+        "signal": "error_rate",
+        "observed": "0.8333",
+        "baseline": "0.0",
+        "evidence": [
+          "E1"
+        ]
+      },
+      {
+        "service": "checkout",
+        "signal": "p95",
+        "observed": "8500.0 ms",
+        "baseline": "4250.0 ms",
+        "evidence": [
+          "E1"
+        ]
+      },
+      {
+        "service": "checkout",
+        "signal": "client_error_rate",
+        "observed": "0.0847",
+        "baseline": "0.0",
+        "evidence": [
+          "E1"
+        ]
+      },
+      {
+        "service": "payment",
+        "signal": "container_state",
+        "observed": "exited, exit code 137, oom_killed false, restart_count 9, unhealthy, stopped 188s ago",
+        "baseline": "running",
+        "evidence": [
+          "E4"
+        ]
+      },
+      {
+        "service": "payment",
+        "signal": "rps",
+        "observed": "0.004",
+        "baseline": "0.019",
+        "evidence": [
+          "E2"
+        ]
+      },
+      {
+        "service": "email",
+        "signal": "rps",
+        "observed": "0.004",
+        "baseline": "0.019",
+        "evidence": [
+          "E3"
+        ]
+      }
+    ],
+    "root_causes": [
+      {
+        "component": "payment",
+        "fault_class": "container_stopped_or_restarting",
+        "cause": "The payment container was SIGKILLed (exit code 137, not OOM-killed) at 12:20:54Z and has not come back. Its restart count is 9 and its health is unhealthy. With the container gone, its DNS name resolves to no addresses (or the old IP has no route), so every checkout Charge call fails.",
+        "confidence": 0.85,
+        "evidence": [
+          "E4",
+          "E12",
+          "E13",
+          "E2"
+        ],
+        "evidence_detail": {
+          "E4": "container payment: not running (exited, exit code 137, stopped 188s ago); restarted 9x; health unhealthy (status=exited, restarts=9, oom_killed=False, health=unhealthy)",
+          "E12": "3/5 traces: deepest failing span is checkout 'oteldemo.PaymentService/Charge' msg='name resolver error: produced zero addresses' chain=load-generator>frontend-proxy>frontend>checkout e.g. trace 6c019a2cd93a7a8f45725517503cd0db",
+          "E13": "2/5 traces: deepest failing span is checkout 'oteldemo.PaymentService/Charge' msg='connection error: desc = \"transport: Error while dialing: dial tcp 172.21.0.16:50051: connect: no route to host\"' chain=load-generator>frontend-proxy>frontend>checkout e.g. trace d31e52c8772c456da845ace5f5ec3138",
+          "E2": "payment [client_call_errors,traffic_drop] over 300s: error_rate 0.0% (baseline 0.0%) client_error_rate 100.0% (baseline 0.0%) p95 1.9ms (baseline 1.9ms) rps 0.004 (baseline 0.019)"
+        }
+      }
+    ],
+    "suspected_origin": {
+      "service": "payment",
+      "reasoning": "All failing checkout traces start at the client span checkout->PaymentService/Charge with resolver or no-route errors. No payment server spans exist, and docker shows the payment container exited with code 137.",
+      "confidence": 0.85,
+      "evidence": [
+        "E4",
+        "E12",
+        "E13"
+      ],
+      "evidence_detail": {
+        "E4": "container payment: not running (exited, exit code 137, stopped 188s ago); restarted 9x; health unhealthy (status=exited, restarts=9, oom_killed=False, health=unhealthy)",
+        "E12": "3/5 traces: deepest failing span is checkout 'oteldemo.PaymentService/Charge' msg='name resolver error: produced zero addresses' chain=load-generator>frontend-proxy>frontend>checkout e.g. trace 6c019a2cd93a7a8f45725517503cd0db",
+        "E13": "2/5 traces: deepest failing span is checkout 'oteldemo.PaymentService/Charge' msg='connection error: desc = \"transport: Error while dialing: dial tcp 172.21.0.16:50051: connect: no route to host\"' chain=load-generator>frontend-proxy>frontend>checkout e.g. trace d31e52c8772c456da845ace5f5ec3138"
+      }
+    },
+    "proposed_action": {
+      "action": "restart_service",
+      "target": "payment",
+      "dry_run": true,
+      "reason": "Payment is stopped, so checkout cannot charge orders. Starting it again should bring back name resolution and Charge calls.",
+      "expected_outcome": "Payment server spans come back. Checkout error rate drops from 0.8333 to about 0, p95 returns to about 4250 ms, and email traffic returns to about 0.019 rps.",
+      "risk_assessment": "Low risk: the service is already down. With 9 restarts and a SIGKILL that was not an OOM, it may crash again; if it does, escalate to a human."
+    },
+    "open_questions": [
+      "Why was payment SIGKILLed (exit 137 with oom_killed=false)? Was it a manual or external kill, a failed health check, or a memory limit hit that was not recorded as an OOM?",
+      "Why have payment (9), checkout (10) and recommendation (12) restarted so many times? Is something unstable across these containers?",
+      "Payment logs have no error explaining the exit; check host/docker events around 12:20:54Z."
+    ],
+    "confidence": 0.85,
+    "status": "diagnosed",
+    "approval": {
+      "status": "rejected",
+      "requested_at": "2026-10-23T12:24:22+00:00",
+      "dry_run": true,
+      "executed": false,
+      "notes": "Cancelled or interrupted",
+      "decision_at": "2026-10-23T12:24:22+00:00"
+    },
+    "validation": {
+      "dropped_evidence_ids": [],
+      "notes": []
+    }
+  }
+}

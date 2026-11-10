@@ -1,0 +1,2070 @@
+{
+  "run_id": "20261023-180655",
+  "source": "live",
+  "source_detail": "prometheus http://localhost:9090, jaeger, opensearch, docker CLI",
+  "alert": {
+    "incident_id": "INC-20261023-123655",
+    "detected_at": "2026-10-23T12:36:55+00:00",
+    "trigger": [
+      {
+        "service": "product-catalog",
+        "signal": "error_rate",
+        "value": 1.0,
+        "threshold": 0.05,
+        "window": "3m",
+        "promql": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_SERVER\",status_code=\"STATUS_CODE_ERROR\"}[3m])) / sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_SERVER\"}[3m]))",
+        "severity": 20.0
+      },
+      {
+        "service": "recommendation",
+        "signal": "error_rate",
+        "value": 1.0,
+        "threshold": 0.05,
+        "window": "3m",
+        "promql": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_SERVER\",status_code=\"STATUS_CODE_ERROR\"}[3m])) / sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_SERVER\"}[3m]))",
+        "severity": 20.0
+      },
+      {
+        "service": "checkout",
+        "signal": "error_rate",
+        "value": 1.0,
+        "threshold": 0.05,
+        "window": "3m",
+        "promql": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_SERVER\",status_code=\"STATUS_CODE_ERROR\"}[3m])) / sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_SERVER\"}[3m]))",
+        "severity": 20.0
+      },
+      {
+        "service": "checkout",
+        "signal": "silent",
+        "value": 0.0622,
+        "threshold": 0.0748,
+        "window": "3m",
+        "promql": "sum by (service_name) (rate(traces_span_metrics_calls_total[3m]))",
+        "severity": 10.0
+      },
+      {
+        "service": "currency",
+        "signal": "silent",
+        "value": 0.0932,
+        "threshold": 0.1901,
+        "window": "3m",
+        "promql": "sum by (service_name) (rate(traces_span_metrics_calls_total[3m]))",
+        "severity": 10.0
+      },
+      {
+        "service": "email",
+        "signal": "silent",
+        "value": 0.0,
+        "threshold": 0.0249,
+        "window": "3m",
+        "promql": "sum by (service_name) (rate(traces_span_metrics_calls_total[3m]))",
+        "severity": 10.0
+      },
+      {
+        "service": "image-provider",
+        "signal": "silent",
+        "value": 0.4273,
+        "threshold": 0.4879,
+        "window": "3m",
+        "promql": "sum by (service_name) (rate(traces_span_metrics_calls_total[3m]))",
+        "severity": 10.0
+      },
+      {
+        "service": "payment",
+        "signal": "silent",
+        "value": 0.0,
+        "threshold": 0.0125,
+        "window": "3m",
+        "promql": "sum by (service_name) (rate(traces_span_metrics_calls_total[3m]))",
+        "severity": 10.0
+      },
+      {
+        "service": "product-catalog",
+        "signal": "silent",
+        "value": 0.7902,
+        "threshold": 1.6178,
+        "window": "3m",
+        "promql": "sum by (service_name) (rate(traces_span_metrics_calls_total[3m]))",
+        "severity": 10.0
+      },
+      {
+        "service": "quote",
+        "signal": "silent",
+        "value": 0.0,
+        "threshold": 0.0888,
+        "window": "3m",
+        "promql": "sum by (service_name) (rate(traces_span_metrics_calls_total[3m]))",
+        "severity": 10.0
+      },
+      {
+        "service": "shipping",
+        "signal": "silent",
+        "value": 0.0,
+        "threshold": 0.0639,
+        "window": "3m",
+        "promql": "sum by (service_name) (rate(traces_span_metrics_calls_total[3m]))",
+        "severity": 10.0
+      },
+      {
+        "service": "frontend",
+        "signal": "error_rate",
+        "value": 0.3031,
+        "threshold": 0.05,
+        "window": "3m",
+        "promql": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_SERVER\",status_code=\"STATUS_CODE_ERROR\"}[3m])) / sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_SERVER\"}[3m]))",
+        "severity": 6.06
+      },
+      {
+        "service": "frontend-proxy",
+        "signal": "error_rate",
+        "value": 0.1901,
+        "threshold": 0.05,
+        "window": "3m",
+        "promql": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_SERVER\",status_code=\"STATUS_CODE_ERROR\"}[3m])) / sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_SERVER\"}[3m]))",
+        "severity": 3.8
+      },
+      {
+        "service": "recommendation",
+        "signal": "p95_ms",
+        "value": 4772.8298,
+        "threshold": 2765.8,
+        "window": "3m",
+        "promql": "histogram_quantile(0.95, sum by (le, service_name) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=\"SPAN_KIND_SERVER\"}[3m])))",
+        "severity": 1.73
+      }
+    ],
+    "alerting_services": [
+      "checkout",
+      "currency",
+      "email",
+      "frontend",
+      "frontend-proxy",
+      "image-provider",
+      "payment",
+      "product-catalog",
+      "quote",
+      "recommendation",
+      "shipping"
+    ],
+    "note": "alerting service is a symptom, not necessarily the root cause"
+  },
+  "model": "claude-opus-5-5",
+  "steps": [
+    {
+      "step": 1,
+      "tool": "get_service_health",
+      "input": {
+        "window": "3m"
+      },
+      "result": {
+        "window_s": 180,
+        "baseline": "loaded",
+        "flagged": [
+          {
+            "service": "product-catalog",
+            "rps": 0.796,
+            "error_rate": 1.0002,
+            "client_error_rate": 1.0002,
+            "p95_ms": 4806.7,
+            "baseline": {
+              "rps": 3.947,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 1883.4
+            },
+            "p95_ratio": 2.55,
+            "rps_ratio": 0.2,
+            "flags": [
+              "errors",
+              "client_call_errors",
+              "slow",
+              "traffic_drop"
+            ],
+            "criticality": "high",
+            "evidence": "E1"
+          },
+          {
+            "service": "recommendation",
+            "rps": 0.295,
+            "error_rate": 1.0002,
+            "client_error_rate": 1.0002,
+            "p95_ms": 4773.3,
+            "baseline": {
+              "rps": 0.612,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 806.0
+            },
+            "p95_ratio": 5.92,
+            "rps_ratio": 0.48,
+            "flags": [
+              "errors",
+              "client_call_errors",
+              "slow"
+            ],
+            "criticality": "medium",
+            "evidence": "E2"
+          },
+          {
+            "service": "checkout",
+            "rps": 0.016,
+            "error_rate": 1.0,
+            "client_error_rate": 0.5,
+            "p95_ms": 4850.0,
+            "baseline": {
+              "rps": 0.019,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 4250.0
+            },
+            "p95_ratio": 1.14,
+            "rps_ratio": 0.84,
+            "flags": [
+              "errors",
+              "client_call_errors"
+            ],
+            "criticality": "critical",
+            "evidence": "E3"
+          },
+          {
+            "service": "frontend",
+            "rps": 4.281,
+            "error_rate": 0.3031,
+            "client_error_rate": 0.5724,
+            "p95_ms": 4293.6,
+            "baseline": {
+              "rps": 11.553,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 1736.8
+            },
+            "p95_ratio": 2.47,
+            "rps_ratio": 0.37,
+            "flags": [
+              "errors",
+              "client_call_errors",
+              "slow"
+            ],
+            "criticality": "critical",
+            "evidence": "E4"
+          },
+          {
+            "service": "payment",
+            "rps": 0.0,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": null,
+            "baseline": {
+              "rps": 0.019,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 1.9
+            },
+            "p95_ratio": null,
+            "rps_ratio": 0.0,
+            "flags": [
+              "traffic_drop",
+              "silent"
+            ],
+            "criticality": "critical",
+            "evidence": "E5"
+          }
+        ],
+        "healthy": [
+          "cart",
+          "ad",
+          "telemetry-docs"
+        ],
+        "truncated": true
+      },
+      "is_error": false,
+      "seconds": 0.11
+    },
+    {
+      "step": 1,
+      "tool": "get_deploy_history",
+      "input": {
+        "lookback": "30m"
+      },
+      "result": {
+        "lookback_s": 1800,
+        "containers": 23,
+        "stats_available": true,
+        "changed_or_unhealthy": [
+          {
+            "name": "astronomy-db",
+            "status": "exited",
+            "exit_code": 0,
+            "oom_killed": false,
+            "restart_count": 0,
+            "health": "unhealthy",
+            "started_at": "2026-10-23T11:33:10.785377998Z",
+            "started_ago_s": 3831,
+            "image": "postgres:18.6",
+            "stopped_at": "2026-10-23T12:33:56.240190359Z",
+            "stopped_ago_s": 185,
+            "problems": [
+              "not running (exited, exit code 0, stopped 185s ago)",
+              "health unhealthy"
+            ],
+            "evidence": "E14"
+          },
+          {
+            "name": "recommendation",
+            "status": "running",
+            "exit_code": 0,
+            "oom_killed": false,
+            "restart_count": 12,
+            "health": "healthy",
+            "started_at": "2026-10-23T12:13:51.465759623Z",
+            "started_ago_s": 1390,
+            "image": "ghcr.io/open-telemetry/demo:latest-recommendation",
+            "cpu_pct": 0.16,
+            "mem_used_mb": 217.0,
+            "mem_limit_mb": 500.0,
+            "mem_pct": 43.41,
+            "problems": [
+              "restarted 12x",
+              "(re)started 1390s ago"
+            ],
+            "evidence": "E15"
+          },
+          {
+            "name": "ad",
+            "status": "running",
+            "exit_code": 0,
+            "oom_killed": false,
+            "restart_count": 12,
+            "health": "healthy",
+            "started_at": "2026-10-23T12:17:58.635803569Z",
+            "started_ago_s": 1143,
+            "image": "ghcr.io/open-telemetry/demo:latest-ad",
+            "cpu_pct": 4.07,
+            "mem_used_mb": 235.5,
+            "mem_limit_mb": 300.0,
+            "mem_pct": 78.5,
+            "problems": [
+              "restarted 12x",
+              "(re)started 1143s ago"
+            ],
+            "evidence": "E16"
+          }
+        ],
+        "healthy": [
+          "currency",
+          "email",
+          "frontend",
+          "frontend-proxy",
+          "grafana",
+          "image-provider",
+          "jaeger",
+          "load-generator",
+          "opamp-server",
+          "otel-collector",
+          "prometheus",
+          "shipping",
+          "telemetry-docs"
+        ],
+        "top_memory": [
+          {
+            "name": "opensearch",
+            "mem_pct": 92.02
+          },
+          {
+            "name": "ad",
+            "mem_pct": 78.5
+          },
+          {
+            "name": "shipping",
+            "mem_pct": 73.69
+          },
+          {
+            "name": "product-catalog",
+            "mem_pct": 70.35
+          },
+          {
+            "name": "frontend",
+            "mem_pct": 66.94
+          }
+        ],
+        "organiser_history": "not configured",
+        "our_actions": [],
+        "truncated": true
+      },
+      "is_error": false,
+      "seconds": 2.66
+    },
+    {
+      "step": 2,
+      "tool": "find_error_traces",
+      "input": {
+        "service": "product-catalog",
+        "lookback": "3m"
+      },
+      "result": {
+        "service": "product-catalog",
+        "lookback_s": 180,
+        "errors_only": true,
+        "traces_examined": 20,
+        "origins": [
+          {
+            "origin_service": "product-catalog",
+            "operation": "oteldemo.ProductCatalogService/ListProducts",
+            "count": 12,
+            "message": "failed to load products: failed to query products: dial tcp: lookup astronomy-db on 127.0.0.11:53: no such host",
+            "chain": [
+              "frontend-web",
+              "frontend-proxy",
+              "frontend",
+              "product-catalog"
+            ],
+            "example_trace": "f08715a3c4ecc4a675407e1894640366",
+            "evidence": "E24"
+          },
+          {
+            "origin_service": "product-catalog",
+            "operation": "oteldemo.ProductCatalogService/GetProduct",
+            "count": 3,
+            "message": "Product Not Found: LS4PSXUNUM",
+            "chain": [
+              "load-generator",
+              "frontend-proxy",
+              "frontend",
+              "product-catalog"
+            ],
+            "example_trace": "e976aacb74ad26c8dabe1cacbc43f8de",
+            "evidence": "E25"
+          }
+        ],
+        "attribute_clusters": [],
+        "edges": [
+          {
+            "edge": "checkout->product-catalog",
+            "calls": 2,
+            "avg_client_ms": 3677.4,
+            "avg_server_ms": 3642.2,
+            "avg_gap_ms": 35.2
+          },
+          {
+            "edge": "frontend-web->frontend-proxy",
+            "calls": 9,
+            "avg_client_ms": 2966.1,
+            "avg_server_ms": 2956.8,
+            "avg_gap_ms": 9.3
+          },
+          {
+            "edge": "frontend->product-catalog",
+            "calls": 24,
+            "avg_client_ms": 2843.4,
+            "avg_server_ms": 2834.6,
+            "avg_gap_ms": 8.8
+          },
+          {
+            "edge": "frontend->checkout",
+            "calls": 2,
+            "avg_client_ms": 3684.8,
+            "avg_server_ms": 3682.1,
+            "avg_gap_ms": 2.7
+          },
+          {
+            "edge": "load-generator->frontend-proxy",
+            "calls": 22,
+            "avg_client_ms": 1816.4,
+            "avg_server_ms": 1814.5,
+            "avg_gap_ms": 1.9
+          }
+        ],
+        "slowest": [
+          {
+            "trace_id": "8f58e294a1ed117affd00721be0a918d",
+            "root": "load-generator user_checkout_multi",
+            "duration_ms": 17929.3
+          },
+          {
+            "trace_id": "59894bcd92ab7b81ac00a60748901721",
+            "root": "load-generator user_checkout_multi",
+            "duration_ms": 9916.8
+          },
+          {
+            "trace_id": "2787409e1226fc3e1ab36262ada3a5ff",
+            "root": "frontend-web GET",
+            "duration_ms": 3766.0
+          }
+        ],
+        "truncated": true
+      },
+      "is_error": false,
+      "seconds": 0.22
+    },
+    {
+      "step": 2,
+      "tool": "search_logs",
+      "input": {
+        "services": [
+          "product-catalog",
+          "astronomy-db"
+        ],
+        "since": "5m"
+      },
+      "result": {
+        "since_s": 300,
+        "min_level": "warn",
+        "contains": null,
+        "services": {
+          "product-catalog": {
+            "log_source": "opensearch (none) + docker logs",
+            "matching_lines": 0,
+            "evidence": "E30"
+          },
+          "astronomy-db": {
+            "log_source": "opensearch (none) + docker logs",
+            "matching_lines": 26
+          }
+        },
+        "patterns": [
+          {
+            "service": "astronomy-db",
+            "level": "error",
+            "count": 20,
+            "first_seen": "2026-10-23T12:32:07.697752860Z",
+            "last_seen": "2026-10-23T12:33:50.872236607Z",
+            "example": "2026-10-23 12:32:07.697 UTC [10000] FATAL:  role \"root\" does not exist",
+            "evidence": "E31"
+          },
+          {
+            "service": "astronomy-db",
+            "level": "error",
+            "count": 6,
+            "first_seen": "2026-10-23T12:33:56.153668610Z",
+            "last_seen": "2026-10-23T12:33:56.154484865Z",
+            "example": "2026-10-23 12:33:56.153 UTC [10194] FATAL:  terminating connection due to administrator command",
+            "evidence": "E32"
+          }
+        ]
+      },
+      "is_error": false,
+      "seconds": 1.31
+    },
+    {
+      "step": 3,
+      "tool": "find_error_traces",
+      "input": {
+        "service": "checkout",
+        "lookback": "5m"
+      },
+      "result": {
+        "service": "checkout",
+        "lookback_s": 300,
+        "errors_only": true,
+        "traces_examined": 4,
+        "origins": [
+          {
+            "origin_service": "product-catalog",
+            "operation": "oteldemo.ProductCatalogService/GetProduct",
+            "count": 2,
+            "message": "Product Not Found: LS4PSXUNUM",
+            "chain": [
+              "load-generator",
+              "frontend-proxy",
+              "frontend",
+              "checkout",
+              "product-catalog"
+            ],
+            "example_trace": "59894bcd92ab7b81ac00a60748901721",
+            "evidence": "E33"
+          },
+          {
+            "origin_service": "product-catalog",
+            "operation": "oteldemo.ProductCatalogService/GetProduct",
+            "count": 2,
+            "message": "Product Not Found: 1YMWWN1N4O",
+            "chain": [
+              "load-generator",
+              "frontend-proxy",
+              "frontend",
+              "checkout",
+              "product-catalog"
+            ],
+            "example_trace": "8f58e294a1ed117affd00721be0a918d",
+            "evidence": "E34"
+          }
+        ],
+        "attribute_clusters": [],
+        "edges": [
+          {
+            "edge": "frontend-proxy->frontend",
+            "calls": 22,
+            "avg_client_ms": 2093.7,
+            "avg_server_ms": 1992.8,
+            "avg_gap_ms": 100.9
+          },
+          {
+            "edge": "checkout->product-catalog",
+            "calls": 4,
+            "avg_client_ms": 3675.7,
+            "avg_server_ms": 3648.4,
+            "avg_gap_ms": 27.4
+          },
+          {
+            "edge": "frontend->product-catalog",
+            "calls": 9,
+            "avg_client_ms": 3225.4,
+            "avg_server_ms": 3219.4,
+            "avg_gap_ms": 5.9
+          },
+          {
+            "edge": "frontend->checkout",
+            "calls": 4,
+            "avg_client_ms": 3682.6,
+            "avg_server_ms": 3680.0,
+            "avg_gap_ms": 2.6
+          },
+          {
+            "edge": "load-generator->frontend-proxy",
+            "calls": 22,
+            "avg_client_ms": 2095.8,
+            "avg_server_ms": 2093.9,
+            "avg_gap_ms": 1.9
+          }
+        ],
+        "slowest": [
+          {
+            "trace_id": "8f58e294a1ed117affd00721be0a918d",
+            "root": "load-generator user_checkout_multi",
+            "duration_ms": 17929.3
+          },
+          {
+            "trace_id": "705f4343711019aa3d894a34c627c6cd",
+            "root": "load-generator user_checkout_multi",
+            "duration_ms": 12045.5
+          },
+          {
+            "trace_id": "59894bcd92ab7b81ac00a60748901721",
+            "root": "load-generator user_checkout_multi",
+            "duration_ms": 9916.8
+          }
+        ],
+        "truncated": true
+      },
+      "is_error": false,
+      "seconds": 0.08
+    },
+    {
+      "step": 3,
+      "tool": "find_error_traces",
+      "input": {
+        "service": "recommendation",
+        "lookback": "3m"
+      },
+      "result": {
+        "service": "recommendation",
+        "lookback_s": 180,
+        "errors_only": true,
+        "traces_examined": 20,
+        "origins": [
+          {
+            "origin_service": "product-catalog",
+            "operation": "oteldemo.ProductCatalogService/ListProducts",
+            "count": 20,
+            "message": "failed to load products: failed to query products: dial tcp: lookup astronomy-db on 127.0.0.11:53: no such host",
+            "chain": [
+              "load-generator",
+              "frontend-proxy",
+              "frontend",
+              "recommendation",
+              "product-catalog"
+            ],
+            "example_trace": "57e761da031f9e4c51308f2b0cb439e2",
+            "evidence": "E39"
+          }
+        ],
+        "attribute_clusters": [],
+        "edges": [
+          {
+            "edge": "frontend-web->frontend-proxy",
+            "calls": 5,
+            "avg_client_ms": 1715.4,
+            "avg_server_ms": 1701.9,
+            "avg_gap_ms": 13.5
+          },
+          {
+            "edge": "recommendation->product-catalog",
+            "calls": 20,
+            "avg_client_ms": 2355.5,
+            "avg_server_ms": 2346.6,
+            "avg_gap_ms": 8.9
+          },
+          {
+            "edge": "frontend->recommendation",
+            "calls": 20,
+            "avg_client_ms": 2359.8,
+            "avg_server_ms": 2356.2,
+            "avg_gap_ms": 3.7
+          },
+          {
+            "edge": "load-generator->frontend-proxy",
+            "calls": 7,
+            "avg_client_ms": 2247.3,
+            "avg_server_ms": 2245.6,
+            "avg_gap_ms": 1.6
+          },
+          {
+            "edge": "frontend-proxy->frontend",
+            "calls": 20,
+            "avg_client_ms": 2173.7,
+            "avg_server_ms": 2173.1,
+            "avg_gap_ms": 0.6
+          }
+        ],
+        "slowest": [
+          {
+            "trace_id": "e83c933363131d37925b46af8670c009",
+            "root": "load-generator user_get_recommendations",
+            "duration_ms": 3735.2
+          },
+          {
+            "trace_id": "619a9c6e3806e58804daeb93e95e8dbe",
+            "root": "load-generator user_get_recommendations",
+            "duration_ms": 3613.6
+          },
+          {
+            "trace_id": "56bd837849cdc8d310fa859d990fd5dc",
+            "root": "load-generator user_get_recommendations",
+            "duration_ms": 3218.6
+          }
+        ]
+      },
+      "is_error": false,
+      "seconds": 0.1
+    }
+  ],
+  "usage": {
+    "input": 38487,
+    "output": 2776
+  },
+  "outcome": "submitted",
+  "seconds": 34.3,
+  "evidence": [
+    {
+      "id": "E1",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "summary": "product-catalog [errors,client_call_errors,slow,traffic_drop] over 180s: error_rate 100.0% (baseline 0.0%) client_error_rate 100.0% (baseline 0.0%) p95 4806.7ms (baseline 1883.4ms) rps 0.796 (baseline 3.947)",
+      "data": {
+        "row": {
+          "service": "product-catalog",
+          "rps": 0.796,
+          "error_rate": 1.0002,
+          "client_error_rate": 1.0002,
+          "p95_ms": 4806.7,
+          "baseline": {
+            "rps": 3.947,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 1883.4
+          },
+          "p95_ratio": 2.55,
+          "rps_ratio": 0.2,
+          "flags": [
+            "errors",
+            "client_call_errors",
+            "slow",
+            "traffic_drop"
+          ],
+          "criticality": "high",
+          "evidence": "E1"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[180s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s])))"
+        },
+        "window_s": 180
+      },
+      "ts": 1792759019.4096658
+    },
+    {
+      "id": "E2",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "summary": "recommendation [errors,client_call_errors,slow] over 180s: error_rate 100.0% (baseline 0.0%) client_error_rate 100.0% (baseline 0.0%) p95 4773.3ms (baseline 806.0ms) rps 0.295 (baseline 0.612)",
+      "data": {
+        "row": {
+          "service": "recommendation",
+          "rps": 0.295,
+          "error_rate": 1.0002,
+          "client_error_rate": 1.0002,
+          "p95_ms": 4773.3,
+          "baseline": {
+            "rps": 0.612,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 806.0
+          },
+          "p95_ratio": 5.92,
+          "rps_ratio": 0.48,
+          "flags": [
+            "errors",
+            "client_call_errors",
+            "slow"
+          ],
+          "criticality": "medium",
+          "evidence": "E2"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[180s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s])))"
+        },
+        "window_s": 180
+      },
+      "ts": 1792759019.4096816
+    },
+    {
+      "id": "E3",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "summary": "checkout [errors,client_call_errors] over 180s: error_rate 100.0% (baseline 0.0%) client_error_rate 50.0% (baseline 0.0%) p95 4850.0ms (baseline 4250.0ms) rps 0.016 (baseline 0.019)",
+      "data": {
+        "row": {
+          "service": "checkout",
+          "rps": 0.016,
+          "error_rate": 1.0,
+          "client_error_rate": 0.5,
+          "p95_ms": 4850.0,
+          "baseline": {
+            "rps": 0.019,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 4250.0
+          },
+          "p95_ratio": 1.14,
+          "rps_ratio": 0.84,
+          "flags": [
+            "errors",
+            "client_call_errors"
+          ],
+          "criticality": "critical",
+          "evidence": "E3"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[180s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s])))"
+        },
+        "window_s": 180
+      },
+      "ts": 1792759019.4096913
+    },
+    {
+      "id": "E4",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "summary": "frontend [errors,client_call_errors,slow] over 180s: error_rate 30.3% (baseline 0.0%) client_error_rate 57.2% (baseline 0.0%) p95 4293.6ms (baseline 1736.8ms) rps 4.281 (baseline 11.553)",
+      "data": {
+        "row": {
+          "service": "frontend",
+          "rps": 4.281,
+          "error_rate": 0.3031,
+          "client_error_rate": 0.5724,
+          "p95_ms": 4293.6,
+          "baseline": {
+            "rps": 11.553,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 1736.8
+          },
+          "p95_ratio": 2.47,
+          "rps_ratio": 0.37,
+          "flags": [
+            "errors",
+            "client_call_errors",
+            "slow"
+          ],
+          "criticality": "critical",
+          "evidence": "E4"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[180s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s])))"
+        },
+        "window_s": 180
+      },
+      "ts": 1792759019.4096994
+    },
+    {
+      "id": "E5",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "summary": "payment [traffic_drop,silent] over 180s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) rps 0.0 (baseline 0.019)",
+      "data": {
+        "row": {
+          "service": "payment",
+          "rps": 0.0,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": null,
+          "baseline": {
+            "rps": 0.019,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 1.9
+          },
+          "p95_ratio": null,
+          "rps_ratio": 0.0,
+          "flags": [
+            "traffic_drop",
+            "silent"
+          ],
+          "criticality": "critical",
+          "evidence": "E5"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[180s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s])))"
+        },
+        "window_s": 180
+      },
+      "ts": 1792759019.4097056
+    },
+    {
+      "id": "E6",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "summary": "shipping [traffic_drop,silent] over 180s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) rps 0.0 (baseline 0.16)",
+      "data": {
+        "row": {
+          "service": "shipping",
+          "rps": 0.0,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": null,
+          "baseline": {
+            "rps": 0.16,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 5.7
+          },
+          "p95_ratio": null,
+          "rps_ratio": 0.0,
+          "flags": [
+            "traffic_drop",
+            "silent"
+          ],
+          "criticality": "high",
+          "evidence": "E6"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[180s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s])))"
+        },
+        "window_s": 180
+      },
+      "ts": 1792759019.4097114
+    },
+    {
+      "id": "E7",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "summary": "currency [traffic_drop,silent] over 180s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 1.9ms (baseline 1.9ms) rps 0.093 (baseline 0.83)",
+      "data": {
+        "row": {
+          "service": "currency",
+          "rps": 0.093,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 1.9,
+          "baseline": {
+            "rps": 0.83,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 1.9
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 0.11,
+          "flags": [
+            "traffic_drop",
+            "silent"
+          ],
+          "criticality": "high",
+          "evidence": "E7"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[180s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s])))"
+        },
+        "window_s": 180
+      },
+      "ts": 1792759019.4097183
+    },
+    {
+      "id": "E8",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "summary": "email [traffic_drop,silent] over 180s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) rps 0.0 (baseline 0.019)",
+      "data": {
+        "row": {
+          "service": "email",
+          "rps": 0.0,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": null,
+          "baseline": {
+            "rps": 0.019,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 175.0
+          },
+          "p95_ratio": null,
+          "rps_ratio": 0.0,
+          "flags": [
+            "traffic_drop",
+            "silent"
+          ],
+          "criticality": "medium",
+          "evidence": "E8"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[180s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s])))"
+        },
+        "window_s": 180
+      },
+      "ts": 1792759019.4097238
+    },
+    {
+      "id": "E9",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "summary": "quote [traffic_drop,silent] over 180s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) rps 0.0 (baseline 0.144)",
+      "data": {
+        "row": {
+          "service": "quote",
+          "rps": 0.0,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": null,
+          "baseline": {
+            "rps": 0.144,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 1.9
+          },
+          "p95_ratio": null,
+          "rps_ratio": 0.0,
+          "flags": [
+            "traffic_drop",
+            "silent"
+          ],
+          "criticality": "low",
+          "evidence": "E9"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[180s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s])))"
+        },
+        "window_s": 180
+      },
+      "ts": 1792759019.4097288
+    },
+    {
+      "id": "E10",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "summary": "image-provider [traffic_drop,silent] over 180s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 1.9ms (baseline 1.9ms) rps 0.427 (baseline 2.903)",
+      "data": {
+        "row": {
+          "service": "image-provider",
+          "rps": 0.427,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 1.9,
+          "baseline": {
+            "rps": 2.903,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 1.9
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 0.15,
+          "flags": [
+            "traffic_drop",
+            "silent"
+          ],
+          "criticality": "low",
+          "evidence": "E10"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[180s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s])))"
+        },
+        "window_s": 180
+      },
+      "ts": 1792759019.409736
+    },
+    {
+      "id": "E11",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "summary": "frontend-proxy [errors,client_call_errors,slow,traffic_drop] over 180s: error_rate 19.0% (baseline 0.0%) client_error_rate 19.0% (baseline 0.0%) p95 4486.1ms (baseline 1607.7ms) rps 3.147 (baseline 11.378)",
+      "data": {
+        "row": {
+          "service": "frontend-proxy",
+          "rps": 3.147,
+          "error_rate": 0.1901,
+          "client_error_rate": 0.1901,
+          "p95_ms": 4486.1,
+          "baseline": {
+            "rps": 11.378,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 1607.7
+          },
+          "p95_ratio": 2.79,
+          "rps_ratio": 0.28,
+          "flags": [
+            "errors",
+            "client_call_errors",
+            "slow",
+            "traffic_drop"
+          ],
+          "criticality": "critical",
+          "evidence": "E11"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[180s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s])))"
+        },
+        "window_s": 180
+      },
+      "ts": 1792759019.4097435
+    },
+    {
+      "id": "E12",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "summary": "frontend-web [client_call_errors] over 180s: error_rate 0.0% (baseline 0.0%) client_error_rate 100.0% (baseline 0.0%) rps 0.0 (baseline 0.0)",
+      "data": {
+        "row": {
+          "service": "frontend-web",
+          "rps": 0.0,
+          "error_rate": 0.0,
+          "client_error_rate": 1.0,
+          "p95_ms": null,
+          "baseline": {
+            "rps": 0.0,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": null
+          },
+          "p95_ratio": null,
+          "rps_ratio": null,
+          "flags": [
+            "client_call_errors"
+          ],
+          "criticality": "unknown",
+          "evidence": "E12"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[180s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s])))"
+        },
+        "window_s": 180
+      },
+      "ts": 1792759019.4097495
+    },
+    {
+      "id": "E13",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "summary": "load-generator [client_call_errors] over 180s: error_rate 0.0% (baseline 0.0%) client_error_rate 63.8% (baseline 8.8%) rps 0.0 (baseline 0.0)",
+      "data": {
+        "row": {
+          "service": "load-generator",
+          "rps": 0.0,
+          "error_rate": 0.0,
+          "client_error_rate": 0.6377,
+          "p95_ms": null,
+          "baseline": {
+            "rps": 0.0,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0879,
+            "p95_ms": null
+          },
+          "p95_ratio": null,
+          "rps_ratio": null,
+          "flags": [
+            "client_call_errors"
+          ],
+          "criticality": "low",
+          "evidence": "E13"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[180s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s])))"
+        },
+        "window_s": 180
+      },
+      "ts": 1792759019.409756
+    },
+    {
+      "id": "E14",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "summary": "container astronomy-db: not running (exited, exit code 0, stopped 185s ago); health unhealthy (status=exited, restarts=0, oom_killed=False, health=unhealthy)",
+      "data": {
+        "name": "astronomy-db",
+        "status": "exited",
+        "exit_code": 0,
+        "oom_killed": false,
+        "restart_count": 0,
+        "health": "unhealthy",
+        "started_at": "2026-10-23T11:33:10.785377998Z",
+        "started_ago_s": 3831,
+        "image": "postgres:18.6",
+        "stopped_at": "2026-10-23T12:33:56.240190359Z",
+        "stopped_ago_s": 185,
+        "problems": [
+          "not running (exited, exit code 0, stopped 185s ago)",
+          "health unhealthy"
+        ],
+        "evidence": "E14"
+      },
+      "ts": 1792759022.070521
+    },
+    {
+      "id": "E15",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "summary": "container recommendation: restarted 12x; (re)started 1390s ago (status=running, restarts=12, oom_killed=False, health=healthy, mem=217.0/500.0MB)",
+      "data": {
+        "name": "recommendation",
+        "status": "running",
+        "exit_code": 0,
+        "oom_killed": false,
+        "restart_count": 12,
+        "health": "healthy",
+        "started_at": "2026-10-23T12:13:51.465759623Z",
+        "started_ago_s": 1390,
+        "image": "ghcr.io/open-telemetry/demo:latest-recommendation",
+        "cpu_pct": 0.16,
+        "mem_used_mb": 217.0,
+        "mem_limit_mb": 500.0,
+        "mem_pct": 43.41,
+        "problems": [
+          "restarted 12x",
+          "(re)started 1390s ago"
+        ],
+        "evidence": "E15"
+      },
+      "ts": 1792759022.070527
+    },
+    {
+      "id": "E16",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "summary": "container ad: restarted 12x; (re)started 1143s ago (status=running, restarts=12, oom_killed=False, health=healthy, mem=235.5/300.0MB)",
+      "data": {
+        "name": "ad",
+        "status": "running",
+        "exit_code": 0,
+        "oom_killed": false,
+        "restart_count": 12,
+        "health": "healthy",
+        "started_at": "2026-10-23T12:17:58.635803569Z",
+        "started_ago_s": 1143,
+        "image": "ghcr.io/open-telemetry/demo:latest-ad",
+        "cpu_pct": 4.07,
+        "mem_used_mb": 235.5,
+        "mem_limit_mb": 300.0,
+        "mem_pct": 78.5,
+        "problems": [
+          "restarted 12x",
+          "(re)started 1143s ago"
+        ],
+        "evidence": "E16"
+      },
+      "ts": 1792759022.0705311
+    },
+    {
+      "id": "E17",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "summary": "container product-catalog: restarted 10x; (re)started 1673s ago (status=running, restarts=10, oom_killed=False, health=healthy, mem=14.1/20.0MB)",
+      "data": {
+        "name": "product-catalog",
+        "status": "running",
+        "exit_code": 0,
+        "oom_killed": false,
+        "restart_count": 10,
+        "health": "healthy",
+        "started_at": "2026-10-23T12:09:08.823699106Z",
+        "started_ago_s": 1673,
+        "image": "ghcr.io/open-telemetry/demo:latest-product-catalog",
+        "cpu_pct": 29.8,
+        "mem_used_mb": 14.1,
+        "mem_limit_mb": 20.0,
+        "mem_pct": 70.35,
+        "problems": [
+          "restarted 10x",
+          "(re)started 1673s ago"
+        ],
+        "evidence": "E17"
+      },
+      "ts": 1792759022.070534
+    },
+    {
+      "id": "E18",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "summary": "container checkout: restarted 10x (status=running, restarts=10, oom_killed=False, health=healthy, mem=11.2/20.0MB)",
+      "data": {
+        "name": "checkout",
+        "status": "running",
+        "exit_code": 0,
+        "oom_killed": false,
+        "restart_count": 10,
+        "health": "healthy",
+        "started_at": "2026-10-23T12:05:53.384552713Z",
+        "started_ago_s": 1868,
+        "image": "ghcr.io/open-telemetry/demo:latest-checkout",
+        "cpu_pct": 4.96,
+        "mem_used_mb": 11.2,
+        "mem_limit_mb": 20.0,
+        "mem_pct": 56.15,
+        "problems": [
+          "restarted 10x"
+        ],
+        "evidence": "E18"
+      },
+      "ts": 1792759022.0705364
+    },
+    {
+      "id": "E19",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "summary": "container cart: restarted 12x (status=running, restarts=12, oom_killed=False, health=none, mem=63.3/160.0MB)",
+      "data": {
+        "name": "cart",
+        "status": "running",
+        "exit_code": 0,
+        "oom_killed": false,
+        "restart_count": 12,
+        "health": "none",
+        "started_at": "2026-10-23T12:00:51.40899306Z",
+        "started_ago_s": 2170,
+        "image": "ghcr.io/open-telemetry/demo:latest-cart",
+        "cpu_pct": 0.72,
+        "mem_used_mb": 63.3,
+        "mem_limit_mb": 160.0,
+        "mem_pct": 39.59,
+        "problems": [
+          "restarted 12x"
+        ],
+        "evidence": "E19"
+      },
+      "ts": 1792759022.070539
+    },
+    {
+      "id": "E20",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "summary": "container payment: (re)started 758s ago (status=running, restarts=0, oom_killed=False, health=healthy, mem=58.7/140.0MB)",
+      "data": {
+        "name": "payment",
+        "status": "running",
+        "exit_code": 0,
+        "oom_killed": false,
+        "restart_count": 0,
+        "health": "healthy",
+        "started_at": "2026-10-23T12:24:23.326437971Z",
+        "started_ago_s": 758,
+        "image": "ghcr.io/open-telemetry/demo:latest-payment",
+        "cpu_pct": 0.46,
+        "mem_used_mb": 58.7,
+        "mem_limit_mb": 140.0,
+        "mem_pct": 41.92,
+        "problems": [
+          "(re)started 758s ago"
+        ],
+        "evidence": "E20"
+      },
+      "ts": 1792759022.0705416
+    },
+    {
+      "id": "E21",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "summary": "container quote: restarted 1x (status=running, restarts=1, oom_killed=False, health=healthy, mem=23.3/40.0MB)",
+      "data": {
+        "name": "quote",
+        "status": "running",
+        "exit_code": 0,
+        "oom_killed": false,
+        "restart_count": 1,
+        "health": "healthy",
+        "started_at": "2026-10-23T09:46:01.566812513Z",
+        "started_ago_s": 10260,
+        "image": "ghcr.io/open-telemetry/demo:latest-quote",
+        "cpu_pct": 0.01,
+        "mem_used_mb": 23.3,
+        "mem_limit_mb": 40.0,
+        "mem_pct": 58.15,
+        "problems": [
+          "restarted 1x"
+        ],
+        "evidence": "E21"
+      },
+      "ts": 1792759022.0705435
+    },
+    {
+      "id": "E22",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "summary": "container valkey-cart: (re)started 359s ago (status=running, restarts=0, oom_killed=False, health=healthy, mem=6.0/20.0MB)",
+      "data": {
+        "name": "valkey-cart",
+        "status": "running",
+        "exit_code": 0,
+        "oom_killed": false,
+        "restart_count": 0,
+        "health": "healthy",
+        "started_at": "2026-10-23T12:31:02.428986992Z",
+        "started_ago_s": 359,
+        "image": "ghcr.io/valkey-io/valkey:9.1.2-alpine3.24",
+        "cpu_pct": 0.28,
+        "mem_used_mb": 6.0,
+        "mem_limit_mb": 20.0,
+        "mem_pct": 29.9,
+        "problems": [
+          "(re)started 359s ago"
+        ],
+        "evidence": "E22"
+      },
+      "ts": 1792759022.070546
+    },
+    {
+      "id": "E23",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "summary": "container opensearch: memory 92.02% of limit (status=running, restarts=0, oom_killed=False, health=healthy, mem=942.3/1024.0MB)",
+      "data": {
+        "name": "opensearch",
+        "status": "running",
+        "exit_code": 0,
+        "oom_killed": false,
+        "restart_count": 0,
+        "health": "healthy",
+        "started_at": "2026-10-23T10:29:30.552708215Z",
+        "started_ago_s": 7651,
+        "image": "ghcr.io/open-telemetry/demo:latest-opensearch",
+        "cpu_pct": 1.46,
+        "mem_used_mb": 942.3,
+        "mem_limit_mb": 1024.0,
+        "mem_pct": 92.02,
+        "problems": [
+          "memory 92.02% of limit"
+        ],
+        "evidence": "E23"
+      },
+      "ts": 1792759022.0705516
+    },
+    {
+      "id": "E24",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "summary": "12/20 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/ListProducts' msg='failed to load products: failed to query products: dial tcp: lookup astronomy-db on 127.0.0.11:53: no such host' chain=frontend-web>frontend-proxy>frontend>product-catalog e.g. trace f08715a3c4ecc4a675407e1894640366",
+      "data": {
+        "origin_service": "product-catalog",
+        "operation": "oteldemo.ProductCatalogService/ListProducts",
+        "count": 12,
+        "message": "failed to load products: failed to query products: dial tcp: lookup astronomy-db on 127.0.0.11:53: no such host",
+        "chain": [
+          "frontend-web",
+          "frontend-proxy",
+          "frontend",
+          "product-catalog"
+        ],
+        "example_trace": "f08715a3c4ecc4a675407e1894640366",
+        "lookback_s": 180
+      },
+      "ts": 1792759025.0969746
+    },
+    {
+      "id": "E25",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "summary": "3/20 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/GetProduct' msg='Product Not Found: LS4PSXUNUM' chain=load-generator>frontend-proxy>frontend>product-catalog e.g. trace e976aacb74ad26c8dabe1cacbc43f8de",
+      "data": {
+        "origin_service": "product-catalog",
+        "operation": "oteldemo.ProductCatalogService/GetProduct",
+        "count": 3,
+        "message": "Product Not Found: LS4PSXUNUM",
+        "chain": [
+          "load-generator",
+          "frontend-proxy",
+          "frontend",
+          "product-catalog"
+        ],
+        "example_trace": "e976aacb74ad26c8dabe1cacbc43f8de",
+        "lookback_s": 180
+      },
+      "ts": 1792759025.096982
+    },
+    {
+      "id": "E26",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "summary": "3/20 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/GetProduct' msg='Product Not Found: 2ZYFJ3GM2N' chain=load-generator>frontend-proxy>frontend>checkout>product-catalog e.g. trace 8f58e294a1ed117affd00721be0a918d",
+      "data": {
+        "origin_service": "product-catalog",
+        "operation": "oteldemo.ProductCatalogService/GetProduct",
+        "count": 3,
+        "message": "Product Not Found: 2ZYFJ3GM2N",
+        "chain": [
+          "load-generator",
+          "frontend-proxy",
+          "frontend",
+          "checkout",
+          "product-catalog"
+        ],
+        "example_trace": "8f58e294a1ed117affd00721be0a918d",
+        "lookback_s": 180
+      },
+      "ts": 1792759025.0969853
+    },
+    {
+      "id": "E27",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "summary": "2/20 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/GetProduct' msg='Product Not Found: 1YMWWN1N4O' chain=load-generator>frontend-proxy>frontend>checkout>product-catalog e.g. trace 8f58e294a1ed117affd00721be0a918d",
+      "data": {
+        "origin_service": "product-catalog",
+        "operation": "oteldemo.ProductCatalogService/GetProduct",
+        "count": 2,
+        "message": "Product Not Found: 1YMWWN1N4O",
+        "chain": [
+          "load-generator",
+          "frontend-proxy",
+          "frontend",
+          "checkout",
+          "product-catalog"
+        ],
+        "example_trace": "8f58e294a1ed117affd00721be0a918d",
+        "lookback_s": 180
+      },
+      "ts": 1792759025.0969875
+    },
+    {
+      "id": "E28",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "summary": "1/20 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/GetProduct' msg='Product Not Found: L9ECAV7KIM' chain=load-generator>frontend-proxy>frontend>checkout>product-catalog e.g. trace 59894bcd92ab7b81ac00a60748901721",
+      "data": {
+        "origin_service": "product-catalog",
+        "operation": "oteldemo.ProductCatalogService/GetProduct",
+        "count": 1,
+        "message": "Product Not Found: L9ECAV7KIM",
+        "chain": [
+          "load-generator",
+          "frontend-proxy",
+          "frontend",
+          "checkout",
+          "product-catalog"
+        ],
+        "example_trace": "59894bcd92ab7b81ac00a60748901721",
+        "lookback_s": 180
+      },
+      "ts": 1792759025.0969896
+    },
+    {
+      "id": "E29",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "summary": "1/20 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/GetProduct' msg='Product Not Found: 9SIQT8TOJO' chain=load-generator>frontend-proxy>frontend>product-catalog e.g. trace d18913fb19b928983c2670341ea24ddb",
+      "data": {
+        "origin_service": "product-catalog",
+        "operation": "oteldemo.ProductCatalogService/GetProduct",
+        "count": 1,
+        "message": "Product Not Found: 9SIQT8TOJO",
+        "chain": [
+          "load-generator",
+          "frontend-proxy",
+          "frontend",
+          "product-catalog"
+        ],
+        "example_trace": "d18913fb19b928983c2670341ea24ddb",
+        "lookback_s": 180
+      },
+      "ts": 1792759025.0969918
+    },
+    {
+      "id": "E30",
+      "tool": "search_logs",
+      "kind": "log",
+      "summary": "product-catalog: no warn+ log lines in last 300s (opensearch (none) + docker logs)",
+      "data": {
+        "service": "product-catalog",
+        "since_s": 300,
+        "level": "warn",
+        "contains": null,
+        "log_source": "opensearch (none) + docker logs"
+      },
+      "ts": 1792759026.3244724
+    },
+    {
+      "id": "E31",
+      "tool": "search_logs",
+      "kind": "log",
+      "summary": "astronomy-db logs (opensearch (none) + docker logs, 300s): 20x ERROR '2026-10-23 12:32:07.697 UTC [10000] FATAL:  role \"root\" does not exist' first 2026-10-23T12:32:07.697752860Z last 2026-10-23T12:33:50.872236607Z",
+      "data": {
+        "service": "astronomy-db",
+        "log_source": "opensearch (none) + docker logs",
+        "level": "error",
+        "pattern": "<n>-<n>-<n> <n>:<n>:<n> UTC [<n>] FATAL: role \"root\" does not exist",
+        "count": 20,
+        "first_seen": "2026-10-23T12:32:07.697752860Z",
+        "last_seen": "2026-10-23T12:33:50.872236607Z",
+        "example": "2026-10-23 12:32:07.697 UTC [10000] FATAL:  role \"root\" does not exist"
+      },
+      "ts": 1792759026.4088445
+    },
+    {
+      "id": "E32",
+      "tool": "search_logs",
+      "kind": "log",
+      "summary": "astronomy-db logs (opensearch (none) + docker logs, 300s): 6x ERROR '2026-10-23 12:33:56.153 UTC [10194] FATAL:  terminating connection due to administrator command' first 2026-10-23T12:33:56.153668610Z last 2026-10-23T12:33:56.154484865Z",
+      "data": {
+        "service": "astronomy-db",
+        "log_source": "opensearch (none) + docker logs",
+        "level": "error",
+        "pattern": "<n>-<n>-<n> <n>:<n>:<n> UTC [<n>] FATAL: terminating connection due to administrator command",
+        "count": 6,
+        "first_seen": "2026-10-23T12:33:56.153668610Z",
+        "last_seen": "2026-10-23T12:33:56.154484865Z",
+        "example": "2026-10-23 12:33:56.153 UTC [10194] FATAL:  terminating connection due to administrator command"
+      },
+      "ts": 1792759026.4088502
+    },
+    {
+      "id": "E33",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "summary": "2/4 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/GetProduct' msg='Product Not Found: LS4PSXUNUM' chain=load-generator>frontend-proxy>frontend>checkout>product-catalog e.g. trace 59894bcd92ab7b81ac00a60748901721",
+      "data": {
+        "origin_service": "product-catalog",
+        "operation": "oteldemo.ProductCatalogService/GetProduct",
+        "count": 2,
+        "message": "Product Not Found: LS4PSXUNUM",
+        "chain": [
+          "load-generator",
+          "frontend-proxy",
+          "frontend",
+          "checkout",
+          "product-catalog"
+        ],
+        "example_trace": "59894bcd92ab7b81ac00a60748901721",
+        "lookback_s": 300
+      },
+      "ts": 1792759030.8407228
+    },
+    {
+      "id": "E34",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "summary": "2/4 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/GetProduct' msg='Product Not Found: 1YMWWN1N4O' chain=load-generator>frontend-proxy>frontend>checkout>product-catalog e.g. trace 8f58e294a1ed117affd00721be0a918d",
+      "data": {
+        "origin_service": "product-catalog",
+        "operation": "oteldemo.ProductCatalogService/GetProduct",
+        "count": 2,
+        "message": "Product Not Found: 1YMWWN1N4O",
+        "chain": [
+          "load-generator",
+          "frontend-proxy",
+          "frontend",
+          "checkout",
+          "product-catalog"
+        ],
+        "example_trace": "8f58e294a1ed117affd00721be0a918d",
+        "lookback_s": 300
+      },
+      "ts": 1792759030.8407276
+    },
+    {
+      "id": "E35",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "summary": "1/4 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/GetProduct' msg='Product Not Found: L9ECAV7KIM' chain=load-generator>frontend-proxy>frontend>checkout>product-catalog e.g. trace 59894bcd92ab7b81ac00a60748901721",
+      "data": {
+        "origin_service": "product-catalog",
+        "operation": "oteldemo.ProductCatalogService/GetProduct",
+        "count": 1,
+        "message": "Product Not Found: L9ECAV7KIM",
+        "chain": [
+          "load-generator",
+          "frontend-proxy",
+          "frontend",
+          "checkout",
+          "product-catalog"
+        ],
+        "example_trace": "59894bcd92ab7b81ac00a60748901721",
+        "lookback_s": 300
+      },
+      "ts": 1792759030.8407297
+    },
+    {
+      "id": "E36",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "summary": "1/4 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/GetProduct' msg='Product Not Found: 2ZYFJ3GM2N' chain=load-generator>frontend-proxy>frontend>checkout>product-catalog e.g. trace 8f58e294a1ed117affd00721be0a918d",
+      "data": {
+        "origin_service": "product-catalog",
+        "operation": "oteldemo.ProductCatalogService/GetProduct",
+        "count": 1,
+        "message": "Product Not Found: 2ZYFJ3GM2N",
+        "chain": [
+          "load-generator",
+          "frontend-proxy",
+          "frontend",
+          "checkout",
+          "product-catalog"
+        ],
+        "example_trace": "8f58e294a1ed117affd00721be0a918d",
+        "lookback_s": 300
+      },
+      "ts": 1792759030.8407311
+    },
+    {
+      "id": "E37",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "summary": "1/4 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/GetProduct' msg='Product Not Found: 66VCHSJNUP' chain=load-generator>frontend-proxy>frontend>checkout>product-catalog e.g. trace 8f58e294a1ed117affd00721be0a918d",
+      "data": {
+        "origin_service": "product-catalog",
+        "operation": "oteldemo.ProductCatalogService/GetProduct",
+        "count": 1,
+        "message": "Product Not Found: 66VCHSJNUP",
+        "chain": [
+          "load-generator",
+          "frontend-proxy",
+          "frontend",
+          "checkout",
+          "product-catalog"
+        ],
+        "example_trace": "8f58e294a1ed117affd00721be0a918d",
+        "lookback_s": 300
+      },
+      "ts": 1792759030.8407328
+    },
+    {
+      "id": "E38",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "summary": "1/4 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/GetProduct' msg='Product Not Found: 9SIQT8TOJO' chain=load-generator>frontend-proxy>frontend>checkout>product-catalog e.g. trace 0e9235ae95978674a33062704c04093c",
+      "data": {
+        "origin_service": "product-catalog",
+        "operation": "oteldemo.ProductCatalogService/GetProduct",
+        "count": 1,
+        "message": "Product Not Found: 9SIQT8TOJO",
+        "chain": [
+          "load-generator",
+          "frontend-proxy",
+          "frontend",
+          "checkout",
+          "product-catalog"
+        ],
+        "example_trace": "0e9235ae95978674a33062704c04093c",
+        "lookback_s": 300
+      },
+      "ts": 1792759030.840735
+    },
+    {
+      "id": "E39",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "summary": "20/20 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/ListProducts' msg='failed to load products: failed to query products: dial tcp: lookup astronomy-db on 127.0.0.11:53: no such host' chain=load-generator>frontend-proxy>frontend>recommendation>product-catalog e.g. trace 57e761da031f9e4c51308f2b0cb439e2",
+      "data": {
+        "origin_service": "product-catalog",
+        "operation": "oteldemo.ProductCatalogService/ListProducts",
+        "count": 20,
+        "message": "failed to load products: failed to query products: dial tcp: lookup astronomy-db on 127.0.0.11:53: no such host",
+        "chain": [
+          "load-generator",
+          "frontend-proxy",
+          "frontend",
+          "recommendation",
+          "product-catalog"
+        ],
+        "example_trace": "57e761da031f9e4c51308f2b0cb439e2",
+        "lookback_s": 180
+      },
+      "ts": 1792759030.9365633
+    }
+  ],
+  "summary": {
+    "source": "live",
+    "source_detail": "prometheus http://localhost:9090, jaeger, opensearch, docker CLI",
+    "headline": "The astronomy-db Postgres container stopped about 185s before the check (exit 0, after a FATAL \"terminating connection due to administrator command\"). product-catalog now fails 100% of requests with \"lookup astronomy-db ... no such host\", and that failure spreads to recommendation, checkout, frontend and frontend-proxy.",
+    "affected_services": [
+      {
+        "service": "astronomy-db",
+        "impact": "Container exited (exit code 0), health unhealthy, stopped 185s before the check; it no longer resolves in Docker DNS",
+        "evidence": [
+          "E14",
+          "E32"
+        ]
+      },
+      {
+        "service": "product-catalog",
+        "impact": "100% server errors on ListProducts and GetProduct (cannot reach its database); p95 is 4806.7ms against a 1883.4ms baseline",
+        "evidence": [
+          "E1",
+          "E24",
+          "E25"
+        ]
+      },
+      {
+        "service": "recommendation",
+        "impact": "100% errors because every ListProducts call to product-catalog fails; p95 is 4773.3ms against an 806.0ms baseline",
+        "evidence": [
+          "E2",
+          "E39"
+        ]
+      },
+      {
+        "service": "checkout",
+        "impact": "100% of PlaceOrder calls fail at the product-catalog GetProduct step (Product Not Found), so orders never reach payment, email or shipping",
+        "evidence": [
+          "E3",
+          "E33",
+          "E34"
+        ]
+      },
+      {
+        "service": "frontend",
+        "impact": "30% server error rate and p95 of 4293.6ms against a 1736.8ms baseline; users see failing product listings, recommendations and checkout",
+        "evidence": [
+          "E4",
+          "E24"
+        ]
+      },
+      {
+        "service": "payment",
+        "impact": "No traffic (silent) because checkout fails before it calls payment",
+        "evidence": [
+          "E5",
+          "E33"
+        ]
+      }
+    ],
+    "anomalies": [
+      {
+        "service": "astronomy-db",
+        "signal": "container_state",
+        "observed": "exited, exit code 0, unhealthy, stopped 185s ago",
+        "baseline": "running",
+        "evidence": [
+          "E14"
+        ]
+      },
+      {
+        "service": "astronomy-db",
+        "signal": "log_errors",
+        "observed": "6x FATAL 'terminating connection due to administrator command' at 12:33:56; before that, 20x FATAL 'role \"root\" does not exist'",
+        "baseline": "unknown",
+        "evidence": [
+          "E31",
+          "E32"
+        ]
+      },
+      {
+        "service": "product-catalog",
+        "signal": "error_rate",
+        "observed": "1.0002",
+        "baseline": "0.0",
+        "evidence": [
+          "E1"
+        ]
+      },
+      {
+        "service": "product-catalog",
+        "signal": "p95",
+        "observed": "4806.7ms",
+        "baseline": "1883.4ms",
+        "evidence": [
+          "E1"
+        ]
+      },
+      {
+        "service": "product-catalog",
+        "signal": "rps",
+        "observed": "0.796",
+        "baseline": "3.947",
+        "evidence": [
+          "E1"
+        ]
+      },
+      {
+        "service": "recommendation",
+        "signal": "error_rate",
+        "observed": "1.0002",
+        "baseline": "0.0",
+        "evidence": [
+          "E2"
+        ]
+      },
+      {
+        "service": "recommendation",
+        "signal": "p95",
+        "observed": "4773.3ms",
+        "baseline": "806.0ms",
+        "evidence": [
+          "E2"
+        ]
+      },
+      {
+        "service": "checkout",
+        "signal": "error_rate",
+        "observed": "1.0",
+        "baseline": "0.0",
+        "evidence": [
+          "E3"
+        ]
+      },
+      {
+        "service": "frontend",
+        "signal": "error_rate",
+        "observed": "0.3031",
+        "baseline": "0.0",
+        "evidence": [
+          "E4"
+        ]
+      },
+      {
+        "service": "frontend",
+        "signal": "p95",
+        "observed": "4293.6ms",
+        "baseline": "1736.8ms",
+        "evidence": [
+          "E4"
+        ]
+      },
+      {
+        "service": "payment",
+        "signal": "silent",
+        "observed": "0.0 rps",
+        "baseline": "0.019 rps",
+        "evidence": [
+          "E5"
+        ]
+      }
+    ],
+    "root_causes": [
+      {
+        "component": "astronomy-db",
+        "fault_class": "dependency_down",
+        "cause": "The product-catalog Postgres database (astronomy-db) was shut down cleanly at about 12:33:56 (exit code 0, 'terminating connection due to administrator command'), which looks like a deliberate stop rather than a crash or OOM. Because the container is gone, its DNS name no longer resolves. Every product-catalog query fails with 'dial tcp: lookup astronomy-db on 127.0.0.11:53: no such host', and GetProduct returns Product Not Found. That breaks recommendation, checkout and the frontend.",
+        "confidence": 0.92,
+        "evidence": [
+          "E14",
+          "E32",
+          "E24",
+          "E25",
+          "E39",
+          "E33",
+          "E1"
+        ],
+        "evidence_detail": {
+          "E14": "container astronomy-db: not running (exited, exit code 0, stopped 185s ago); health unhealthy (status=exited, restarts=0, oom_killed=False, health=unhealthy)",
+          "E32": "astronomy-db logs (opensearch (none) + docker logs, 300s): 6x ERROR '2026-10-23 12:33:56.153 UTC [10194] FATAL:  terminating connection due to administrator command' first 2026-10-23T12:33:56.153668610Z last 2026-10-23T12:33:56.154484865Z",
+          "E24": "12/20 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/ListProducts' msg='failed to load products: failed to query products: dial tcp: lookup astronomy-db on 127.0.0.11:53: no such host' chain=frontend-web>frontend-proxy>frontend>product-catalog e.g. trace f08715a3c4ecc4a675407e1894640366",
+          "E25": "3/20 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/GetProduct' msg='Product Not Found: LS4PSXUNUM' chain=load-generator>frontend-proxy>frontend>product-catalog e.g. trace e976aacb74ad26c8dabe1cacbc43f8de",
+          "E39": "20/20 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/ListProducts' msg='failed to load products: failed to query products: dial tcp: lookup astronomy-db on 127.0.0.11:53: no such host' chain=load-generator>frontend-proxy>frontend>recommendation>product-catalog e.g. trace 57e761da031f9e4c51308f2b0cb439e2",
+          "E33": "2/4 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/GetProduct' msg='Product Not Found: LS4PSXUNUM' chain=load-generator>frontend-proxy>frontend>checkout>product-catalog e.g. trace 59894bcd92ab7b81ac00a60748901721",
+          "E1": "product-catalog [errors,client_call_errors,slow,traffic_drop] over 180s: error_rate 100.0% (baseline 0.0%) client_error_rate 100.0% (baseline 0.0%) p95 4806.7ms (baseline 1883.4ms) rps 0.796 (baseline 3.947)"
+        }
+      }
+    ],
+    "suspected_origin": {
+      "service": "astronomy-db",
+      "reasoning": "Every error trace for product-catalog, recommendation and checkout bottoms out in product-catalog, which fails because it cannot resolve astronomy-db. The deploy history shows astronomy-db exited 185s before the check, which matches when the alerts started.",
+      "confidence": 0.92,
+      "evidence": [
+        "E14",
+        "E24",
+        "E39",
+        "E33"
+      ],
+      "evidence_detail": {
+        "E14": "container astronomy-db: not running (exited, exit code 0, stopped 185s ago); health unhealthy (status=exited, restarts=0, oom_killed=False, health=unhealthy)",
+        "E24": "12/20 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/ListProducts' msg='failed to load products: failed to query products: dial tcp: lookup astronomy-db on 127.0.0.11:53: no such host' chain=frontend-web>frontend-proxy>frontend>product-catalog e.g. trace f08715a3c4ecc4a675407e1894640366",
+        "E39": "20/20 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/ListProducts' msg='failed to load products: failed to query products: dial tcp: lookup astronomy-db on 127.0.0.11:53: no such host' chain=load-generator>frontend-proxy>frontend>recommendation>product-catalog e.g. trace 57e761da031f9e4c51308f2b0cb439e2",
+        "E33": "2/4 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/GetProduct' msg='Product Not Found: LS4PSXUNUM' chain=load-generator>frontend-proxy>frontend>checkout>product-catalog e.g. trace 59894bcd92ab7b81ac00a60748901721"
+      }
+    },
+    "proposed_action": {
+      "action": "restart_service",
+      "target": "astronomy-db",
+      "dry_run": true,
+      "reason": "astronomy-db is stopped (exited, exit 0). Starting it again restores the database that product-catalog depends on, and the DNS name will resolve again.",
+      "expected_outcome": "astronomy-db running and healthy. product-catalog error rate back to about 0 (baseline 0.0) and p95 back toward 1883.4ms. recommendation and checkout errors clear. Traffic resumes to payment, email, shipping and quote, and frontend p95 returns toward 1736.8ms.",
+      "risk_assessment": "Low. The database is already down, so restarting it cannot make things worse. If someone stopped it on purpose (for maintenance), a restart could interfere with their work, so check with the team first. The data should still be on the existing volume."
+    },
+    "open_questions": [
+      "Who or what stopped astronomy-db at 12:33:56? A clean exit after 'administrator command' points to a deliberate docker stop or fault injection.",
+      "What caused the earlier repeated 'role \"root\" does not exist' errors (12:32-12:33)? They may come from a misconfigured health check or client, and may be related to the stop.",
+      "Are the 'Product Not Found' errors from GetProduct entirely due to the database outage? Confirm they stop once the database is back.",
+      "recommendation and ad each show 12 restarts from before this incident; check whether that instability is unrelated."
+    ],
+    "confidence": 0.92,
+    "status": "diagnosed",
+    "approval": {
+      "status": "rejected",
+      "requested_at": "2026-10-23T12:37:30+00:00",
+      "dry_run": true,
+      "executed": false,
+      "notes": "Cancelled or interrupted",
+      "decision_at": "2026-10-23T12:37:30+00:00"
+    },
+    "validation": {
+      "dropped_evidence_ids": [],
+      "notes": []
+    }
+  }
+}

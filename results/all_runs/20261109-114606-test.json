@@ -1,0 +1,803 @@
+{
+  "schema_version": 2,
+  "status": "complete",
+  "metadata": {
+    "run_id": "20261109-114606",
+    "incident_id": "INC-UNSEEN-TLS",
+    "started_at": "2026-11-09T06:16:06+00:00",
+    "ended_at": "2026-11-09T06:22:00+00:00",
+    "updated_at": "2026-11-09T06:22:00+00:00",
+    "mode": "test",
+    "source_detail": "fixtures tests/fixtures/unseen_cert_expired",
+    "provider": "ollama",
+    "model": "qwen3:8b",
+    "git": {
+      "commit": "0d1653f4144b976b6dc889fb515bf6ee95dd9e09",
+      "dirty": false
+    }
+  },
+  "alert": {
+    "incident_id": "INC-UNSEEN-TLS",
+    "detected_at": "2026-10-23T07:20:00Z",
+    "alerting_services": [
+      "checkout"
+    ],
+    "trigger": [
+      {
+        "service": "checkout",
+        "signal": "error_rate",
+        "value": 0.97,
+        "threshold": 0.05,
+        "window": "3m"
+      }
+    ],
+    "note": "alerting service is a symptom, not necessarily the root cause"
+  },
+  "investigation": {
+    "steps": [
+      {
+        "step": 1,
+        "tool": "get_service_health",
+        "arguments": {
+          "window": "3m"
+        },
+        "result": {
+          "window_s": 180,
+          "baseline": "loaded",
+          "flagged": [
+            {
+              "service": "checkout",
+              "rps": 0.41,
+              "error_rate": 0.9756,
+              "client_error_rate": 0.4444,
+              "p95_ms": 260.0,
+              "baseline": {
+                "rps": 0.41,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 260
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 1.0,
+              "flags": [
+                "errors",
+                "client_call_errors"
+              ],
+              "criticality": "critical",
+              "evidence": "E1"
+            },
+            {
+              "service": "payment",
+              "rps": 0.02,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 35.0,
+              "baseline": {
+                "rps": 0.4,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 35
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 0.05,
+              "flags": [
+                "traffic_drop",
+                "silent"
+              ],
+              "criticality": "critical",
+              "evidence": "E2"
+            },
+            {
+              "service": "email",
+              "rps": 0.02,
+              "error_rate": 0.0,
+              "client_error_rate": 0.0,
+              "p95_ms": 40.0,
+              "baseline": {
+                "rps": 0.38,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 40
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 0.05,
+              "flags": [
+                "traffic_drop",
+                "silent"
+              ],
+              "criticality": "medium",
+              "evidence": "E3"
+            },
+            {
+              "service": "frontend",
+              "rps": 9.0,
+              "error_rate": 0.0444,
+              "client_error_rate": 0.0263,
+              "p95_ms": 170.0,
+              "baseline": {
+                "rps": 9.0,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 170
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 1.0,
+              "flags": [
+                "errors",
+                "client_call_errors"
+              ],
+              "criticality": "critical",
+              "evidence": "E4"
+            },
+            {
+              "service": "frontend-proxy",
+              "rps": 9.6,
+              "error_rate": 0.0417,
+              "client_error_rate": 0.0,
+              "p95_ms": 185.0,
+              "baseline": {
+                "rps": 9.6,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 185
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 1.0,
+              "flags": [
+                "errors"
+              ],
+              "criticality": "critical",
+              "evidence": "E5"
+            }
+          ],
+          "healthy": [
+            "product-catalog",
+            "shipping",
+            "currency",
+            "cart",
+            "recommendation",
+            "ad",
+            "quote",
+            "image-provider"
+          ]
+        },
+        "evidence_ids": [
+          "E1",
+          "E2",
+          "E3",
+          "E4",
+          "E5"
+        ],
+        "seconds": 0.0,
+        "at_s": 73.2,
+        "error": null
+      },
+      {
+        "step": 2,
+        "tool": "find_error_traces",
+        "arguments": {
+          "service": "checkout",
+          "lookback": "3m",
+          "errors_only": true
+        },
+        "result": {
+          "service": "checkout",
+          "lookback_s": 180,
+          "errors_only": true,
+          "traces_examined": 6,
+          "origins": [
+            {
+              "origin_service": "checkout",
+              "operation": "oteldemo.CurrencyService/Convert",
+              "count": 6,
+              "message": "rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate has expired or is not yet valid\"",
+              "chain": [
+                "frontend",
+                "checkout"
+              ],
+              "example_trace": "8e4f0000000000000000000000000000",
+              "unanswered_call_to": "oteldemo.CurrencyService",
+              "evidence": "E6"
+            }
+          ],
+          "attribute_clusters": [],
+          "edges": [],
+          "slowest": [
+            {
+              "trace_id": "8e4f0000000000000000000000000000",
+              "root": "frontend POST /api/checkout",
+              "duration_ms": 24.0
+            },
+            {
+              "trace_id": "8e4f0000000000000000000000000001",
+              "root": "frontend POST /api/checkout",
+              "duration_ms": 24.0
+            },
+            {
+              "trace_id": "8e4f0000000000000000000000000002",
+              "root": "frontend POST /api/checkout",
+              "duration_ms": 24.0
+            }
+          ]
+        },
+        "evidence_ids": [
+          "E6"
+        ],
+        "seconds": 0.0,
+        "at_s": 134.0,
+        "error": null
+      },
+      {
+        "step": 3,
+        "tool": "get_deploy_history",
+        "arguments": {
+          "lookback": "3m",
+          "names": [
+            "currency"
+          ]
+        },
+        "result": {
+          "lookback_s": 180,
+          "containers": 1,
+          "stats_available": true,
+          "changed_or_unhealthy": [],
+          "healthy": [
+            "currency"
+          ],
+          "top_memory": [
+            {
+              "name": "currency",
+              "mem_pct": 30.0
+            }
+          ],
+          "organiser_history": "not configured",
+          "our_actions": [],
+          "evidence": "E7"
+        },
+        "evidence_ids": [
+          "E7"
+        ],
+        "seconds": 0.04,
+        "at_s": 167.3,
+        "error": null
+      },
+      {
+        "step": 4,
+        "tool": "find_error_traces",
+        "arguments": {
+          "errors_only": true,
+          "lookback": "3m",
+          "service": "frontend"
+        },
+        "result": {
+          "service": "frontend",
+          "lookback_s": 180,
+          "errors_only": true,
+          "traces_examined": 6,
+          "origins": [
+            {
+              "origin_service": "checkout",
+              "operation": "oteldemo.CurrencyService/Convert",
+              "count": 6,
+              "message": "rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate has expired or is not yet valid\"",
+              "chain": [
+                "frontend",
+                "checkout"
+              ],
+              "example_trace": "8e4f0000000000000000000000000000",
+              "unanswered_call_to": "oteldemo.CurrencyService",
+              "evidence": "E8"
+            }
+          ],
+          "attribute_clusters": [],
+          "edges": [],
+          "slowest": [
+            {
+              "trace_id": "8e4f0000000000000000000000000000",
+              "root": "frontend POST /api/checkout",
+              "duration_ms": 24.0
+            },
+            {
+              "trace_id": "8e4f0000000000000000000000000001",
+              "root": "frontend POST /api/checkout",
+              "duration_ms": 24.0
+            },
+            {
+              "trace_id": "8e4f0000000000000000000000000002",
+              "root": "frontend POST /api/checkout",
+              "duration_ms": 24.0
+            }
+          ]
+        },
+        "evidence_ids": [
+          "E8"
+        ],
+        "seconds": 0.02,
+        "at_s": 205.6,
+        "error": null
+      },
+      {
+        "step": 5,
+        "tool": "find_error_traces",
+        "arguments": {
+          "errors_only": true,
+          "lookback": "3m",
+          "service": "currency"
+        },
+        "result": {
+          "service": "currency",
+          "lookback_s": 180,
+          "errors_only": true,
+          "traces_examined": 0,
+          "origins": [],
+          "attribute_clusters": [],
+          "edges": [],
+          "slowest": [],
+          "evidence": "E9"
+        },
+        "evidence_ids": [
+          "E9"
+        ],
+        "seconds": 0.0,
+        "at_s": 268.2,
+        "error": null
+      }
+    ],
+    "outcome": "llm_error",
+    "error": "BadRequestError: Error code: 400 - invalid message content type: <nil>",
+    "model_turns": 6,
+    "submitted_at_s": 354.5
+  },
+  "evidence": [
+    {
+      "id": "E1",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "checkout [errors,client_call_errors] over 180s: error_rate 97.6% (baseline 0.0%) client_error_rate 44.4% (baseline 0.0%) p95 260.0ms (baseline 260ms) rps 0.41 (baseline 0.41)",
+      "ts": "2026-11-09T06:17:19+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "checkout",
+          "rps": 0.41,
+          "error_rate": 0.9756,
+          "client_error_rate": 0.4444,
+          "p95_ms": 260.0,
+          "baseline": {
+            "rps": 0.41,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 260
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 1.0,
+          "flags": [
+            "errors",
+            "client_call_errors"
+          ],
+          "criticality": "critical",
+          "evidence": "E1"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[180s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s])))"
+        },
+        "window_s": 180
+      }
+    },
+    {
+      "id": "E2",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "payment [traffic_drop,silent] over 180s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 35.0ms (baseline 35ms) rps 0.02 (baseline 0.4)",
+      "ts": "2026-11-09T06:17:19+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "payment",
+          "rps": 0.02,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 35.0,
+          "baseline": {
+            "rps": 0.4,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 35
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 0.05,
+          "flags": [
+            "traffic_drop",
+            "silent"
+          ],
+          "criticality": "critical",
+          "evidence": "E2"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[180s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s])))"
+        },
+        "window_s": 180
+      }
+    },
+    {
+      "id": "E3",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "email [traffic_drop,silent] over 180s: error_rate 0.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 40.0ms (baseline 40ms) rps 0.02 (baseline 0.38)",
+      "ts": "2026-11-09T06:17:19+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "email",
+          "rps": 0.02,
+          "error_rate": 0.0,
+          "client_error_rate": 0.0,
+          "p95_ms": 40.0,
+          "baseline": {
+            "rps": 0.38,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 40
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 0.05,
+          "flags": [
+            "traffic_drop",
+            "silent"
+          ],
+          "criticality": "medium",
+          "evidence": "E3"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[180s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s])))"
+        },
+        "window_s": 180
+      }
+    },
+    {
+      "id": "E4",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "frontend [errors,client_call_errors] over 180s: error_rate 4.4% (baseline 0.0%) client_error_rate 2.6% (baseline 0.0%) p95 170.0ms (baseline 170ms) rps 9.0 (baseline 9.0)",
+      "ts": "2026-11-09T06:17:19+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "frontend",
+          "rps": 9.0,
+          "error_rate": 0.0444,
+          "client_error_rate": 0.0263,
+          "p95_ms": 170.0,
+          "baseline": {
+            "rps": 9.0,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 170
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 1.0,
+          "flags": [
+            "errors",
+            "client_call_errors"
+          ],
+          "criticality": "critical",
+          "evidence": "E4"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[180s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s])))"
+        },
+        "window_s": 180
+      }
+    },
+    {
+      "id": "E5",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "frontend-proxy [errors] over 180s: error_rate 4.2% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 185.0ms (baseline 185ms) rps 9.6 (baseline 9.6)",
+      "ts": "2026-11-09T06:17:19+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "frontend-proxy",
+          "rps": 9.6,
+          "error_rate": 0.0417,
+          "client_error_rate": 0.0,
+          "p95_ms": 185.0,
+          "baseline": {
+            "rps": 9.6,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 185
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 1.0,
+          "flags": [
+            "errors"
+          ],
+          "criticality": "critical",
+          "evidence": "E5"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[180s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[180s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[180s])))"
+        },
+        "window_s": 180
+      }
+    },
+    {
+      "id": "E6",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "observation": "6/6 traces: deepest failing span is checkout 'oteldemo.CurrencyService/Convert' (client call to oteldemo.CurrencyService got no server span) msg='rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed t' chain=frontend>checkout e.g. trace 8e4f0000000000000000000000000000",
+      "ts": "2026-11-09T06:18:20+00:00",
+      "cited": false,
+      "data": {
+        "origin_service": "checkout",
+        "operation": "oteldemo.CurrencyService/Convert",
+        "count": 6,
+        "message": "rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate has expired or is not yet valid\"",
+        "chain": [
+          "frontend",
+          "checkout"
+        ],
+        "example_trace": "8e4f0000000000000000000000000000",
+        "unanswered_call_to": "oteldemo.CurrencyService",
+        "lookback_s": 180
+      }
+    },
+    {
+      "id": "E7",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "observation": "all 1 containers running and healthy; none (re)started in the last 180s",
+      "ts": "2026-11-09T06:18:53+00:00",
+      "cited": false,
+      "data": {
+        "healthy": [
+          "currency"
+        ]
+      }
+    },
+    {
+      "id": "E8",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "observation": "6/6 traces: deepest failing span is checkout 'oteldemo.CurrencyService/Convert' (client call to oteldemo.CurrencyService got no server span) msg='rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed t' chain=frontend>checkout e.g. trace 8e4f0000000000000000000000000000",
+      "ts": "2026-11-09T06:19:31+00:00",
+      "cited": false,
+      "data": {
+        "origin_service": "checkout",
+        "operation": "oteldemo.CurrencyService/Convert",
+        "count": 6,
+        "message": "rpc error: code = Unavailable desc = connection error: desc = \"transport: authentication handshake failed: tls: failed to verify certificate: x509: certificate has expired or is not yet valid\"",
+        "chain": [
+          "frontend",
+          "checkout"
+        ],
+        "example_trace": "8e4f0000000000000000000000000000",
+        "unanswered_call_to": "oteldemo.CurrencyService",
+        "lookback_s": 180
+      }
+    },
+    {
+      "id": "E9",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "observation": "no error traces for service currency in last 180s",
+      "ts": "2026-11-09T06:20:34+00:00",
+      "cited": false,
+      "data": {
+        "service": "currency",
+        "lookback_s": 180
+      }
+    }
+  ],
+  "diagnosis": {
+    "status": "escalate",
+    "headline": "Investigation ended without a diagnosis (agent outcome: llm_error).",
+    "confidence": 0.0,
+    "root_causes": [],
+    "suspected_origin": {
+      "service": "unknown",
+      "reasoning": "agent outcome: llm_error",
+      "confidence": 0.0,
+      "evidence": []
+    },
+    "affected_services": [],
+    "anomalies": [],
+    "ruled_out": [],
+    "open_questions": [],
+    "prevention": [
+      "Close the telemetry gaps that kept this diagnosis uncertain (logs, traces, metrics).",
+      "Write a runbook entry once the cause is known."
+    ],
+    "proposed_action": {
+      "action": "escalate_to_human",
+      "target": "unknown",
+      "fault_class": "unknown",
+      "reason": "Confidence below threshold or no root cause with valid evidence; a human must decide.",
+      "next_steps": [
+        "Review the cited evidence and the open questions.",
+        "Collect more telemetry: traces of the alerting service, logs, container state over time."
+      ]
+    },
+    "validation": {
+      "dropped_evidence_ids": [],
+      "notes": [
+        "no root cause with valid evidence; escalated to human"
+      ],
+      "overrides": []
+    },
+    "suggested_fixes": []
+  },
+  "remediation_plan": {
+    "steps": []
+  },
+  "escalations": [
+    {
+      "target": "unknown",
+      "fault_class": "unknown",
+      "reason": "Confidence below threshold or no root cause with valid evidence; a human must decide.",
+      "next_steps": [
+        "Review the cited evidence and the open questions.",
+        "Collect more telemetry: traces of the alerting service, logs, container state over time."
+      ],
+      "source": "no allowlisted fix"
+    }
+  ],
+  "manual_verifications": [],
+  "outcome": {
+    "status": "escalated",
+    "summary": "investigation ended without a diagnosis (llm_error); escalated to a human",
+    "prevention": [
+      "Close the telemetry gaps that kept this diagnosis uncertain (logs, traces, metrics).",
+      "Write a runbook entry once the cause is known."
+    ],
+    "investigation_outcome": "llm_error",
+    "plan_outcome": null
+  },
+  "review": null,
+  "notifications": [],
+  "accounting": {
+    "tokens_in": 29512,
+    "tokens_out": 4152,
+    "estimated_cost_usd": null,
+    "reviewer_tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "price_basis": "USD per 1M tokens, Anthropic first-party rates",
+    "phases": {
+      "investigation_s": 354.5,
+      "remediation_s": 0.0,
+      "verify_s": 0,
+      "total_s": 354.6
+    },
+    "steps_used": 6,
+    "step_budget": 10
+  },
+  "report_paths": {
+    "report": "C:\\Placement\\incident-zero-oncall-agent\\runs\\20261109-114606-test.report.md",
+    "actions_log": "C:\\Placement\\incident-zero-oncall-agent\\runs\\actions.jsonl",
+    "action_log_lines": []
+  },
+  "postmortem": {
+    "draft": true,
+    "times": {
+      "fault_started": null,
+      "fault_started_evidence": null,
+      "fault_started_what": null,
+      "detected": "2026-10-23T07:20:00+00:00",
+      "investigation_started": "2026-11-09T06:16:06+00:00",
+      "diagnosed": null,
+      "approved": null,
+      "executed": null,
+      "recovery_verified": null,
+      "ended": "2026-11-09T06:22:00+00:00"
+    },
+    "durations": {
+      "time_to_detect_s": null,
+      "time_to_diagnose_s": null,
+      "time_to_recover_s": null,
+      "total_s": 1465320.0
+    },
+    "impact": {
+      "services": [],
+      "signals": [
+        {
+          "text": "checkout: error rate 97.6% (baseline 0.0%); client-call error rate 44.4% (baseline 0.0%)",
+          "evidence": [
+            "E1"
+          ]
+        },
+        {
+          "text": "payment: traffic 0.02 rps against a baseline of 0.4 rps (5%)",
+          "evidence": [
+            "E2"
+          ]
+        },
+        {
+          "text": "email: traffic 0.02 rps against a baseline of 0.38 rps (5%)",
+          "evidence": [
+            "E3"
+          ]
+        },
+        {
+          "text": "frontend: error rate 4.4% (baseline 0.0%); client-call error rate 2.6% (baseline 0.0%)",
+          "evidence": [
+            "E4"
+          ]
+        },
+        {
+          "text": "frontend-proxy: error rate 4.2% (baseline 0.0%)",
+          "evidence": [
+            "E5"
+          ]
+        }
+      ],
+      "failed_requests": [
+        {
+          "text": "6 failing trace(s) originating in checkout 'oteldemo.CurrencyService/Convert' (sampled traces, not all requests)",
+          "evidence": [
+            "E6"
+          ]
+        },
+        {
+          "text": "6 failing trace(s) originating in checkout 'oteldemo.CurrencyService/Convert' (sampled traces, not all requests)",
+          "evidence": [
+            "E8"
+          ]
+        }
+      ],
+      "failed_requests_total": null,
+      "note": "Failed-request numbers are counts from sampled traces and log lines in the record; the total number of failed requests is unknown."
+    },
+    "five_whys": [
+      {
+        "n": 1,
+        "why": "Why did this incident happen?",
+        "because": "unknown, needs human investigation",
+        "evidence": [],
+        "source": "unknown"
+      }
+    ],
+    "went_well": [],
+    "could_be_better": [
+      "The investigation ended without a diagnosis (llm_error).",
+      "The reviewer did not run (ONCALL_REVIEWER off)."
+    ],
+    "action_items": [
+      {
+        "action": "Close the telemetry gaps that kept this diagnosis uncertain (logs, traces, metrics).",
+        "type": "prevent",
+        "priority": "medium",
+        "owner": "to assign"
+      },
+      {
+        "action": "Write a runbook entry once the cause is known.",
+        "type": "mitigate",
+        "priority": "medium",
+        "owner": "to assign"
+      }
+    ]
+  }
+}

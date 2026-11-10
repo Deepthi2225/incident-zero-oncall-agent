@@ -1,0 +1,44 @@
+{
+  "run_id": "20261023-153921",
+  "source": "live",
+  "source_detail": "prometheus http://localhost:9090, jaeger, docker CLI",
+  "alert": {
+    "source": "watcher",
+    "fired_at": "2026-10-23T10:09:20+00:00",
+    "service": "checkout",
+    "signal": "error_rate",
+    "value": 1.0,
+    "threshold": 0.05,
+    "window_s": 180,
+    "other_breaches": []
+  },
+  "model": "claude-opus-5-5",
+  "steps": [],
+  "usage": {
+    "input": 0,
+    "output": 0
+  },
+  "error": "no LLM credentials: set ANTHROPIC_API_KEY",
+  "outcome": "llm_error",
+  "seconds": 0.4,
+  "evidence": [],
+  "summary": {
+    "source": "live",
+    "source_detail": "prometheus http://localhost:9090, jaeger, docker CLI",
+    "headline": "Investigation ended without a summary (agent outcome: llm_error).",
+    "affected_services": [],
+    "anomalies": [],
+    "suspected_origin": {
+      "service": "unknown",
+      "reasoning": "agent outcome: llm_error",
+      "confidence": 0.0,
+      "evidence": []
+    },
+    "open_questions": [],
+    "status": "needs_human",
+    "validation": {
+      "dropped_evidence_ids": [],
+      "notes": []
+    }
+  }
+}

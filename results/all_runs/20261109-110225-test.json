@@ -1,0 +1,578 @@
+{
+  "schema_version": 2,
+  "status": "running",
+  "metadata": {
+    "run_id": "20261109-110225",
+    "incident_id": "INC-UNSEEN-DISK",
+    "started_at": "2026-11-09T05:32:25+00:00",
+    "ended_at": null,
+    "updated_at": "2026-11-09T05:36:12+00:00",
+    "mode": "test",
+    "source_detail": "fixtures tests/fixtures/unseen_disk_full",
+    "provider": "groq",
+    "model": "openai/gpt-oss-120b",
+    "git": {
+      "commit": "8816bf0ef679fb07a5583a11836762a46fc02de9",
+      "dirty": true
+    }
+  },
+  "alert": {
+    "incident_id": "INC-UNSEEN-DISK",
+    "detected_at": "2026-10-23T07:20:00Z",
+    "alerting_services": [
+      "product-catalog",
+      "frontend"
+    ],
+    "trigger": [
+      {
+        "service": "product-catalog",
+        "signal": "error_rate",
+        "value": 0.31,
+        "threshold": 0.05,
+        "window": "3m"
+      },
+      {
+        "service": "frontend",
+        "signal": "error_rate",
+        "value": 0.08,
+        "threshold": 0.05,
+        "window": "3m"
+      }
+    ],
+    "note": "alerting service is a symptom, not necessarily the root cause"
+  },
+  "investigation": {
+    "steps": [
+      {
+        "step": 1,
+        "tool": "get_service_health",
+        "arguments": {
+          "window": "5m"
+        },
+        "result": {
+          "window_s": 300,
+          "baseline": "loaded",
+          "flagged": [
+            {
+              "service": "product-catalog",
+              "rps": 6.0,
+              "error_rate": 0.31,
+              "client_error_rate": 0.0,
+              "p95_ms": 6.0,
+              "baseline": {
+                "rps": 6.0,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 6
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 1.0,
+              "flags": [
+                "errors"
+              ],
+              "criticality": "high",
+              "evidence": "E1"
+            },
+            {
+              "service": "frontend",
+              "rps": 9.0,
+              "error_rate": 0.08,
+              "client_error_rate": 0.0474,
+              "p95_ms": 170.0,
+              "baseline": {
+                "rps": 9.0,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 170
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 1.0,
+              "flags": [
+                "errors",
+                "client_call_errors"
+              ],
+              "criticality": "critical",
+              "evidence": "E2"
+            },
+            {
+              "service": "frontend-proxy",
+              "rps": 9.6,
+              "error_rate": 0.075,
+              "client_error_rate": 0.0,
+              "p95_ms": 185.0,
+              "baseline": {
+                "rps": 9.6,
+                "error_rate": 0.0,
+                "client_error_rate": 0.0,
+                "p95_ms": 185
+              },
+              "p95_ratio": 1.0,
+              "rps_ratio": 1.0,
+              "flags": [
+                "errors"
+              ],
+              "criticality": "critical",
+              "evidence": "E3"
+            }
+          ],
+          "healthy": [
+            "checkout",
+            "payment",
+            "currency",
+            "shipping",
+            "cart",
+            "ad",
+            "email",
+            "recommendation",
+            "quote",
+            "image-provider"
+          ]
+        },
+        "evidence_ids": [
+          "E1",
+          "E2",
+          "E3"
+        ],
+        "seconds": 0.01,
+        "at_s": 8.9,
+        "error": null
+      },
+      {
+        "step": 2,
+        "tool": "find_error_traces",
+        "arguments": {
+          "errors_only": true,
+          "limit": 20,
+          "lookback": "5m",
+          "service": "product-catalog"
+        },
+        "result": {
+          "service": "product-catalog",
+          "lookback_s": 300,
+          "errors_only": true,
+          "traces_examined": 6,
+          "origins": [
+            {
+              "origin_service": "product-catalog",
+              "operation": "oteldemo.ProductCatalogService/AddReview",
+              "count": 6,
+              "message": "pq: could not extend file \"base/16384/2619\": No space left on device",
+              "chain": [
+                "frontend",
+                "product-catalog"
+              ],
+              "example_trace": "9f500000000000000000000000000000",
+              "evidence": "E4"
+            }
+          ],
+          "attribute_clusters": [],
+          "edges": [
+            {
+              "edge": "frontend->product-catalog",
+              "calls": 6,
+              "avg_client_ms": 9.0,
+              "avg_server_ms": 7.0,
+              "avg_gap_ms": 2.0
+            }
+          ],
+          "slowest": [
+            {
+              "trace_id": "9f500000000000000000000000000000",
+              "root": "frontend POST /api/product-review",
+              "duration_ms": 19.0
+            },
+            {
+              "trace_id": "9f500000000000000000000000000001",
+              "root": "frontend POST /api/product-review",
+              "duration_ms": 19.0
+            },
+            {
+              "trace_id": "9f500000000000000000000000000002",
+              "root": "frontend POST /api/product-review",
+              "duration_ms": 19.0
+            }
+          ]
+        },
+        "evidence_ids": [
+          "E4"
+        ],
+        "seconds": 0.0,
+        "at_s": 35.2,
+        "error": null
+      },
+      {
+        "step": 3,
+        "tool": "get_deploy_history",
+        "arguments": {
+          "lookback": "10m",
+          "names": [
+            "astronomy-db"
+          ]
+        },
+        "result": {
+          "lookback_s": 600,
+          "containers": 1,
+          "stats_available": true,
+          "changed_or_unhealthy": [],
+          "healthy": [
+            "astronomy-db"
+          ],
+          "top_memory": [
+            {
+              "name": "astronomy-db",
+              "mem_pct": 30.0
+            }
+          ],
+          "organiser_history": "not configured",
+          "our_actions": [],
+          "evidence": "E5"
+        },
+        "evidence_ids": [
+          "E5"
+        ],
+        "seconds": 0.09,
+        "at_s": 60.4,
+        "error": null
+      },
+      {
+        "step": 4,
+        "tool": "search_logs",
+        "arguments": {
+          "contains": "No space",
+          "level": "error",
+          "services": [
+            "astronomy-db"
+          ],
+          "since": "10m"
+        },
+        "result": {
+          "since_s": 600,
+          "min_level": "error",
+          "contains": "No space",
+          "services": {
+            "astronomy-db": {
+              "log_source": "docker logs",
+              "matching_lines": 6
+            }
+          },
+          "patterns": [
+            {
+              "service": "astronomy-db",
+              "level": "error",
+              "count": 6,
+              "first_seen": "2026-10-23T07:17:40.000000000Z",
+              "last_seen": "2026-10-23T07:19:20.000000000Z",
+              "example": "ERROR:  could not extend file \"base/16384/2619\": No space left on device",
+              "evidence": "E6"
+            }
+          ]
+        },
+        "evidence_ids": [
+          "E6"
+        ],
+        "seconds": 0.0,
+        "at_s": 67.7,
+        "error": null
+      },
+      {
+        "step": 5,
+        "tool": "list_metrics",
+        "arguments": {
+          "contains": "disk"
+        },
+        "result": {
+          "contains": "disk",
+          "total": 0,
+          "names": []
+        },
+        "evidence_ids": [],
+        "seconds": 0.0,
+        "at_s": 96.9,
+        "error": null
+      },
+      {
+        "step": 6,
+        "tool": "get_deploy_history",
+        "arguments": {
+          "lookback": "30m",
+          "names": [
+            "astronomy-db"
+          ]
+        },
+        "result": {
+          "lookback_s": 1800,
+          "containers": 1,
+          "stats_available": true,
+          "changed_or_unhealthy": [],
+          "healthy": [
+            "astronomy-db"
+          ],
+          "top_memory": [
+            {
+              "name": "astronomy-db",
+              "mem_pct": 30.0
+            }
+          ],
+          "organiser_history": "not configured",
+          "our_actions": [],
+          "evidence": "E7"
+        },
+        "evidence_ids": [
+          "E7"
+        ],
+        "seconds": 0.0,
+        "at_s": 193.2,
+        "error": null
+      },
+      {
+        "step": 7,
+        "tool": "get_metric",
+        "arguments": {
+          "promql": "node_filesystem_avail_bytes{instance=~\".*astronomy-db.*\"}",
+          "window": "5m"
+        },
+        "result": {
+          "promql": "node_filesystem_avail_bytes{instance=~\".*astronomy-db.*\"}",
+          "window_s": 300,
+          "series_total": 0,
+          "series": [],
+          "hint": "metrics arrive about every 60 s (OTLP push), so rate()/increase() need windows of at least 3m and a query window of several minutes; check the name with list_metrics",
+          "evidence": "E8"
+        },
+        "evidence_ids": [
+          "E8"
+        ],
+        "seconds": 0.0,
+        "at_s": 227.2,
+        "error": null
+      }
+    ],
+    "outcome": null,
+    "error": null,
+    "model_turns": 7
+  },
+  "evidence": [
+    {
+      "id": "E1",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "product-catalog [errors] over 300s: error_rate 31.0% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 6.0ms (baseline 6ms) rps 6.0 (baseline 6.0)",
+      "ts": "2026-11-09T05:32:34+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "product-catalog",
+          "rps": 6.0,
+          "error_rate": 0.31,
+          "client_error_rate": 0.0,
+          "p95_ms": 6.0,
+          "baseline": {
+            "rps": 6.0,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 6
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 1.0,
+          "flags": [
+            "errors"
+          ],
+          "criticality": "high",
+          "evidence": "E1"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E2",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "frontend [errors,client_call_errors] over 300s: error_rate 8.0% (baseline 0.0%) client_error_rate 4.7% (baseline 0.0%) p95 170.0ms (baseline 170ms) rps 9.0 (baseline 9.0)",
+      "ts": "2026-11-09T05:32:34+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "frontend",
+          "rps": 9.0,
+          "error_rate": 0.08,
+          "client_error_rate": 0.0474,
+          "p95_ms": 170.0,
+          "baseline": {
+            "rps": 9.0,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 170
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 1.0,
+          "flags": [
+            "errors",
+            "client_call_errors"
+          ],
+          "criticality": "critical",
+          "evidence": "E2"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E3",
+      "tool": "get_service_health",
+      "kind": "metric",
+      "observation": "frontend-proxy [errors] over 300s: error_rate 7.5% (baseline 0.0%) client_error_rate 0.0% (baseline 0.0%) p95 185.0ms (baseline 185ms) rps 9.6 (baseline 9.6)",
+      "ts": "2026-11-09T05:32:34+00:00",
+      "cited": false,
+      "data": {
+        "row": {
+          "service": "frontend-proxy",
+          "rps": 9.6,
+          "error_rate": 0.075,
+          "client_error_rate": 0.0,
+          "p95_ms": 185.0,
+          "baseline": {
+            "rps": 9.6,
+            "error_rate": 0.0,
+            "client_error_rate": 0.0,
+            "p95_ms": 185
+          },
+          "p95_ratio": 1.0,
+          "rps_ratio": 1.0,
+          "flags": [
+            "errors"
+          ],
+          "criticality": "critical",
+          "evidence": "E3"
+        },
+        "queries": {
+          "rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s]))",
+          "err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "client_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\"}[300s]))",
+          "client_err_rps": "sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\",status_code=\"STATUS_CODE_ERROR\"}[300s]))",
+          "p95_ms": "histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~\"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER\"}[300s])))"
+        },
+        "window_s": 300
+      }
+    },
+    {
+      "id": "E4",
+      "tool": "find_error_traces",
+      "kind": "trace",
+      "observation": "6/6 traces: deepest failing span is product-catalog 'oteldemo.ProductCatalogService/AddReview' msg='pq: could not extend file \"base/16384/2619\": No space left on device' chain=frontend>product-catalog e.g. trace 9f500000000000000000000000000000",
+      "ts": "2026-11-09T05:33:00+00:00",
+      "cited": false,
+      "data": {
+        "origin_service": "product-catalog",
+        "operation": "oteldemo.ProductCatalogService/AddReview",
+        "count": 6,
+        "message": "pq: could not extend file \"base/16384/2619\": No space left on device",
+        "chain": [
+          "frontend",
+          "product-catalog"
+        ],
+        "example_trace": "9f500000000000000000000000000000",
+        "lookback_s": 300
+      }
+    },
+    {
+      "id": "E5",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "observation": "all 1 containers running and healthy; none (re)started in the last 600s",
+      "ts": "2026-11-09T05:33:26+00:00",
+      "cited": false,
+      "data": {
+        "healthy": [
+          "astronomy-db"
+        ]
+      }
+    },
+    {
+      "id": "E6",
+      "tool": "search_logs",
+      "kind": "log",
+      "observation": "astronomy-db logs (docker logs, 600s): 6x ERROR 'ERROR:  could not extend file \"base/16384/2619\": No space left on device' first 2026-10-23T07:17:40.000000000Z last 2026-10-23T07:19:20.000000000Z",
+      "ts": "2026-11-09T05:33:33+00:00",
+      "cited": false,
+      "data": {
+        "service": "astronomy-db",
+        "log_source": "docker logs",
+        "level": "error",
+        "pattern": "ERROR: could not extend file \"base/<n>/<n>\": No space left on device",
+        "count": 6,
+        "first_seen": "2026-10-23T07:17:40.000000000Z",
+        "last_seen": "2026-10-23T07:19:20.000000000Z",
+        "example": "ERROR:  could not extend file \"base/16384/2619\": No space left on device"
+      }
+    },
+    {
+      "id": "E7",
+      "tool": "get_deploy_history",
+      "kind": "container",
+      "observation": "all 1 containers running and healthy; none (re)started in the last 1800s",
+      "ts": "2026-11-09T05:35:38+00:00",
+      "cited": false,
+      "data": {
+        "healthy": [
+          "astronomy-db"
+        ]
+      }
+    },
+    {
+      "id": "E8",
+      "tool": "get_metric",
+      "kind": "metric",
+      "observation": "node_filesystem_avail_bytes{instance=~\".*astronomy-db.*\"} returned no data over 300s (metrics arrive about every 60 s (OTLP push), so rate()/increase() need windows of at least 3m and a query window of several minutes; check the name with list_metrics)",
+      "ts": "2026-11-09T05:36:12+00:00",
+      "cited": false,
+      "data": {
+        "promql": "node_filesystem_avail_bytes{instance=~\".*astronomy-db.*\"}",
+        "window_s": 300,
+        "adjusted": []
+      }
+    }
+  ],
+  "diagnosis": null,
+  "remediation_plan": null,
+  "escalations": [],
+  "manual_verifications": [],
+  "outcome": null,
+  "review": null,
+  "notifications": [],
+  "accounting": {
+    "tokens_in": 27483,
+    "tokens_out": 1122,
+    "estimated_cost_usd": null,
+    "reviewer_tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "price_basis": "USD per 1M tokens, Anthropic first-party rates",
+    "phases": {
+      "investigation_s": null,
+      "remediation_s": null,
+      "verify_s": 0,
+      "total_s": 227.2
+    },
+    "steps_used": 7,
+    "step_budget": 12
+  },
+  "report_paths": {
+    "report": "C:\\Placement\\incident-zero-oncall-agent\\runs\\20261109-110225-test.report.md",
+    "actions_log": "C:\\Placement\\incident-zero-oncall-agent\\runs\\actions.jsonl",
+    "action_log_lines": []
+  }
+}

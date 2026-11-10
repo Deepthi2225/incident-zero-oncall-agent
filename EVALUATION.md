@@ -75,6 +75,36 @@ and [results/unseen/](results/unseen/).
 | 20261109-110811 | unseen_disk_full (Postgres out of disk) | Groq | Right origin (astronomy-db); the reviewer doubted "disk full" against a quota, lowering 0.59 to 0.39; escalated | 183 s |
 | 20261109-115221 | unseen_cert_expired (TLS to currency) | Ollama | Right cause (expired certificate on the currency call), 0.95; its proposed restart was replaced by escalation by the validator | 137 s |
 
+## Totals across all saved runs (counted 10 Nov 2026)
+
+Counted from all 55 run records in `results/`. Runs that were not already in another folder are in
+[results/all_runs/](results/all_runs/), with email addresses redacted. Four runs from 23 Oct ended
+with no diagnosis because no key was set; they are counted as runs but not as diagnoses.
+
+| Measure | Count |
+|---|---|
+| Saved runs / live runs | 55 / 26 |
+| Diagnoses with root causes / root-cause claims / evidence citations | 30 / 38 / 148 |
+| Citations the validator dropped as not collected | 0 |
+| Live Claude runs on 24 Oct naming payment's stopped container as the top cause | 15 of 15; confidence 0.65 to 0.92, median 0.90 |
+| Of those, runs where payment itself was not in the alert | 2 (20261024-160811, 20261024-163644), plus 1 manual alert |
+| Diagnosis time, those 15 runs | 28.9 to 61.6 s, median 32.5 s; 3 to 7 tool steps, median 3 |
+| Model cost, those 15 runs | $0.14 to $0.44, median $0.19 |
+| Proposals rejected by a person / dry runs / executed and recovered | 4 / 4 / 3 |
+| Validator changed the proposed action | 5 runs: 3 restarts became escalations (20261109-115221, 20261109-122037, 20261109-171801), 1 escalation became a throttle for a traffic flood, 1 restart was retargeted |
+
+The 15 repeat runs were practice runs of the stopped-payment incident. Which fault was injected was
+not recorded in the run files; the alerts (payment silent, checkout errors) and the Day 2 notes match it.
+
+## Improvement over time
+
+| Measure | 23 Oct 20:53 (end of Day 1) | 24 Oct 13:57 (code freeze) | 24 Oct 16:19 | 8 Nov | 9 Nov |
+|---|---|---|---|---|---|
+| Tests collected by pytest | 106 | 301 | 406 | 484 | 616 |
+| Recorded incident fixtures | 1 | 4 | 4 | 4 | 7 |
+
+Counted with `pytest --collect-only` at each commit of `main`.
+
 ## Other checks
 
 - **Fault injection and reset:** all 26 `faultctl` faults were injected for 60 s and reset. Containers

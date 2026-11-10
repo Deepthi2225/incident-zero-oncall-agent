@@ -1,0 +1,48 @@
+{
+  "run_id": "20261023-140459",
+  "alert": {
+    "source": "watcher",
+    "fired_at": "2026-10-23T07:20:00Z",
+    "service": "checkout",
+    "signal": "error_rate",
+    "value": 0.952,
+    "threshold": 0.05,
+    "window_s": 120,
+    "other_breaches": [
+      {
+        "service": "frontend",
+        "signal": "error_rate",
+        "value": 0.044,
+        "threshold": 0.05
+      }
+    ]
+  },
+  "model": "claude-opus-5-5",
+  "source": "fake",
+  "steps": [],
+  "usage": {
+    "input": 0,
+    "output": 0
+  },
+  "error": "no LLM credentials: set ANTHROPIC_API_KEY",
+  "outcome": "llm_error",
+  "seconds": 0.2,
+  "evidence": [],
+  "summary": {
+    "headline": "Investigation ended without a summary (agent outcome: llm_error).",
+    "affected_services": [],
+    "anomalies": [],
+    "suspected_origin": {
+      "service": "unknown",
+      "reasoning": "agent outcome: llm_error",
+      "confidence": 0.0,
+      "evidence": []
+    },
+    "open_questions": [],
+    "status": "needs_human",
+    "validation": {
+      "dropped_evidence_ids": [],
+      "notes": []
+    }
+  }
+}
